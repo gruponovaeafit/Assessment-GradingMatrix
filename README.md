@@ -1,2 +1,2 @@
-# Assessment-GradingMatrix-V1
-This project consists of the development of a web platform with a grading matrix that allows the groups to grade their participant in the assessment activity.
+# Assessment-GradingMatrix
+This project consists of developing a web platform with a grading matrix that allows the groups to grade their participants in the assessment activity.
