@@ -1,17 +1,21 @@
 "use client";
 import React from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 const GroupGeneration: React.FC = () => {
     const [groupsGenerated, setGroupsGenerated] = useState<string[][]>([]);
-    
-   
+    const router = useRouter();
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
   
       const formElement = e.currentTarget;
       const formData = new FormData(formElement);
+
+      if (!formData.get('groups') || Number(formData.get('groups')) <= 0 || Number(formData.get('groups')) > 10) {
+        alert('Por favor, ingrese un número válido de grupos.');
+        return;
+    }
   
       try {
         const response = await fetch("/api/groupG", {
@@ -19,7 +23,7 @@ const GroupGeneration: React.FC = () => {
           headers: {
             "Content-Type": "application/json",
           },
-
+            
           body: JSON.stringify(Object.fromEntries(formData.entries())), // Convierte FormData a JSON
         });
       
@@ -29,8 +33,6 @@ const GroupGeneration: React.FC = () => {
         }
       
         setGroupsGenerated(await response.json().then((data) => data.groups));
-      
-       
         
       } catch (error) {
         console.error("Error sending form:", error);
@@ -62,6 +64,9 @@ const GroupGeneration: React.FC = () => {
                 ))}
                
             </div>
+            <button className='mt-4 bg-gray bg-opacity-50 text-white py-2 px-4 rounded-lg' onClick={() => router.push('/dashboard')}>
+                Ir al panel de calificaciones
+            </button>
 
             
         </div>
