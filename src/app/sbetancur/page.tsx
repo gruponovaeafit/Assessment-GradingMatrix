@@ -12,7 +12,7 @@ export default function Home() {
       <div className="flex flex-col gap-4 w-full max-w-xs">
       
         <button className="flex items-center justify-center w-full h-24 bg-gray-50 rounded-md text-2xl font-bold text-black"
-        onClick={() => {router.push('/rave');}}>
+        onClick={() => {router.push('/dashboard');}}>
           Tablero de Calificacion
         </button>
 

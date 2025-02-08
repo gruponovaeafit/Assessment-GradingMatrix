@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 const mockDatabase = {
     users: [
-        "Alice", "Bob", "Charlie", "David", "Eve", "Frank", "Grace", "Hank", "Ivy", "Jack",
-        "Kathy", "Leo", "Mona", "Nate", "Olivia", "Paul", "Quincy", "Rachel", "Steve", "Tracy"
+        "Alice Blandon Redondo", "Bob", "Charlie", "David", "Eve", "Frank", "Grace", "Hank", "Ivy", "Jack",
+        "Kathy", "Leo", "Mona", "Nate", "Olivia", "Paul", "Quincy", "Rachel Gutierrez Martinez", "Steve", "Tracy"
     ]
 };
 
