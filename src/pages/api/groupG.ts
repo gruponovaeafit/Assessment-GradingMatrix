@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const { groups } = req.body;
-    console.log(groups);
+ 
 
     const users = mockDatabase.users;
 
@@ -27,13 +27,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         groupsGenerated[index % groups].push(user);
     });
 
-    console.log(groupsGenerated);
 
     if (!groups) {
         res.status(400).json({ message: "Missing groups" });
         return;
     }
 
-    res.status(200).json({ message: "Groups generated" });
+    res.status(200).json({ message: "Groups generated", groups: groupsGenerated });
     
 };   

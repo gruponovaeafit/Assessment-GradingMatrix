@@ -1,10 +1,12 @@
 "use client";
 import React from 'react';
 import { useRouter } from 'next/router';
+import { useState } from 'react';
 
 const GroupGeneration: React.FC = () => {
+    const [groupsGenerated, setGroupsGenerated] = useState<string[][]>([]);
     
-
+   
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
   
@@ -12,20 +14,24 @@ const GroupGeneration: React.FC = () => {
       const formData = new FormData(formElement);
   
       try {
-        const response = await fetch("/api/forms/groupG", {
+        const response = await fetch("/api/groupG", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify(Object.fromEntries(formData.entries())), // Convierte FormData a JSON
         });
       
         if (!response.ok) {
+         
           throw new Error(`HTTP error! status: ${response.status}`);
         }
       
-        const data = await response.json();
-        console.log("Response data:", data);
+        setGroupsGenerated(await response.json().then((data) => data.groups));
+      
+       
+        
       } catch (error) {
         console.error("Error sending form:", error);
       }
@@ -38,23 +44,23 @@ const GroupGeneration: React.FC = () => {
                 <input 
                     type="number" 
                     placeholder='Cantidad de grupos' 
+                    name='groups'
                     className='placeholder-white placeholder-semibold bg-white bg-opacity-30 border-none rounded-lg outline-none p-2'
                 />
                 <button type='submit' className='mt-2 bg-blue-500 text-white py-2 px-4 rounded-lg'>Generar grupos</button>
             </form>
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                {['Equipo A', 'Equipo B', 'Equipo C', 'Equipo D'].map((team, index) => (
-                    <div key={index} className=' flex flex-col justify-center items-center p-4 bg-white bg-opacity-10 rounded-lg shadow-md w-[250px]'>
-                        <h2 className='text-lg font-semibold text-white'>{team}</h2>
-            
+                {groupsGenerated && groupsGenerated.map((group, index) => (
+                    <div key={index} className='flex flex-col justify-center items-center p-4 bg-white bg-opacity-10 rounded-lg shadow-md w-[250px]'>
+                        <h2 className='text-lg font-semibold text-white'>Grupo {index + 1}</h2>
                         <ul>
-                            <li className='text-white'>Miembro 1</li>
-                            <li className='text-white'>Miembro 2</li>
-                            <li className='text-white'>Miembro 3</li>
-                            <li className='text-white'>Miembro 4</li>
+                            {group.map((member, memberIndex) => (
+                                <li key={memberIndex} className='text-white'>{member}</li>
+                            ))}
                         </ul>
                     </div>
                 ))}
+               
             </div>
 
             
