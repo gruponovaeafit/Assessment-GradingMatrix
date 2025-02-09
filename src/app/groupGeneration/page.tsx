@@ -41,17 +41,20 @@ const GroupGeneration: React.FC = () => {
 
     return (
         <div className='flex flex-col items-center justify-center min-h-screen py-2'>
-            <h1 className='text-3xl font-bold mb-[20]'>Genera los grupos de manera aleatoria</h1>
+            <h1 className='text-3xl font-bold mb-[40] mt-[40]'>Genera los Grupos</h1>
             <form onSubmit={handleFormSubmit} className='flex flex-col items-center justify-center bg-white bg-opacity-10 rounded-lg p-4 m-[20] w-[300px]'>
                 <input 
                     type="number" 
                     placeholder='Cantidad de grupos' 
                     name='groups'
-                    className='placeholder-white placeholder-semibold bg-white bg-opacity-30 border-none rounded-lg outline-none p-2'
+                    className='placeholder-white placeholder-bold bg-violet-700 bg- border-none rounded-lg outline-none p-2 w-full'
                 />
-                <button type='submit' className='mt-2 bg-blue-500 text-white py-2 px-4 rounded-lg'>Generar grupos</button>
+                <button type='submit' className='mt-4 bg-gray-300 bg-opacity-10 text-white py-2 px-4 rounded-lg w-full'>Generar grupos</button>
+                <button className='mt-4 bg-gray-300 bg-opacity-10 text-white py-2 px-4 rounded-lg w-full' onClick={() => router.push('/dashboard')}>
+                Ir al panel de calificaciones
+            </button>
             </form>
-            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2 m-[20]'>
                 {groupsGenerated && groupsGenerated.map((group, index) => (
                     <div key={index} className='flex flex-col justify-center items-center p-4 bg-white bg-opacity-10 rounded-lg shadow-md w-[250px]'>
                         <h2 className='text-lg font-semibold text-white'>Grupo {index + 1}</h2>
@@ -60,16 +63,14 @@ const GroupGeneration: React.FC = () => {
                                 <li key={memberIndex} className='text-white'>{member}</li>
                             ))}
                         </ul>
-                        <button className='mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg'>
+                        <button className='mt-4 bg-gray-300 bg-opacity-20 text-white py-2 px-4 rounded-lg'>
                             Asignar Calificadores
                         </button>
                     </div>
                 ))}
                
             </div>
-            <button className='mt-4 bg-gray bg-opacity-50 text-white py-2 px-4 rounded-lg' onClick={() => router.push('/dashboard')}>
-                Ir al panel de calificaciones
-            </button>
+            
 
             
         </div>
