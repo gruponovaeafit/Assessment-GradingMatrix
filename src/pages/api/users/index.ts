@@ -1,4 +1,3 @@
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 import sql, { config as SqlConfig } from 'mssql';
 
@@ -26,33 +25,42 @@ export async function connectToDatabase() {
   }
 }
 
-// API para registrar personas
+// API para manejar GET y POST
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
-  }
-
-  const { nombre, correo } = req.body;
-
-  if (!nombre || !correo) {
-    return res.status(400).json({ error: 'Nombre y correo son obligatorios' });
-  }
-
   let pool;
+  
   try {
     pool = await connectToDatabase();
-    const result = await pool.request()
-      .input('Nombre', sql.NVarChar, nombre)
-      .input('Correo', sql.NVarChar, correo)
-      .query('INSERT INTO Personas (Nombre, Correo) VALUES (@Nombre, @Correo)');
 
-    res.status(200).json({ message: 'Persona inscrita exitosamente' });
+    if (req.method === 'GET') {
+      // Obtener todas las personas
+      const result = await pool.request().query('SELECT ID, Nombre, Correo FROM Personas');
+      res.status(200).json(result.recordset);
+    } 
+    else if (req.method === 'POST') {
+      // Registrar nueva persona
+      const { nombre, correo } = req.body;
+
+      if (!nombre || !correo) {
+        return res.status(400).json({ error: 'Nombre y correo son obligatorios' });
+      }
+
+      await pool.request()
+        .input('Nombre', sql.NVarChar, nombre)
+        .input('Correo', sql.NVarChar, correo)
+        .query('INSERT INTO Personas (Nombre, Correo) VALUES (@Nombre, @Correo)');
+
+      res.status(200).json({ message: 'Persona inscrita exitosamente' });
+    } 
+    else {
+      res.status(405).json({ error: 'Método no permitido' });
+    }
   } catch (error: any) {
-    if (error.number === 2627) { // Error por correo duplicado (clave única)
+    if (req.method === 'POST' && error.number === 2627) {
       res.status(400).json({ error: 'El correo ya está registrado' });
     } else {
-      console.error('❌ Error al registrar la persona:', error);
-      res.status(500).json({ error: 'Error al registrar la persona' });
+      console.error('❌ Error al procesar la solicitud:', error);
+      res.status(500).json({ error: 'Error al procesar la solicitud' });
     }
   } finally {
     if (pool) await pool.close();
