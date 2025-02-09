@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         p.Correo AS Correo,
         AVG(ISNULL(cpg.Calificacion, 0)) AS Calificacion_Promedio,
         CASE 
-          WHEN AVG(ISNULL(cpg.Calificacion, 0)) >= 60 THEN 'Aprobado'
+          WHEN AVG(ISNULL(cpg.Calificacion, 0)) >= 4.0 THEN 'Aprobado'
           ELSE 'Reprobado'
         END AS Estado
       FROM PersonasPorGrupo ppg
