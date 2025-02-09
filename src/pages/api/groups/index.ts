@@ -50,28 +50,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const request = new sql.Request(transaction);
 
-    // Limpiar las tablas antes de insertar nuevos datos
+    // Limpiar la tabla PersonasPorGrupo antes de insertar nuevos datos
     await request.query('DELETE FROM PersonasPorGrupo');
-    await request.query('DELETE FROM Grupos');
+
+    // Mapear los grupos a las bases existentes
+    const baseMapping: { [key: number]: string } = {
+      0: 'Grupo1',
+      1: 'Grupo2',
+      2: 'Grupo3',
+      3: 'Grupo4',
+      4: 'Grupo5'
+    };
 
     for (let i = 0; i < groups.length; i++) {
-      const groupName = `Grupo ${i + 1}`;
+      const baseName = baseMapping[i % 5];
 
-      // Insertar grupo en la tabla Grupos y obtener el ID
-      await request.input('Nombre', sql.NVarChar, groupName).query('INSERT INTO Grupos (Nombre)');
-      const idResult = await request.query('SELECT SCOPE_IDENTITY() AS ID');
-      const grupoID = idResult.recordset[0].ID;
+      // Crear una nueva instancia de request para cada iteración
+      const groupRequest = new sql.Request(transaction);
+      const groupResult = await groupRequest.input('NombreBase', sql.NVarChar, baseName)
+        .query('SELECT ID FROM Grupos WHERE Nombre = @NombreBase');
+
+      if (groupResult.recordset.length === 0) {
+        console.error(`❌ La base ${baseName} no existe en la base de datos.`);
+        continue;
+      }
+
+      const grupoID = groupResult.recordset[0].ID;
 
       // Insertar personas en la tabla PersonasPorGrupo
       for (const member of groups[i]) {
         if (member.ID && grupoID) {
           const insertQuery = 'INSERT INTO PersonasPorGrupo (ID_Persona, ID_Grupo) VALUES (@ID_Persona, @ID_Grupo)';
-          console.log(`Ejecutando consulta: ${insertQuery} con ID_Persona=${member.ID}, ID_Grupo=${grupoID}`);
+          console.log(`Preparando inserción: ${insertQuery} con ID_Persona=${member.ID}, ID_Grupo=${grupoID}`);
 
-          await request
-            .input('ID_Persona', sql.Int, member.ID)
-            .input('ID_Grupo', sql.Int, grupoID)
-            .query(insertQuery);
+          const insertRequest = new sql.Request(transaction);
+          insertRequest.input('ID_Persona', sql.Int, member.ID);
+          insertRequest.input('ID_Grupo', sql.Int, grupoID);
+
+          await insertRequest.query(insertQuery);
         } else {
           console.error('❌ Datos inválidos para inserción:', { ID_Persona: member.ID, ID_Grupo: grupoID });
         }

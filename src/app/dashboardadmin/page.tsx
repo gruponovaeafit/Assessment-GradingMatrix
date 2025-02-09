@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 
 interface Calificacion {
   Grupo: string;
+  ID: number;
   Participante: string;
+  Correo: string;
   Calificacion_Promedio: number;
   Estado: string;
 }
@@ -42,7 +44,9 @@ export default function Dashboard() {
           <thead className="bg-gray-50 bg-opacity-20">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Grupo</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">ID</th>
               <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Participante</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Correo</th>
               <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Calificación Promedio</th>
               <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Estado</th>
             </tr>
@@ -51,7 +55,9 @@ export default function Dashboard() {
             {data.map((item, index) => (
               <tr key={index}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.Grupo}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.ID}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.Participante}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.Correo}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.Calificacion_Promedio.toFixed(2)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.Estado}</td>
               </tr>

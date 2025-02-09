@@ -15,7 +15,7 @@ export const dbConfig: SqlConfig = {
   },
 };
 
-// Funcíon para conectar a la base de datos
+// Función para conectar a la base de datos
 export async function connectToDatabase() {
   try {
     const pool = await sql.connect(dbConfig);
@@ -34,17 +34,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const result = await pool.request().query(`
       SELECT 
         g.Nombre AS Grupo,
+        p.ID AS ID,
         p.Nombre AS Participante,
-        AVG(cpg.Calificacion) AS Calificacion_Promedio,
+        p.Correo AS Correo,
+        AVG(ISNULL(cpg.Calificacion, 0)) AS Calificacion_Promedio,
         CASE 
-          WHEN AVG(cpg.Calificacion) >= 60 THEN 'Aprobado'
+          WHEN AVG(ISNULL(cpg.Calificacion, 0)) >= 60 THEN 'Aprobado'
           ELSE 'Reprobado'
         END AS Estado
       FROM PersonasPorGrupo ppg
       JOIN Personas p ON p.ID = ppg.ID_Persona
       JOIN Grupos g ON g.ID = ppg.ID_Grupo
-      LEFT JOIN CalificacionesPorGrupo cpg ON cpg.ID_Grupo = g.ID
-      GROUP BY g.Nombre, p.Nombre
+      LEFT JOIN CalificacionesPorPersona cpg ON cpg.ID_Grupo = ppg.ID_Grupo AND cpg.ID_Persona = p.ID
+      GROUP BY g.Nombre, p.ID, p.Nombre, p.Correo
       ORDER BY g.Nombre, p.Nombre;
     `);
 
@@ -55,4 +57,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } finally {
     if (pool) await pool.close();
   }
-} 
+}
