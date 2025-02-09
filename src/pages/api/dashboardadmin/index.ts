@@ -1,6 +1,6 @@
-// pages/api/dashboard/index.ts
+// pages/api/dashboardadmin/index.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import sql, { pool, config as SqlConfig } from "mssql";
+import sql, { config as SqlConfig } from "mssql";
 
 // Configuración de la base de datos
 export const dbConfig: SqlConfig = {
@@ -26,10 +26,11 @@ export async function connectToDatabase() {
   }
 }
 
-// API para obtener datos del dashboard
+// API para obtener datos del dashboard admin
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  let pool;
   try {
-    const pool = await connectToDatabase();
+    pool = await connectToDatabase();
     const result = await pool.request().query(`
       SELECT 
         g.Nombre AS Grupo,
@@ -52,6 +53,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error("❌ Error al obtener los datos del dashboard:", error);
     res.status(500).json({ error: "Error al obtener los datos del dashboard" });
   } finally {
-    await pool.close();
+    if (pool) await pool.close();
   }
 } 
