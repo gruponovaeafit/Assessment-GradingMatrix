@@ -4,10 +4,10 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center items-center min-h-screen py-2">
       <h1 className="text-4xl font-bold mb-8">Panel de Calificaciones</h1>
-      <button className=" rounded-md bg-gray-300 bg-opacity-20 mb-8 text-xl p-5 font-bold"> Rotar Base </button>
+      <button className=" mt-4 bg-gray-300 bg-opacity-10 text-white py-2 px-4 rounded-lg w-[400] text-xl font-bold mb-[30]"> Rotar Base </button>
       
       
-      <div className="flex flex-col gap-4  max-w-[800px] rounded-md p-4 bg-gray-50 bg-opacity-10">
+      <div className="flex flex-col gap-4  w-[1000px] rounded-md p-4 bg-gray-50 bg-opacity-10">
         <table className="min-w-full divide-y divide-gray-200 bg-opacity-50 rounded-md">
           <thead className="bg-gray-50 bg-opacity-20 w-full">
             <tr className="min-w-full">
@@ -28,7 +28,7 @@ export default function Home() {
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200 rounded-md">
+          <tbody className="bg-white divide-y divide-violet-700 rounded-md">
             <tr>
               
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Grupo 1</td>
