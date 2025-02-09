@@ -1,4 +1,3 @@
-// pages/api/groups/index.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import sql, { config as SqlConfig } from 'mssql';
 
@@ -39,31 +38,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   console.log('📦 Datos recibidos para insertar:', JSON.stringify(groups, null, 2));
-
   let pool;
   let transaction;
   try {
     pool = await connectToDatabase();
     transaction = new sql.Transaction(pool);
-
     await transaction.begin();
-
     const request = new sql.Request(transaction);
-
     // Limpiar la tabla PersonasPorGrupo antes de insertar nuevos datos
     await request.query('DELETE FROM PersonasPorGrupo');
-
     // Mapear los grupos a las bases existentes
     const baseMapping: { [key: number]: string } = {
       0: 'Grupo1',
       1: 'Grupo2',
       2: 'Grupo3',
       3: 'Grupo4',
-      4: 'Grupo5'
+      4: 'Grupo5',
+      5: 'Grupo6',
+      6: 'Grupo7',
     };
-
     for (let i = 0; i < groups.length; i++) {
-      const baseName = baseMapping[i % 5];
+      const baseName = baseMapping[i % 7];
 
       // Crear una nueva instancia de request para cada iteración
       const groupRequest = new sql.Request(transaction);
@@ -76,17 +71,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const grupoID = groupResult.recordset[0].ID;
-
       // Insertar personas en la tabla PersonasPorGrupo
       for (const member of groups[i]) {
         if (member.ID && grupoID) {
           const insertQuery = 'INSERT INTO PersonasPorGrupo (ID_Persona, ID_Grupo) VALUES (@ID_Persona, @ID_Grupo)';
           console.log(`Preparando inserción: ${insertQuery} con ID_Persona=${member.ID}, ID_Grupo=${grupoID}`);
-
           const insertRequest = new sql.Request(transaction);
           insertRequest.input('ID_Persona', sql.Int, member.ID);
           insertRequest.input('ID_Grupo', sql.Int, grupoID);
-
           await insertRequest.query(insertQuery);
         } else {
           console.error('❌ Datos inválidos para inserción:', { ID_Persona: member.ID, ID_Grupo: grupoID });
@@ -95,7 +87,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     await transaction.commit();
-
     res.status(200).json({ message: 'Grupos subidos exitosamente' });
   } catch (error) {
     console.error('❌ Error al subir los grupos:', error);
