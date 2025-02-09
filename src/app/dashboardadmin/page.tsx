@@ -36,35 +36,31 @@ export default function Dashboard() {
   if (error) return <p className="text-center mt-20 text-red-500">{error}</p>;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2">
-      <h1 className="text-4xl font-bold mb-8">Panel de Calificaciones</h1>
-
-      <div className="flex flex-col gap-4 max-w-[800px] rounded-md p-4 bg-gray-50 bg-opacity-10">
-        <table className="min-w-full divide-y divide-gray-200 bg-opacity-50 rounded-md">
-          <thead className="bg-gray-50 bg-opacity-20">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Grupo</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">ID</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Participante</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Correo</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Calificación Promedio</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Estado</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200 rounded-md">
-            {data.map((item, index) => (
-              <tr key={index}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.Grupo}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.ID}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.Participante}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.Correo}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.Calificacion_Promedio.toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.Estado}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-screen py-2 ">
+    <h1 className="text-4xl font-bold mb-8">Panel de Calificaciones</h1>
+    
+    <div className="flex flex-col gap-4 max-w-[800px] w-[350] rounded-md p-4 bg-gray-500 bg-opacity-20">
+      {data.map((item, index) => (
+        <div key={index} className="flex flex-col gap-2 p-4 bg-white bg-opacity-5 rounded-lg shadow-md">
+          <h2 className="text-xl font-bold text-white">{item.Grupo}</h2>
+          
+          <div className="text-white text-sm">
+            
+            <p><span className="font-bold text-violet-700 text-lg mr-[5]">ID:</span> {item.ID}</p>
+            <p><span className="font-bold text-violet-700 text-lg mr-[5]">Participante:</span> {item.Participante}</p>
+            <p><span className="font-bold text-violet-700 text-lg mr-[5]">Correo:</span> {item.Correo}</p>
+            <p><span className="font-bold text-violet-700 text-lg mr-[5]">Calificación Promedio:</span> {item.Calificacion_Promedio.toFixed(2)}</p>
+            <p>
+              <span className="font-bold text-violet-700 text-lg mr-[5]">Estado:</span> 
+              <span className={item.Calificacion_Promedio < 4 ? 'text-red-500' : 'text-green-500'}>
+                {item.Estado}
+              </span>
+            </p>
+           
+          </div>
+        </div>
+      ))}
     </div>
+  </div>
   );
 } 
