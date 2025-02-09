@@ -32,9 +32,9 @@ export default function RegisterPerson() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2 bg-gray-900 text-white">
+    <div className="flex flex-col items-center justify-center min-h-screen py-2  text-white">
       <h1 className="text-4xl font-bold mb-8">Inscribir Persona</h1>
-      <form onSubmit={handleSubmit} className="w-full max-w-md bg-gray-800 p-6 rounded-md shadow-lg border border-gray-700">
+      <form onSubmit={handleSubmit} className="w-full max-w-md  p-6 rounded-md  bg-gray-300 bg-opacity-10">
         <div className="mb-4">
           <label className="block text-gray-300 text-sm font-bold mb-2">Nombre</label>
           <input
@@ -57,7 +57,7 @@ export default function RegisterPerson() {
         </div>
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+          className="rounded-md bg-gray-300 bg-opacity-20 text-white text-xl p-4 font-semibold w-full"
         >
           Inscribir
         </button>
