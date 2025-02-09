@@ -1,4 +1,4 @@
-// pages/api/groups/index.ts
+// pages/api/groups/members.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import sql, { config as SqlConfig } from 'mssql';
 
@@ -26,22 +26,20 @@ export async function connectToDatabase() {
   }
 }
 
-// API para subir la distribución de los grupos
+// API para obtener miembros de un grupo específico
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
+  if (req.method !== 'OPTIONS') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const { groups } = req.body;
+  const { id }  = JSON.parse(req.body)
+  const idGrupo = id;
 
-  if (!groups || !Array.isArray(groups)) {
-    return res.status(400).json({ error: 'Datos de grupos inválidos' });
+  if (!idGrupo || isNaN(Number(idGrupo))) {
+    return res.status(400).json({ error: 'ID de grupo inválido' });
   }
 
-  console.log('📦 Datos recibidos para insertar:', JSON.stringify(groups, null, 2));
-
   let pool;
-  let transaction;
   try {
     pool = await connectToDatabase();
     transaction = new sql.Transaction(pool);
@@ -98,12 +96,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     await transaction.commit();
 
-    res.status(200).json({ message: 'Grupos subidos exitosamente' });
+    res.status(200).json(result.recordset);
   } catch (error) {
-    console.error('❌ Error al subir los grupos:', error);
-    if (transaction) await transaction.rollback();
-    res.status(500).json({ error: 'Error al subir los grupos a la base de datos' });
+    console.error('❌ Error al obtener los miembros del grupo:', error);
+    res.status(500).json({ error: 'Error al obtener los miembros del grupo' });
   } finally {
     if (pool) await pool.close();
   }
-} 
+}

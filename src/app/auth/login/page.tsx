@@ -1,8 +1,12 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useStoredId } from "../../Hooks/UseStoreId";
 
 export default function Login() {
+  const { saveId } = useStoredId();
+
+
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,6 +40,7 @@ export default function Login() {
 
       const data = await response.json();
      if (data.role === "calificador") {
+        saveId(data.ID_Grupo);
         router.push(`/graderPage`);
       } else {
         router.push("/dashboard");
