@@ -63,9 +63,6 @@ const GroupGeneration: React.FC = () => {
                                 <li key={memberIndex} className='text-white'>{member}</li>
                             ))}
                         </ul>
-                        <button className='mt-4 bg-gray-300 bg-opacity-20 text-white py-2 px-4 rounded-lg'>
-                            Asignar Calificadores
-                        </button>
                     </div>
                 ))}
                
