@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const result = await pool.request()
       .input('Correo', sql.NVarChar, email)
       .input('Contrasena', sql.NVarChar, password)
-      .query('SELECT ID, Correo, ID_Grupo FROM Calificadores WHERE Correo = @Correo AND Contrasena = @Contrasena');
+      .query('SELECT ID, Correo, ID_Grupo, ID_Base FROM Calificadores WHERE Correo = @Correo AND Contrasena = @Contrasena');
 
     if (result.recordset.length === 0) {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const calificador = result.recordset[0];
 
-    res.status(200).json({ role: 'calificador', ID_Grupo: calificador.ID_Grupo });
+    res.status(200).json({ role: 'calificador', ID_Grupo: calificador.ID_Grupo, ID_Base: calificador.ID_Base, ID_Calificador: calificador.ID });
   } catch (error) {
     console.error('❌ Error al procesar el login:', error);
     res.status(500).json({ error: 'Error al procesar el login' });

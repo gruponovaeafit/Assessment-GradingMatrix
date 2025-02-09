@@ -1,27 +1,37 @@
 import { useState, useEffect } from "react";
 
-const STORAGE_KEY = "storedId"; // Clave para almacenar en localStorage
+const STORAGE_KEY = "storedData"; // Nueva clave para almacenar el objeto
+
+// Definir la estructura del objeto que guardarás
+interface StoredData {
+  idGrupo: number | null;
+  id_Calificador: string | null;
+  id_base: string | null;
+}
+
 
 export const useStoredId = () => {
-  const [storedId, setStoredId] = useState<number | null>(null);
+  const [storedData, setStoredData] = useState<StoredData>({
+    idGrupo: null,
+    id_Calificador: null,
+    id_base:  null,
+  });
 
-  // Cargar la ID guardada en localStorage (si existe)
+  // Cargar datos desde localStorage al iniciar
   useEffect(() => {
-    const savedId = localStorage.getItem(STORAGE_KEY);
-    if (savedId) {
-      setStoredId(parseInt(savedId, 10));
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+      setStoredData(JSON.parse(savedData)); // Convertimos de string a objeto
     }
   }, []);
 
-  // Guardar en localStorage cuando cambia la ID
-  const saveId = (id: number | null) => {
-    setStoredId(id);
-    if (id !== null) {
-      localStorage.setItem(STORAGE_KEY, id.toString());
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
+  // Guardar datos en localStorage cuando cambian
+  const saveData = (idGrupo: number | null, id_Calificador: string | null, id_base: string | null) => { 
+    
+    const newData = { idGrupo, id_Calificador, id_base };
+    setStoredData(newData);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newData)); // Convertimos a JSON
   };
 
-  return { storedId, saveId };
+  return { storedData, saveData };
 };

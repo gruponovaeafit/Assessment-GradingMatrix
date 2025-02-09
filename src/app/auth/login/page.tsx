@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useStoredId } from "../../Hooks/UseStoreId";
 
 export default function Login() {
-  const { saveId } = useStoredId();
+  const { saveData } = useStoredId();
 
 
   const router = useRouter();
@@ -40,7 +40,8 @@ export default function Login() {
 
       const data = await response.json();
      if (data.role === "calificador") {
-        saveId(data.ID_Grupo);
+
+        saveData(data.ID_Grupo, data.ID_Calificador, data.ID_Base);
         router.push(`/graderPage`);
       } else {
         router.push("/dashboard");
