@@ -75,8 +75,8 @@ const GroupGeneration: React.FC = () => {
 
     return (
         <div className='flex flex-col items-center justify-center min-h-screen py-2'>
-            <h1 className='text-3xl font-bold mb-[40] mt-[40]'>Genera los Grupos</h1>
-            <form onSubmit={handleFormSubmit} className='flex flex-col items-center justify-center bg-white bg-opacity-10 rounded-lg p-4 m-[20] w-[300px]'>
+            <h1 className='text-2xl font-bold mb-[40] mt-[40]'>Genera los Grupos</h1>
+            <form onSubmit={handleFormSubmit} className='flex flex-col items-center justify-center bg-white bg-opacity-5 rounded-lg p-4 m-[20] w-[300px]'>
                 <input 
                     type="number" 
                     placeholder='Cantidad de grupos' 
@@ -84,7 +84,7 @@ const GroupGeneration: React.FC = () => {
                     className='placeholder-white placeholder-bold bg-violet-700 border-none rounded-lg outline-none p-2 w-full'
                 />
                 <button type='submit' className='mt-4 bg-gray-300 bg-opacity-10 text-white py-2 px-4 rounded-lg w-full'>Generar grupos</button>
-                <button className='mt-4 bg-gray-300 bg-opacity-10 text-white py-2 px-4 rounded-lg w-full' onClick={() => router.push('/dashboard')}>
+                <button className='mt-4 bg-gray-300 bg-opacity-10 text-white py-2 px-4 rounded-lg w-full' onClick={() => router.push('/dashboardadmin')}>
                     Ir al panel de calificaciones
                 </button>
                 {groupsGenerated.length > 0 && (
@@ -95,16 +95,16 @@ const GroupGeneration: React.FC = () => {
             </form>
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2 m-[20]'>
                 {groupsGenerated && groupsGenerated.map((group, index) => (
-                    <div key={index} className='flex flex-col justify-center items-center p-4 bg-white bg-opacity-10 rounded-lg shadow-md w-[250px]'>
-                        <h2 className='text-lg font-semibold text-white'>Grupo {index + 1}</h2>
-                        <ul>
-                            {group.map((member) => (
-                                <li key={member.ID} className='flex items-center gap-2'>
-                                    <span className='text-blue-400 font-bold'>#{member.ID}</span>
-                                    <span className='text-white'>{member.Nombre} (<span className='text-gray-400'>{member.Correo}</span>)</span>
-                                </li>
-                            ))}
-                        </ul>
+                    <div key={index} className='flex flex-col justify-center items-center p-4 bg-white bg-opacity-5 rounded-lg shadow-md w-[360px] mb-[20] shadow-gray-300/20'>
+                      <h2 className='text-lg font-semibold text-white mb-[10]'>Grupo {index + 1}</h2>
+                      <ul>
+                        {group.map((member) => (
+                          <li key={member.ID} className='flex items-center justify-start gap-2 bg-gray-300 bg-opacity-10 rounded-lg mb-[10] p-[5]'>
+                            <span className='text-violet-700 font-bold'>#{member.ID}</span>
+                            <span className='text-white'>{member.Nombre} (<span className='text-gray-400'>{member.Correo}</span>)</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                 ))}
             </div>

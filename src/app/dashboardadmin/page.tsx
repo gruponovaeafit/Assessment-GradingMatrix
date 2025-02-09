@@ -37,19 +37,19 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2 ">
-    <h1 className="text-4xl font-bold mb-8">Panel de Calificaciones</h1>
+  <h1 className="text-2xl font-bold mb-8 mt-[20]">Panel de Calificaciones</h1>
     
     <div className="flex flex-col gap-4 max-w-[800px] w-[350] rounded-md p-4 bg-gray-500 bg-opacity-20">
       {data.map((item, index) => (
         <div key={index} className="flex flex-col gap-2 p-4 bg-white bg-opacity-5 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold text-white">{item.Grupo}</h2>
+          <h2 className="text-xl font-bold text-white">{item.Participante}</h2>
           
           <div className="text-white text-sm">
             
             <p><span className="font-bold text-violet-700 text-lg mr-[5]">ID:</span> {item.ID}</p>
-            <p><span className="font-bold text-violet-700 text-lg mr-[5]">Participante:</span> {item.Participante}</p>
+            <p><span className="font-bold text-violet-700 text-lg mr-[5]">Grupo:</span> {item.Grupo}</p>
             <p><span className="font-bold text-violet-700 text-lg mr-[5]">Correo:</span> {item.Correo}</p>
-            <p><span className="font-bold text-violet-700 text-lg mr-[5]">Calificación Promedio:</span> {item.Calificacion_Promedio.toFixed(2)}</p>
+            <p><span className="font-bold text-violet-700 text-lg mr-[5]">Promedio:</span> {item.Calificacion_Promedio.toFixed(2)}</p>
             <p>
               <span className="font-bold text-violet-700 text-lg mr-[5]">Estado:</span> 
               <span className={item.Calificacion_Promedio < 4 ? 'text-red-500' : 'text-green-500'}>

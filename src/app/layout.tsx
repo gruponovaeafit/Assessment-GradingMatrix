@@ -29,7 +29,7 @@ export default function RootLayout({
       >
         {children}
 
-            <footer className="fixed bottom-[20] w-full text-center mt-4 text-lg m-[0]">
+            <footer className=" mb-[20] w-full text-center mt-4 text-lg m-[0]">
             Powered by <span className="font-bold text-violet-700">Nova</span>
             </footer>
 

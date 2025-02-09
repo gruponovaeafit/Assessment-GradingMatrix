@@ -43,7 +43,7 @@ export default function RegisterPerson() {
   }, [mensaje]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2  text-white w-[400]">
+    <div className="flex flex-col items-center justify-center min-h-screen   text-white w-[400]">
       <h1 className="text-4xl font-bold mb-8">Inscribir Persona</h1>
       <form onSubmit={handleSubmit} className="  p-5 rounded-md  bg-gray-300 bg-opacity-10">
         <div className="mb-4">
