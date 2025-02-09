@@ -46,31 +46,33 @@ export default function Login() {
   };
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <h1 className="text-4xl font-bold mb-6">Iniciar Sesión</h1>
+    <div className="flex flex-col items-center justify-center ">
+       <h1 className="text-2xl font-bold mt-[20] mb-[20]">Ingresa tus credenciales</h1>
       <form
         onSubmit={handleLogin}
-        className="flex flex-col items-center gap-4 bg-gray-300 bg-opacity-20 p-6 rounded-lg w-80"
+        className="flex flex-col items-center gap-4 bg-gray-300 bg-opacity-10 p-6 rounded-lg w-80"
       >
         <input
           type="email"
           placeholder="Correo Electrónico"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="p-2 border-none rounded-md w-full text-black placeholder-gray-700"
+          className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-violet-700"
           required
         />
+
+       
         <input
           type="password"
           placeholder="Contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="p-2 border-none rounded-md w-full text-black placeholder-gray-700"
+          className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-violet-700"
           required
         />
         <button
           type="submit"
-          className="rounded-md bg-gray-300 bg-opacity-20 text-white text-xl p-4 font-bold w-full"
+          className="rounded-md bg-gray-300 bg-opacity-20 text-white text-xl p-4 font-semibold w-full"
         >
           Iniciar Sesión
         </button>

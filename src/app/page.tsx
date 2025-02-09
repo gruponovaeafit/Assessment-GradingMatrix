@@ -5,7 +5,7 @@ import {useRouter} from "next/navigation"
 export default function Home() {
   const router = useRouter()
   return (
-    <div className="flex flex-col items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] mt-[100]">
+    <div className="flex flex-col items-center justify-items-center  p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] mt-[100]">
         <h1 className="text-3xl font-regular text-center">Panel de calificaciones <span className="font-bold text-violet-700">Assessment 2025-1</span></h1>
         <div className="flex flex-col items-center gap-4">
           

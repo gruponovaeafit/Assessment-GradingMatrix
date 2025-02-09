@@ -43,8 +43,8 @@ export default function RegisterPerson() {
   }, [mensaje]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen   text-white w-[400]">
-      <h1 className="text-4xl font-bold mb-8">Inscribir Persona</h1>
+    <div className="flex flex-col items-center justify-items-center mt-[30px]">
+      <h1 className="text-2xl font-bold mb-8">Inscribir Persona</h1>
       <form onSubmit={handleSubmit} className="  p-5 rounded-md  bg-gray-300 bg-opacity-10">
         <div className="mb-4">
           <label className="block text-gray-300 text-sm font-bold mb-2">Nombre</label>
