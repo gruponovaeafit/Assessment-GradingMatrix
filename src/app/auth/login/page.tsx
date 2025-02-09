@@ -12,8 +12,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const adminEmail = "admin@example.com";
-  const adminPassword = "admin123";
+  const adminEmail = process.env.NEXT_PUBLIC_CRR;
+  const adminPassword = process.env.NEXT_PUBLIC_PSS;
 
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
