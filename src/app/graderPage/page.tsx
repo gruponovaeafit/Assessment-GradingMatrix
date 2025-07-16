@@ -14,7 +14,7 @@ const GraderPage: React.FC = () => {
     useEffect(() => {
         const storedData = localStorage.getItem("storedData");
         const parsedData = storedData ? JSON.parse(storedData) : null;
-        const storedId = parsedData?.id_base;
+        const storedId = parsedData?.idGrupo;
 
         if (!storedId) {
             console.error("❌ No se encontró storedId en localStorage.");
