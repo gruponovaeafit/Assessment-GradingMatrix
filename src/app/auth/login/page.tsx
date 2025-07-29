@@ -52,38 +52,51 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center ">
-       <h1 className="text-2xl font-bold mt-[20] mb-[20]">Ingresa tus credenciales</h1>
-      <form
-        onSubmit={handleLogin}
-        className="flex flex-col items-center gap-4 bg-gray-300 bg-opacity-10 p-6 rounded-lg w-80"
-      >
-        <input
-          type="email"
-          placeholder="Correo Electrónico"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-violet-700"
-          required
-        />
+  <div
+  className="flex flex-col items-center justify-center min-h-screen bg-no-repeat bg-cover bg-center"
+  style={{ backgroundImage: "url('/gradienterosa.svg')" }}
+>
 
-       
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-violet-700"
-          required
-        />
-        <button
+  <div
+    className="relative bg-no-repeat bg-center bg-contain w-[500px] h-[600px] flex items-center justify-center"
+    style={{ backgroundImage: "url('/marco.svg')" }} 
+>
+    <form onSubmit={handleLogin} className="flex flex-col items-center gap-4 p-6 w-80">
+      <h1 className="text-2xl font-bold mb-8 text-white">Ingresar Credenciales</h1>
+      <div className="mb-4 w-full">
+        <label className="block text-xl font-bold mb-2 text-white ml-[50px]">Correo electrónico</label>
+         <input
+           type="text"
+           placeholder="Correo Electrónico"
+           value={email}
+           onChange={(e) => setEmail(e.target.value)}
+           required
+           className="w-full px-3 py-2 border border-[#542CB3] bg-[#DB0083] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#542CB3]"
+         />
+      </div>
+
+      <div className="mb-4 w-full">
+        <label className="block text-xl font-bold mb-2 text-white ml-20">Contraseña</label>
+         <input
+           type="email"
+           placeholder="Contraseña"
+           value={password}
+           onChange={(e) => setPassword(e.target.value)}
+           required
+           className="w-full px-3 py-2 border border-[#542CB3] bg-[#DB0083] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#542CB3]"
+         />
+      </div>
+
+       <button
           type="submit"
-          className="rounded-md bg-gray-300 bg-opacity-20 text-white text-xl p-4 font-semibold w-full"
-        >
-          Iniciar Sesión
-        </button>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-      </form>
+         className="rounded-md bg-gray-300 bg-opacity-20 text-white text-xl p-4 font-semibold w-full"
+      >
+        Iniciar Sesión
+       </button>
+
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+     </form>
     </div>
-  );
-} 
+  </div>
+ );
+}
