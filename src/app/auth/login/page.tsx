@@ -52,14 +52,11 @@ export default function Login() {
   };
 
   return (
-  <div
-  className="flex flex-col items-center justify-center min-h-screen bg-no-repeat bg-cover bg-center"
-  style={{ backgroundImage: "url('/gradienterosa.svg')" }}
->
-
-  <div
-    className="relative bg-no-repeat bg-center bg-contain w-[500px] h-[600px] flex items-center justify-center"
-    style={{ backgroundImage: "url('/marco.svg')" }} 
+    <div   className="flex flex-col items-center justify-center w-full min-h-screen bg-no-repeat bg-cover bg-center"
+   style={{ backgroundImage: "url('/Bg_gradient_pink.svg')" }}>
+     <div
+    className="relative bg-no-repeat bg-center bg-contain w-[400px] h-[600px] flex items-center justify-center"
+    style={{ backgroundImage: "url('/Frame_general.svg')" }} 
 >
     <form onSubmit={handleLogin} className="flex flex-col items-center gap-4 p-6 w-80">
       <h1 className="text-2xl font-bold mb-8 text-white">Ingresar Credenciales</h1>
