@@ -43,41 +43,60 @@ export default function RegisterPerson() {
   }, [mensaje]);
 
   return (
-    <div className="flex flex-col items-center justify-items-center mt-[30px]">
-      <h1 className="text-2xl font-bold mb-8">Inscribir Persona</h1>
-      <form onSubmit={handleSubmit} className="  p-5 rounded-md  bg-gray-300 bg-opacity-10">
-        <div className="mb-4">
-          <label className="block text-gray-300 text-sm font-bold mb-2">Nombre</label>
-          <input
-            type="text"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-violet-700"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-gray-300 text-sm font-bold mb-2">Correo</label>
-          <input
-            type="email"
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
-            required
-            className="w-full px-3 py-2 border border-gray-600 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-violet-700"
-          />
-        </div>
-        <button
-          type="submit"
+  <div
+  className="flex flex-col items-center justify-center min-h-screen"
+  style={{ backgroundImage: "url('/gradienterosa.svg')" }}
+>
 
-          className="rounded-md bg-gray-300 bg-opacity-20 text-white text-xl p-4 font-semibold w-full"
-        >
-          Inscribir
-        </button>
-      </form>
-    
+  <div
+    className="relative bg-no-repeat bg-center bg-contain w-[500px] h-[600px] flex items-center justify-center"
+    style={{ backgroundImage: "url('/marco.svg')" }} 
+>
+    <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 p-6 w-80">
+      <h1 className="text-2xl font-bold mb-8 text-white">Inscribir Aspirante</h1>
 
-     
-      {mensaje && <p className="mt-4 text-lg font-medium text-center text-green-400">{mensaje}</p>}
-    </div>
+      <div className="mb-4 w-full">
+        <label className="block text-xl font-bold mb-2 text-white ml-[100px]">Nombre</label>
+        <input
+          type="text"
+          placeholder="Nombre del aspirante"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          required
+          className="w-full px-3 py-2 border border-[#542CB3] bg-[#DB0083] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#542CB3]"
+        />
+      </div>
+
+      <div className="mb-4 w-full">
+        <label className="block text-xl font-bold mb-2 text-white ml-12">Correo Electrónico</label>
+        <input
+          type="email"
+          placeholder="Correo del aspirante"
+          value={correo}
+          onChange={(e) => setCorreo(e.target.value)}
+          required
+          className="w-full px-3 py-2 border border-[#542CB3] bg-[#DB0083] text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#542CB3]"
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="w-full"
+      >
+        <img
+          src="/botonInscribir.svg"
+          alt="Botón Inscribir"
+          className="w-full h-auto"
+        />
+      </button>
+
+
+
+      {mensaje && (
+        <p className="mt-4 text-lg font-medium text-center text-green-400">{mensaje}</p>
+      )}
+    </form>
+  </div>
+</div>
   );
 }

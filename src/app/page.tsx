@@ -5,24 +5,29 @@ import {useRouter} from "next/navigation"
 export default function Home() {
   const router = useRouter()
   return (
-    <div className="flex flex-col items-center justify-items-center  p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] mt-[100]">
-        <h1 className="text-3xl font-regular text-center">Panel de calificaciones <span className="font-bold text-violet-700">Assessment 2025-1</span></h1>
-        <div className="flex flex-col items-center gap-4">
-          
-
-          <h2 className="text-xl">¿Eres Registrador?</h2>
-          <button className="rounded-md bg-gray-300 bg-opacity-20 text-white text-xl p-4 font-bold w-full"
-          onClick={()=>{router.push("/subscribeusers")}}>Ingresa Aquí</button>
-
-          <h2 className="text-xl">¿Eres calificador de base?</h2>
-          <button className="rounded-md bg-gray-300 bg-opacity-20 text-white text-xl p-4 font-bold w-full"
-          onClick={()=>{router.push("/auth/login")}}>Ingresa Aquí</button>
-
-          <h2 className="text-xl">¿Eres Admin?</h2>
-          <button className="rounded-md bg-gray-300 bg-opacity-20 text-white text-xl p-4 font-bold w-full"
-          onClick={()=>{router.push("/auth/login")}}>WambiSpace</button>
-          
-        </div>
-    </div>
-  );
+    <div   className="flex flex-col items-center justify-center min-h-screen bg-no-repeat bg-cover bg-center"
+  style={{ backgroundImage: "url('/gradientemorado.svg')" }}>
+    <span className="font-bold text-3xl text-white-700">Assessment 2025-1</span>
+      <div className="flex flex-col items-center justify-center gap-12 bg-no-repeat bg-center bg-contain w-[400px] h-[600px] "
+      style={{ backgroundImage: "url('/marco.svg')" }}
+      >
+      <h1 className="text-3xl font-regular text-center">¿Quién eres?</h1>
+      <button
+       onClick={() => router.push("/subscribeusers")}
+       className="w-[260px] h-[50px] bg-no-repeat bg-contain bg-center"
+       style={{ backgroundImage: "url('/Botón Registrador.svg')" }}
+      />
+      <button
+       onClick={() => router.push("/auth/login")}
+       className="w-[260px] h-[50px] bg-no-repeat bg-contain bg-center"
+       style={{ backgroundImage: "url('/botóncal.svg')" }}
+      />
+      <button
+       onClick={() => router.push("/auth/login")}
+       className="w-[260px] h-[50px] bg-no-repeat bg-contain bg-center"
+       style={{ backgroundImage: "url('/botónadm.svg')" }}
+      />    
+      </div>
+  </div>
+ );
 }

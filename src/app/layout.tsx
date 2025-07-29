@@ -25,12 +25,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+      
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
 
-            <footer className=" mb-[20] w-full text-center mt-4 text-lg m-[0]">
-            Powered by <span className="font-bold text-violet-700">Nova</span>
+            <footer className="mb-[20] w-full text-xl text-center mt-4 m-[0] italic">
+            POWERED BY <span className="font-bold text-3xl text-violet-700">Nova</span>
             </footer>
 
       </body>
