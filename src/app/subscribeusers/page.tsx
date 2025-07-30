@@ -43,8 +43,8 @@ export default function RegisterPerson() {
   }, [mensaje]);
 
   return (
-    <div   className="flex flex-col items-center justify-center w-full min-h-screen bg-no-repeat bg-cover bg-center"
-   style={{ backgroundImage: "url('/Bg_gradient_pink.svg')" }}>
+    <div   className="flex flex-col items-center justify-center w-full min-h-screen bg-no-repeat bg-cover bg-center bg-[linear-gradient(210deg,#135ce3,#8c4fd5,#ff296e,#d9448f,#b25faf)]"
+    >
      <div
     className="relative bg-no-repeat bg-center bg-contain w-[400px] h-[600px] flex items-center justify-center"
     style={{ backgroundImage: "url('/Frame_general.svg')" }} 
@@ -94,6 +94,9 @@ export default function RegisterPerson() {
       )}
     </form>
   </div>
+  <footer className="mb-[20] w-full text-xl text-center mt-20 m-[0] italic">
+   POWERED BY <span className="font-bold text-3xl text-violet-700">Nova</span>
+  </footer>
 </div>
   );
 }

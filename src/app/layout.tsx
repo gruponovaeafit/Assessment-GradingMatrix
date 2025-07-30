@@ -30,9 +30,7 @@ export default function RootLayout({
       >
         {children}
 
-            <footer className="mb-[20] w-full text-xl text-center mt-4 m-[0] italic">
-            POWERED BY <span className="font-bold text-3xl text-violet-700">Nova</span>
-            </footer>
+        
 
       </body>
     </html>
