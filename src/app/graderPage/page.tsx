@@ -117,6 +117,9 @@ const GraderPage: React.FC = () => {
                     </div>
                 ))}
             </div>
+     <footer className="mb-[20] w-full text-xl text-center mt-20 m-[0] italic">
+       POWERED BY <span className="font-bold text-3xl text-violet-700">Nova</span>
+     </footer>
         </div>
     ); 
 }

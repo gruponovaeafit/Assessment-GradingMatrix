@@ -36,7 +36,7 @@ export default function Dashboard() {
   if (error) return <p className="text-center mt-20 text-red-500">{error}</p>;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2 ">
+    <div className="flex flex-col items-center justify-center min-h-screen py-2 bg-[linear-gradient(210deg,#135ce3,#8c4fd5,#ff296e,#d9448f,#b25faf)]">
   <h1 className="text-2xl font-bold mb-8 mt-[20]">Panel de Calificaciones</h1>
     
     <div className="flex flex-col gap-4 max-w-[800px] w-[350] rounded-md p-4 bg-gray-500 bg-opacity-20">
@@ -61,6 +61,9 @@ export default function Dashboard() {
         </div>
       ))}
     </div>
+    <footer className="mb-[20] w-full text-xl text-center mt-20 m-[0] italic">
+       POWERED BY <span className="font-bold text-3xl text-violet-700">Nova</span>
+     </footer>
   </div>
   );
 } 

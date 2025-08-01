@@ -52,7 +52,7 @@ export default function Login() {
   };
 
   return (
-    <div   className="flex flex-col items-center justify-center w-full min-h-screen bg-no-repeat bg-cover bg-center bg-[linear-gradient(210deg,#135ce3,#8c4fd5,#ff296e,#d9448f,#b25faf)]"
+    <div   className=" gr flex flex-col items-center justify-center w-full min-h-screen bg-no-repeat bg-cover bg-center bg-[linear-gradient(210deg,#135ce3,#8c4fd5,#ff296e,#d9448f,#b25faf)]"
     >
      <div
     className="relative bg-no-repeat bg-center bg-contain w-[400px] h-[600px] flex items-center justify-center"
