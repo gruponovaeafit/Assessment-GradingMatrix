@@ -92,7 +92,7 @@ export default function RegisterPerson() {
           </div>
 
           <div className="mb-2 w-full">
-            <label className="block text-xl font-bold mb-1 text-white ml-16">Foto de perfil</label>
+            <label className="block text-xl font-bold mb-1 text-white ml-16">Foto de Aspirante</label>
             <input
               type="file"
               accept="image/*"

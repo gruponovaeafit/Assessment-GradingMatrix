@@ -13,7 +13,7 @@ export default function Home() {
       >
       <h1 className="text-3xl font-regular text-center">¿Quién eres?</h1>
       <button
-       onClick={() => router.push("/subscribeusers")}
+       onClick={() => router.push("/register")}
        className="w-[260px] h-[50px] bg-no-repeat bg-contain bg-center"
        style={{ backgroundImage: "url('/Button_registrar.svg')" }}
       />

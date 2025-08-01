@@ -37,16 +37,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         p.ID AS ID,
         p.Nombre AS Participante,
         p.Correo AS Correo,
-        AVG(ISNULL(cpg.Calificacion, 0)) AS Calificacion_Promedio,
+        p.role AS role,
+        AVG(ISNULL(cpg.Calificacion_1 + cpg.Calificacion_2 + cpg.Calificacion_3, 0) / 3.0) AS Calificacion_Promedio,
         CASE 
-          WHEN AVG(ISNULL(cpg.Calificacion, 0)) >= 4.0 THEN 'Aprobado'
+          WHEN AVG(ISNULL(cpg.Calificacion_1 + cpg.Calificacion_2 + cpg.Calificacion_3, 0) / 3.0) >= 4.0 THEN 'Aprobado'
           ELSE 'Reprobado'
         END AS Estado
       FROM PersonasPorGrupo ppg
       JOIN Personas p ON p.ID = ppg.ID_Persona
       JOIN Grupos g ON g.ID = ppg.ID_Grupo
       LEFT JOIN CalificacionesPorPersona cpg ON cpg.ID_Grupo = ppg.ID_Grupo AND cpg.ID_Persona = p.ID
-      GROUP BY g.Nombre, p.ID, p.Nombre, p.Correo
+      GROUP BY g.Nombre, p.ID, p.Nombre, p.Correo, p.role
       ORDER BY g.Nombre, p.Nombre;
     `);
 
