@@ -14,7 +14,7 @@ export const dbConfig: SqlConfig = {
   },
 };
 
-// Funcíon para conectar a la base de datos
+// Función para conectar a la base de datos
 export async function connectToDatabase() {
   try {
     const pool = await sql.connect(dbConfig);
@@ -28,18 +28,17 @@ export async function connectToDatabase() {
 // API para manejar GET y POST
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   let pool;
-  
+
   try {
     pool = await connectToDatabase();
 
     if (req.method === 'GET') {
-      // Obtener todas las personas
-      const result = await pool.request().query('SELECT ID, Nombre, Correo FROM Personas');
-      res.status(200).json(result.recordset);
-    } 
+      const result = await pool.request().query('SELECT ID, Nombre, Correo, Photo FROM Personas');
+      return res.status(200).json(result.recordset);
+    }
+
     else if (req.method === 'POST') {
-      // Registrar nueva persona
-      const { nombre, correo } = req.body;
+      const { nombre, correo, photo } = req.body;
 
       if (!nombre || !correo) {
         return res.status(400).json({ error: 'Nombre y correo son obligatorios' });
@@ -48,21 +47,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await pool.request()
         .input('Nombre', sql.NVarChar, nombre)
         .input('Correo', sql.NVarChar, correo)
-        .query('INSERT INTO Personas (Nombre, Correo) VALUES (@Nombre, @Correo)');
+        .input('Photo', sql.NVarChar, photo || null)
+        .query(`
+          INSERT INTO Personas (Nombre, Correo, Photo)
+          VALUES (@Nombre, @Correo, @Photo)
+        `);
 
-      res.status(200).json({ message: 'Persona inscrita exitosamente' });
-    } 
-    else {
-      res.status(405).json({ error: 'Método no permitido' });
+      return res.status(200).json({ message: 'Persona inscrita exitosamente' });
     }
+
+    else {
+      return res.status(405).json({ error: 'Método no permitido' });
+    }
+
   } catch (error: any) {
     if (req.method === 'POST' && error.number === 2627) {
-      res.status(400).json({ error: 'El correo ya está registrado' });
+      return res.status(400).json({ error: 'El correo ya está registrado' });
     } else {
       console.error('❌ Error al procesar la solicitud:', error);
-      res.status(500).json({ error: 'Error al procesar la solicitud' });
+      return res.status(500).json({ error: 'Error al procesar la solicitud' });
     }
   } finally {
     if (pool) await pool.close();
   }
-} 
+}
