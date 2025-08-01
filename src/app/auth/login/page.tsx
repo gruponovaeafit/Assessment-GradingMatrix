@@ -52,21 +52,18 @@ export default function Login() {
   };
 
   return (
-  <div
-  className="flex flex-col items-center justify-center min-h-screen bg-no-repeat bg-cover bg-center"
-  style={{ backgroundImage: "url('/gradienterosa.svg')" }}
->
-
-  <div
-    className="relative bg-no-repeat bg-center bg-contain w-[500px] h-[600px] flex items-center justify-center"
-    style={{ backgroundImage: "url('/marco.svg')" }} 
+    <div   className="flex flex-col items-center justify-center w-full min-h-screen bg-no-repeat bg-cover bg-center bg-[linear-gradient(210deg,#135ce3,#8c4fd5,#ff296e,#d9448f,#b25faf)]"
+    >
+     <div
+    className="relative bg-no-repeat bg-center bg-contain w-[400px] h-[600px] flex items-center justify-center"
+    style={{ backgroundImage: "url('/Frame_general.svg')" }} 
 >
     <form onSubmit={handleLogin} className="flex flex-col items-center gap-4 p-6 w-80">
       <h1 className="text-2xl font-bold mb-8 text-white">Ingresar Credenciales</h1>
       <div className="mb-4 w-full">
         <label className="block text-xl font-bold mb-2 text-white ml-[50px]">Correo electrónico</label>
          <input
-           type="text"
+           type="email"
            placeholder="Correo Electrónico"
            value={email}
            onChange={(e) => setEmail(e.target.value)}
@@ -78,7 +75,7 @@ export default function Login() {
       <div className="mb-4 w-full">
         <label className="block text-xl font-bold mb-2 text-white ml-20">Contraseña</label>
          <input
-           type="email"
+           type="password"
            placeholder="Contraseña"
            value={password}
            onChange={(e) => setPassword(e.target.value)}
@@ -97,6 +94,9 @@ export default function Login() {
           {error && <p className="text-red-500 text-sm">{error}</p>}
      </form>
     </div>
+    <footer className="mb-[20] w-full text-xl text-center mt-20 m-[0] italic">
+     POWERED BY <span className="font-bold text-3xl text-violet-700">Nova</span>
+    </footer>
   </div>
  );
 }

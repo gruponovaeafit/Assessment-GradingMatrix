@@ -43,14 +43,11 @@ export default function RegisterPerson() {
   }, [mensaje]);
 
   return (
-  <div
-  className="flex flex-col items-center justify-center min-h-screen"
-  style={{ backgroundImage: "url('/gradienterosa.svg')" }}
->
-
-  <div
-    className="relative bg-no-repeat bg-center bg-contain w-[500px] h-[600px] flex items-center justify-center"
-    style={{ backgroundImage: "url('/marco.svg')" }} 
+    <div   className="flex flex-col items-center justify-center w-full min-h-screen bg-no-repeat bg-cover bg-center bg-[linear-gradient(210deg,#135ce3,#8c4fd5,#ff296e,#d9448f,#b25faf)]"
+    >
+     <div
+    className="relative bg-no-repeat bg-center bg-contain w-[400px] h-[600px] flex items-center justify-center"
+    style={{ backgroundImage: "url('/Frame_general.svg')" }} 
 >
     <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 p-6 w-80">
       <h1 className="text-2xl font-bold mb-8 text-white">Inscribir Aspirante</h1>
@@ -84,7 +81,7 @@ export default function RegisterPerson() {
         className="w-full"
       >
         <img
-          src="/botonInscribir.svg"
+          src="/Button_register.svg"
           alt="Botón Inscribir"
           className="w-full h-auto"
         />
@@ -97,6 +94,9 @@ export default function RegisterPerson() {
       )}
     </form>
   </div>
+  <footer className="mb-[20] w-full text-xl text-center mt-20 m-[0] italic">
+   POWERED BY <span className="font-bold text-3xl text-violet-700">Nova</span>
+  </footer>
 </div>
   );
 }
