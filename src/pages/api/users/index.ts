@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === 'GET') {
       // Obtener todas las personas
-      const result = await pool.request().query('SELECT ID, Nombre, Correo FROM Personas');
+      const result = await pool.request().query('SELECT ID, Nombre, Correo, role FROM Personas');
       res.status(200).json(result.recordset);
     } 
     else if (req.method === 'POST') {

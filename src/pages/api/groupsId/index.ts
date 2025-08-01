@@ -46,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     request.input('ID_Grupo', sql.Int, Number(idGrupo));
 
     const query = `
-      SELECT P.ID, P.Nombre
+      SELECT P.ID, P.Nombre, P.role
       FROM PersonasPorGrupo PG
       JOIN Personas P ON PG.ID_Persona = P.ID
       WHERE PG.ID_Grupo = @ID_Grupo

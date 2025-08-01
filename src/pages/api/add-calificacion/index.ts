@@ -29,25 +29,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { ID_Persona, ID_Grupo, ID_Base, ID_Calificador, Calificacion } = req.body;
+    const { ID_Persona, ID_Grupo, ID_Base, ID_Calificador, Calificacion_1, Calificacion_2, Calificacion_3 } = req.body;
 
     console.log("📥 Datos recibidos en API:", req.body); // Debugging
 
-    if (!ID_Persona || !ID_Grupo || !ID_Base || !ID_Calificador || Calificacion === undefined) {
+    if (!ID_Persona || !ID_Grupo || !ID_Base || !ID_Calificador || Calificacion_1 === undefined || Calificacion_2 === undefined || Calificacion_3 === undefined) {
       return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
 
     const pool = await connectToDatabase();
     const query = `
-      INSERT INTO CalificacionesPorPersona (ID_Grupo, ID_Base, ID_Calificador, Fecha_Calificacion, Calificacion, ID_Persona)
-      VALUES (@ID_Grupo, @ID_Base, @ID_Calificador, GETDATE(), @Calificacion, @ID_Persona);
+      INSERT INTO CalificacionesPorPersona (ID_Grupo, ID_Base, ID_Calificador, Fecha_Calificacion, Calificacion_1, Calificacion_2, Calificacion_3, ID_Persona)
+      VALUES (@ID_Grupo, @ID_Base, @ID_Calificador, GETDATE(), @Calificacion_1, @Calificacion_2, @Calificacion_3, @ID_Persona);
     `;
 
     await pool.request()
       .input("ID_Grupo", sql.Int, ID_Grupo)
       .input("ID_Base", sql.Int, ID_Base)
       .input("ID_Calificador", sql.Int, ID_Calificador)
-      .input("Calificacion", sql.Float, parseFloat(Calificacion)) // Asegurar tipo FLOAT
+      .input("Calificacion_1", sql.Float, parseFloat(Calificacion_1))
+      .input("Calificacion_2", sql.Float, parseFloat(Calificacion_2))
+      .input("Calificacion_3", sql.Float, parseFloat(Calificacion_3)) // Asegurar tipo FLOAT
       .input("ID_Persona", sql.Int, ID_Persona)
       .query(query);
 
