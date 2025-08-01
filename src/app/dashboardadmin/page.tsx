@@ -105,7 +105,7 @@ export default function Dashboard() {
               backgroundPosition: '0% center',
             }}
           >
-            <div className="w-full flex justify-center mb-">
+            <div className="w-full flex justify-center mb-2">
               <h2 className="text-sm font-bold text-white text-center w-[100%] leading-tight">
                 {item.Participante}
               </h2>
@@ -120,7 +120,12 @@ export default function Dashboard() {
               <p><span className="font-bold">Grupo:</span> {item.Grupo}</p>
               <p><span className="font-bold">Correo:</span> {item.Correo}</p>
               <p><span className="font-bold">Rol:</span> {item.role}</p>
-              <p><span className="font-bold">Promedio:</span> {item.Calificacion_Promedio.toFixed(2)}</p>
+              <p>
+                <span className="font-bold">Promedio:</span>{" "}
+                {item.Calificacion_Promedio != null
+                  ? item.Calificacion_Promedio.toFixed(2)
+                  : "Sin calificación"}
+              </p>
               <p>
                 <span className="font-bold">Estado:</span>{' '}
                 <span className={item.Calificacion_Promedio < 4 ? 'text-red-400' : 'text-green-400'}>

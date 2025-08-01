@@ -1,3 +1,4 @@
+// pages/api/groupsId.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import sql, { config as SqlConfig } from 'mssql';
 
@@ -32,33 +33,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { idGrupo } = req.body;
+  // Ahora recibes idCalificador en el body
+  const { idCalificador } = req.body;
 
-    if (!idGrupo || isNaN(Number(idGrupo))) {
-      return res.status(400).json({ error: 'ID de grupo inválido' });
-    }
+  if (!idCalificador || isNaN(Number(idCalificador))) {
+    return res.status(400).json({ error: 'ID de calificador inválido' });
+  }
 
-    console.log('🔍 Buscando miembros del grupo:', idGrupo);
-    
-    let pool = await connectToDatabase();
-    const request = new sql.Request(pool);
-    
-    request.input('ID_Grupo', sql.Int, Number(idGrupo));
+  const pool = await connectToDatabase();
+  let request = new sql.Request(pool);
 
-    const query = `
-      SELECT P.ID, P.Nombre, P.role
-      FROM PersonasPorGrupo PG
-      JOIN Personas P ON PG.ID_Persona = P.ID
-      WHERE PG.ID_Grupo = @ID_Grupo
-    `;
+  // 1. Buscar el ID_Grupo del calificador
+  request.input('ID', sql.Int, Number(idCalificador));
+  const grupoResult = await request.query(`
+    SELECT ID_Grupo FROM Calificadores WHERE ID = @ID
+  `);
 
-    const result = await request.query(query);
+  if (grupoResult.recordset.length === 0) {
+    return res.status(404).json({ error: 'No se encontró el calificador' });
+  }
 
-    if (result.recordset.length === 0) {
-      return res.status(404).json({ message: 'No se encontraron personas en este grupo' });
-    }
+  const idGrupo = grupoResult.recordset[0].ID_Grupo;
 
-    res.status(200).json(result.recordset);
+  if (!idGrupo) {
+    return res.status(404).json({ error: 'El calificador no tiene grupo asignado' });
+  }
+
+  console.log('🔍 Buscando miembros del grupo:', idGrupo);
+
+  // 2. Buscar los miembros del grupo
+  request = new sql.Request(pool); // Nuevo request limpio
+  request.input('ID_Grupo', sql.Int, Number(idGrupo));
+
+  const query = `
+    SELECT 
+      PG.ID_Persona AS ID_Persona,
+      P.ID,
+      P.Nombre, 
+      P.role, 
+      PG.ID_Grupo AS Grupo,
+      P.Photo
+    FROM PersonasPorGrupo PG
+    JOIN Personas P ON PG.ID_Persona = P.ID
+    WHERE PG.ID_Grupo = @ID_Grupo
+  `;
+
+  const result = await request.query(query);
+
+  if (result.recordset.length === 0) {
+    return res.status(404).json({ message: 'No se encontraron personas en este grupo' });
+  }
+  res.status(200).json(result.recordset);
   } catch (error) {
     console.error('❌ Error al obtener los miembros del grupo:', error);
     res.status(500).json({ error: 'Error al obtener los miembros del grupo' });

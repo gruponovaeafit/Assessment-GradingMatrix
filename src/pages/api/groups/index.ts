@@ -56,9 +56,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       4: 'Grupo5',
       5: 'Grupo6',
       6: 'Grupo7',
+      7: 'Grupo8',
     };
     for (let i = 0; i < groups.length; i++) {
-      const baseName = baseMapping[i % 7];
+      const baseName = baseMapping[i % 8];
 
       // Crear una nueva instancia de request para cada iteración
       const groupRequest = new sql.Request(transaction);

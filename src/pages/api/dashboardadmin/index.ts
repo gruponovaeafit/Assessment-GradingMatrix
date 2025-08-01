@@ -32,22 +32,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     pool = await connectToDatabase();
     const result = await pool.request().query(`
+      WITH PromediosPorBase AS (
+        SELECT
+          cpg.ID_Persona,
+          cpg.ID_Grupo,
+          AVG((ISNULL(cpg.Calificacion_1, 0) + ISNULL(cpg.Calificacion_2, 0) + ISNULL(cpg.Calificacion_3, 0)) / 3.0) AS PromedioBase
+        FROM CalificacionesPorPersona cpg
+        GROUP BY cpg.ID_Persona, cpg.ID_Grupo, cpg.ID_Base
+      ),
+      PromediosGenerales AS (
+        SELECT
+          ID_Persona,
+          ID_Grupo,
+          AVG(PromedioBase) AS Calificacion_Promedio
+        FROM PromediosPorBase
+        GROUP BY ID_Persona, ID_Grupo
+      )
       SELECT 
         g.Nombre AS Grupo,
         p.ID AS ID,
         p.Nombre AS Participante,
         p.Correo AS Correo,
         p.role AS role,
-        AVG(ISNULL(cpg.Calificacion_1 + cpg.Calificacion_2 + cpg.Calificacion_3, 0) / 3.0) AS Calificacion_Promedio,
+        p.Photo AS Photo, -- <-- Se incluye la foto
+        pg.Calificacion_Promedio,
         CASE 
-          WHEN AVG(ISNULL(cpg.Calificacion_1 + cpg.Calificacion_2 + cpg.Calificacion_3, 0) / 3.0) >= 4.0 THEN 'Aprobado'
+          WHEN pg.Calificacion_Promedio >= 4.0 THEN 'Aprobado'
           ELSE 'Reprobado'
         END AS Estado
       FROM PersonasPorGrupo ppg
       JOIN Personas p ON p.ID = ppg.ID_Persona
       JOIN Grupos g ON g.ID = ppg.ID_Grupo
-      LEFT JOIN CalificacionesPorPersona cpg ON cpg.ID_Grupo = ppg.ID_Grupo AND cpg.ID_Persona = p.ID
-      GROUP BY g.Nombre, p.ID, p.Nombre, p.Correo, p.role
+      LEFT JOIN PromediosGenerales pg ON pg.ID_Persona = p.ID AND pg.ID_Grupo = ppg.ID_Grupo
       ORDER BY g.Nombre, p.Nombre;
     `);
 
