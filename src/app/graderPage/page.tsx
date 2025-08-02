@@ -94,12 +94,24 @@ const GraderPage: React.FC = () => {
         fetchNombreCalificador();
     }, [storedData]);
 
+    // SOLO PERMITE ENTEROS ENTRE 1 Y 5
     const handleInputChange = (idPersona: number, calificacionNumber: number, value: string) => {
+        // Quitar decimales, permite solo enteros
+        let numericValue = value.replace(',', '.');
+        let number = numericValue === '' ? '' : Number(numericValue);
+
+        if (
+            number !== '' &&
+            (!Number.isInteger(number) || number < 1 || number > 5)
+        ) {
+            return; // no actualiza si no es entero entre 1 y 5
+        }
+
         setCalificaciones(prev => ({
             ...prev,
             [idPersona]: {
                 ...prev[idPersona],
-                [`Calificacion_${calificacionNumber}`]: value ? Number(value) : ''
+                [`Calificacion_${calificacionNumber}`]: number
             }
         }));
     };
@@ -245,8 +257,8 @@ const GraderPage: React.FC = () => {
                                 <label className='text-sm font-semibold block mb-1'>Habilidad #{num}:</label>
                                 <input
                                     type="number"
-                                    step="0.1"
-                                    min="0"
+                                    step="1"
+                                    min="1"
                                     max="5"
                                     value={calificaciones[usuario.ID]?.[`Calificacion_${num}` as CalificacionKey] ?? ''}
                                     onChange={e => handleInputChange(usuario.ID, num, e.target.value)}
