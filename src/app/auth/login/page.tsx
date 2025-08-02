@@ -22,7 +22,7 @@ export default function Login() {
 
 
     if (email === adminEmail && password === adminPassword) {
-      router.push("/dashboardadmin");
+      router.push("/final");
       return;
     }
     try {

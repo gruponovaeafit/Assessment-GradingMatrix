@@ -175,7 +175,7 @@ const GraderPage: React.FC = () => {
             setErrores([]);
             setTimeout(() => {
                 window.location.reload();
-            }, 5000);
+            }, 1000);
 
         } catch (error) {
             console.error('❌ Error al enviar calificaciones múltiples:', error);

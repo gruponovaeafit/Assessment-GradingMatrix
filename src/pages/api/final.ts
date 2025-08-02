@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import sql, { config as SqlConfig } from "mssql";
 
+// Configuración MSSQL
 export const dbConfig: SqlConfig = {
   user: process.env.DB_USER as string,
   password: process.env.DB_PASS as string,
@@ -13,11 +14,16 @@ export const dbConfig: SqlConfig = {
   },
 };
 
+function normalizaBase(nombre: string) {
+  // Deja solo los números del nombre y lo devuelve como "Base N"
+  const match = nombre.match(/\d+/);
+  return match ? `Base ${parseInt(match[0], 10)}` : nombre;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const pool = await sql.connect(dbConfig);
 
-    // Traer personas con su grupo (usando join a PersonasPorGrupo y Grupos)
     const personasResult = await pool.request().query(`
       SELECT 
         P.ID,
@@ -25,70 +31,96 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         P.Correo,
         G.Nombre AS Grupo,
         P.role,
-        P.photo,
-        -- Calcula el promedio final (promedio de todos los promedios por base)
-        (
-          SELECT 
-            AVG(
-              (ISNULL(C.Calificacion_1,0) + ISNULL(C.Calificacion_2,0) + ISNULL(C.Calificacion_3,0)) / 
-              (CASE 
-                WHEN C.Calificacion_1 IS NOT NULL AND C.Calificacion_2 IS NOT NULL AND C.Calificacion_3 IS NOT NULL THEN 3
-                WHEN (C.Calificacion_1 IS NOT NULL AND C.Calificacion_2 IS NOT NULL) OR (C.Calificacion_1 IS NOT NULL AND C.Calificacion_3 IS NOT NULL) OR (C.Calificacion_2 IS NOT NULL AND C.Calificacion_3 IS NOT NULL) THEN 2
-                WHEN C.Calificacion_1 IS NOT NULL OR C.Calificacion_2 IS NOT NULL OR C.Calificacion_3 IS NOT NULL THEN 1
-                ELSE NULL
-              END)
-            )
-          FROM CalificacionesPorPersona C
-          WHERE C.ID_Persona = P.ID
-        ) AS Calificacion_Promedio
+        P.photo AS Foto
       FROM Personas P
       LEFT JOIN PersonasPorGrupo PG ON PG.ID_Persona = P.ID
       LEFT JOIN Grupos G ON G.ID = PG.ID_Grupo
     `);
-
     const personas = personasResult.recordset;
 
-    // Calificaciones promedio por base
-    const calificacionesResult = await pool.request().query(`
-      SELECT 
-        C.ID_Persona,
-        B.Nombre,
-        AVG(
-          (ISNULL(C.Calificacion_1,0) + ISNULL(C.Calificacion_2,0) + ISNULL(C.Calificacion_3,0)) / 
-          (CASE 
-            WHEN C.Calificacion_1 IS NOT NULL AND C.Calificacion_2 IS NOT NULL AND C.Calificacion_3 IS NOT NULL THEN 3
-            WHEN (C.Calificacion_1 IS NOT NULL AND C.Calificacion_2 IS NOT NULL) OR (C.Calificacion_1 IS NOT NULL AND C.Calificacion_3 IS NOT NULL) OR (C.Calificacion_2 IS NOT NULL AND C.Calificacion_3 IS NOT NULL) THEN 2
-            WHEN C.Calificacion_1 IS NOT NULL OR C.Calificacion_2 IS NOT NULL OR C.Calificacion_3 IS NOT NULL THEN 1
+    const basePromResult = await pool.request().query(`
+      SELECT
+        T.ID_Persona,
+        T.NombreBase,
+        AVG(T.Promedio_Registro) AS PromedioPorBase
+      FROM (
+        SELECT
+          P.ID_Persona,
+          B.Nombre AS NombreBase,
+          (
+            ISNULL(P.Calificacion_1,0) + ISNULL(P.Calificacion_2,0) + ISNULL(P.Calificacion_3,0)
+          ) /
+          (CASE
+            WHEN P.Calificacion_1 IS NOT NULL AND P.Calificacion_2 IS NOT NULL AND P.Calificacion_3 IS NOT NULL THEN 3
+            WHEN (P.Calificacion_1 IS NOT NULL AND P.Calificacion_2 IS NOT NULL) OR (P.Calificacion_1 IS NOT NULL AND P.Calificacion_3 IS NOT NULL) OR (P.Calificacion_2 IS NOT NULL AND P.Calificacion_3 IS NOT NULL) THEN 2
+            WHEN P.Calificacion_1 IS NOT NULL OR P.Calificacion_2 IS NOT NULL OR P.Calificacion_3 IS NOT NULL THEN 1
             ELSE NULL
-          END)
-        ) AS PromedioBase
-      FROM CalificacionesPorPersona C
-      INNER JOIN Bases B ON C.ID_Base = B.ID
-      GROUP BY C.ID_Persona, B.Nombre
+          END) AS Promedio_Registro
+        FROM CalificacionesPorPersona P
+        INNER JOIN Bases B ON P.ID_Base = B.ID
+      ) AS T
+      GROUP BY T.ID_Persona, T.NombreBase
+      HAVING COUNT(*) = 2
     `);
 
-    // Organizar calificaciones por persona y base
-    const calificacionesPorPersona: Record<number, any> = {};
-    for (const row of calificacionesResult.recordset) {
-      if (!calificacionesPorPersona[row.ID_Persona])
-        calificacionesPorPersona[row.ID_Persona] = {};
-      calificacionesPorPersona[row.ID_Persona][row.NombreBase] = row.PromedioBase;
+    const generalPromResult = await pool.request().query(`
+      SELECT 
+        ID_Persona,
+        AVG(PromedioPorBase) AS PromedioGeneral
+      FROM (
+        SELECT 
+          P.ID_Persona,
+          AVG(
+            (ISNULL(P.Calificacion_1,0) + ISNULL(P.Calificacion_2,0) + ISNULL(P.Calificacion_3,0)) /
+              (CASE 
+                  WHEN P.Calificacion_1 IS NOT NULL AND P.Calificacion_2 IS NOT NULL AND P.Calificacion_3 IS NOT NULL THEN 3
+                  WHEN (P.Calificacion_1 IS NOT NULL AND P.Calificacion_2 IS NOT NULL) OR (P.Calificacion_1 IS NOT NULL AND P.Calificacion_3 IS NOT NULL) OR (P.Calificacion_2 IS NOT NULL AND P.Calificacion_3 IS NOT NULL) THEN 2
+                  WHEN P.Calificacion_1 IS NOT NULL OR P.Calificacion_2 IS NOT NULL OR P.Calificacion_3 IS NOT NULL THEN 1
+                  ELSE NULL
+              END)
+          ) AS PromedioPorBase
+        FROM CalificacionesPorPersona P
+        GROUP BY P.ID_Persona, P.ID_Base
+      ) t
+      GROUP BY ID_Persona
+    `);
+
+    // <-- NORMALIZA AQUI -->
+    const basePromByPersona: Record<number, Record<string, number>> = {};
+    for (const row of basePromResult.recordset) {
+      const baseNom = normalizaBase(row.NombreBase);
+      if (!basePromByPersona[row.ID_Persona]) basePromByPersona[row.ID_Persona] = {};
+      basePromByPersona[row.ID_Persona][baseNom] = row.PromedioPorBase;
     }
 
-    // Construir respuesta
+    const generalPromByPersona: Record<number, number> = {};
+    for (const row of generalPromResult.recordset) {
+      generalPromByPersona[row.ID_Persona] = row.PromedioGeneral;
+    }
+
+    const baseNames = ["Base 1", "Base 2", "Base 3", "Base 4", "Base 5"];
+
     const data = personas.map((p: any) => {
-      const bases = calificacionesPorPersona[p.ID] || {};
+      const bases = basePromByPersona[p.ID] || {};
+      const calificacionesBases = baseNames.reduce((acc, nombreBase, i) => {
+        acc[`Calificacion_Base_${i + 1}`] =
+          nombreBase in bases ? bases[nombreBase] : null;
+        return acc;
+      }, {} as Record<string, number | null>);
+
+      const promedio = generalPromByPersona[p.ID] ?? null;
+
       return {
         ...p,
-        Estado: p.Calificacion_Promedio != null ? "Completado" : "Pendiente",
-        Calificacion_Base_1: bases["Base 1"] ?? null,
-        Calificacion_Base_2: bases["Base 2"] ?? null,
-        Calificacion_Base_3: bases["Base 3"] ?? null,
-        // Si tienes más bases, agrégalas aquí
+        Estado: promedio != null ? "Completado" : "Pendiente",
+        Calificacion_Promedio: promedio,
+        ...calificacionesBases,
       };
     });
 
     res.status(200).json(data);
+    res.status(200).json(data);
+    await pool.close();
   } catch (error: any) {
     console.error("❌ Error en dashboardadmin:", error);
     res.status(500).json({ error: "Error interno al cargar datos" });

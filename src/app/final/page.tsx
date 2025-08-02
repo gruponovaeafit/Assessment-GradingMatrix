@@ -7,12 +7,14 @@ interface Calificacion {
   Participante: string;
   Correo: string;
   role: string;
-  Foto: string;
+  Foto?: string | null; // Permitimos undefined/null
   Calificacion_Promedio: number | null;
   Estado: string;
   Calificacion_Base_1?: number | null;
   Calificacion_Base_2?: number | null;
   Calificacion_Base_3?: number | null;
+  Calificacion_Base_4?: number | null;
+  Calificacion_Base_5?: number | null;
 }
 
 export default function DashboardTabla() {
@@ -70,7 +72,7 @@ export default function DashboardTabla() {
     if (res.ok) {
       setMensaje("✅ Participante actualizado correctamente");
       setData((prev) =>
-        prev.map((p) => (p.ID === editModal.ID ? editModal : p))
+        prev.map((p) => (p.ID === editModal.ID ? { ...p, ...editModal } : p))
       );
       setEditModal(null);
       setOriginalData(null);
@@ -93,7 +95,7 @@ export default function DashboardTabla() {
           {mensaje}
         </p>
       )}
-      <div className="overflow-x-auto w-full max-w-6xl rounded-2xl bg-white/30 shadow-lg backdrop-blur-md">
+      <div className="overflow-x-auto w-full max-w-7xl rounded-2xl bg-white/30 shadow-lg backdrop-blur-md">
         <table className="min-w-full border-collapse rounded-xl overflow-hidden">
           <thead>
             <tr className="bg-purple-800 text-white">
@@ -105,6 +107,8 @@ export default function DashboardTabla() {
               <th className="p-3 text-left">Base 1</th>
               <th className="p-3 text-left">Base 2</th>
               <th className="p-3 text-left">Base 3</th>
+              <th className="p-3 text-left">Base 4</th>
+              <th className="p-3 text-left">Base 5</th>
               <th className="p-3 text-left">Promedio Final</th>
               <th className="p-3 text-left">Estado</th>
               <th className="p-3 text-left">Acciones</th>
@@ -118,12 +122,15 @@ export default function DashboardTabla() {
               >
                 <td className="p-2">
                   <img
-                    src={item.Foto}
+                    src={item.Foto && item.Foto.trim() !== "" ? item.Foto : "/userdefault.png"}
                     alt={item.Participante}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
-                    onError={(e) =>
-                      ((e.target as HTMLImageElement).src = "/userdefault.png")
-                    }
+                    className="w-80 h-40 rounded-full object-cover border-2 border-white shadow"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== window.location.origin + "/userdefault.png") {
+                        target.src = "/userdefault.png";
+                      }
+                    }}
                   />
                 </td>
                 <td className="p-2 font-semibold">{item.Participante}</td>
@@ -143,6 +150,16 @@ export default function DashboardTabla() {
                 <td className="p-2 text-center">
                   {item.Calificacion_Base_3 != null
                     ? item.Calificacion_Base_3.toFixed(2)
+                    : "-"}
+                </td>
+                <td className="p-2 text-center">
+                  {item.Calificacion_Base_4 != null
+                    ? item.Calificacion_Base_4.toFixed(2)
+                    : "-"}
+                </td>
+                <td className="p-2 text-center">
+                  {item.Calificacion_Base_5 != null
+                    ? item.Calificacion_Base_5.toFixed(2)
                     : "-"}
                 </td>
                 <td className="p-2 font-bold text-center">
