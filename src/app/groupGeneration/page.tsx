@@ -18,7 +18,7 @@ const GroupGeneration: React.FC = () => {
   useEffect(() => {
     const fetchPersonas = async () => {
       try {
-        const response = await fetch("/api/dashboardadmin");
+        const response = await fetch("/api/users");
         if (!response.ok) throw new Error('Error al cargar las personas');
         const data = await response.json();
         setPersonas(data);
