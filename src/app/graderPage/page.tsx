@@ -244,8 +244,12 @@ const GraderPage: React.FC = () => {
                             <div key={num} className='mb-2 w-36 px-4'>
                                 <label className='text-sm font-semibold block mb-1'>Habilidad #{num}:</label>
                                 <input
-                                    value={calificaciones[usuario.ID]?.[`Calificacion_${num}` as CalificacionKey] || ''}
-                                    onChange={(e) => handleInputChange(usuario.ID, num, e.target.value)}
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    max="5"
+                                    value={calificaciones[usuario.ID]?.[`Calificacion_${num}` as CalificacionKey] ?? ''}
+                                    onChange={e => handleInputChange(usuario.ID, num, e.target.value)}
                                     placeholder="Calificación"
                                     className='w-full px-3 py-2 rounded bg-pink-600 text-white placeholder-white font-medium text-center shadow-md focus:outline-none focus:ring-2 focus:ring-white/70'
                                 />
