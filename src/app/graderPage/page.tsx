@@ -102,7 +102,7 @@ const GraderPage: React.FC = () => {
 
         if (
             number !== '' &&
-            (!Number.isInteger(number) || number < 1 || number > 5)
+            (typeof number === 'number' && (!Number.isInteger(number) || number < 1 || number > 5))
         ) {
             return; // no actualiza si no es entero entre 1 y 5
         }
