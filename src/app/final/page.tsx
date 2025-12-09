@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useAdminAuth } from "../Hooks/useAdminAuth";
 
 interface Calificacion {
   ID: number;
@@ -18,12 +19,18 @@ interface Calificacion {
 }
 
 export default function DashboardTabla() {
+  const { isAdmin, isLoading: authLoading, requireAdmin, logout } = useAdminAuth();
   const [data, setData] = useState<Calificacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState("");
   const [editModal, setEditModal] = useState<Calificacion | null>(null);
   const [originalData, setOriginalData] = useState<Calificacion | null>(null);
+
+  // Proteger la ruta - redirige si no es admin
+  useEffect(() => {
+    requireAdmin();
+  }, [isAdmin, authLoading]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,7 +59,7 @@ export default function DashboardTabla() {
     e.preventDefault();
     if (!editModal || !originalData) return;
 
-    const updates: any = { id: editModal.ID };
+    const updates: Record<string, string | number> = { id: editModal.ID };
     if (editModal.Participante !== originalData.Participante) updates.nombre = editModal.Participante;
     if (editModal.Correo !== originalData.Correo) updates.correo = editModal.Correo;
     if (editModal.role !== originalData.role) updates.role = editModal.role;
@@ -81,50 +88,140 @@ export default function DashboardTabla() {
     }
   };
 
-  if (loading) return <p className="text-center mt-20">Cargando datos...</p>;
-  if (error) return <p className="text-center mt-20 text-red-500">{error}</p>;
+  // Mostrar loading mientras verifica autenticación
+  if (authLoading || !isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen gradient_purple">
+        <p className="text-white text-xl">Verificando acceso...</p>
+      </div>
+    );
+  }
+
+  if (loading) return <p className="text-center mt-20 text-white">Cargando datos...</p>;
+  if (error) return <p className="text-center mt-20 text-error">{error}</p>;
+
+  // Función para determinar el estado y color según el promedio
+  const getEstadoInfo = (promedio: number | null) => {
+    if (promedio == null) {
+      return { texto: "Pendiente", color: "text-white/60" };
+    }
+    if (promedio >= 4.7) {
+      return { texto: "✅ Pasa al grupo", color: "text-success" };
+    }
+    if (promedio >= 4) {
+      return { texto: "📋 Pasa a entrevista", color: "text-success-light" };
+    }
+    if (promedio >= 3.599) {
+      return { texto: "⚠️ Pasa a discusión", color: "text-yellow-400" };
+    }
+    return { texto: "❌ No pasa", color: "text-error" };
+  };
 
   return (
     <div
-      className="flex flex-col items-center justify-center min-h-screen py-8 bg-cover bg-center"
-      style={{ backgroundImage: "url('/rosamorado.svg')" }}
+      className="flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-2 sm:px-4 bg-cover bg-center gradient_purple"
     >
-      <h1 className="text-3xl font-bold mb-8 text-white">Panel de Calificaciones</h1>
+      {/* Header con título y botón logout */}
+      <div className="w-full max-w-7xl flex justify-between items-center mb-4 sm:mb-8 px-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">Panel de Calificaciones</h1>
+        <button
+          onClick={logout}
+          className="bg-error hover:bg-error-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+        >
+          Cerrar Sesión
+        </button>
+      </div>
       {mensaje && (
-        <p className="mb-6 text-lg font-medium text-center text-white bg-black/40 px-4 py-2 rounded">
+        <p className="mb-4 sm:mb-6 text-base sm:text-lg font-medium text-center text-white bg-black/40 px-4 py-2 rounded">
           {mensaje}
         </p>
       )}
-      <div className="overflow-x-auto w-full max-w-7xl rounded-2xl bg-white/30 shadow-lg backdrop-blur-md">
+      
+      {/* Vista móvil: cards */}
+      <div className="block lg:hidden w-full max-w-md space-y-4">
+        {data.map((item) => (
+          <div key={item.ID} className="bg-white/20 backdrop-blur-md rounded-xl p-4 text-white">
+            <div className="flex items-center gap-3 mb-3">
+              <img
+                src={item.Foto && item.Foto.trim() !== "" ? item.Foto : "/userdefault.png"}
+                alt={item.Participante}
+                className="w-16 h-16 rounded-full object-cover border-2 border-white shadow"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (target.src !== window.location.origin + "/userdefault.png") {
+                    target.src = "/userdefault.png";
+                  }
+                }}
+              />
+              <div>
+                <p className="font-bold text-sm">{item.Participante}</p>
+                <p className="text-xs text-white/80 truncate max-w-[180px]">{item.Correo}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+              <p><span className="font-bold">Rol:</span> {item.role === "1" ? "Infiltrado" : item.role === "0" ? "Aspirante" : item.role}</p>
+              <p><span className="font-bold">Grupo:</span> {item.Grupo}</p>
+            </div>
+            <div className="grid grid-cols-5 gap-1 text-xs text-center mb-3">
+              <div><span className="block text-white/60">B1</span>{item.Calificacion_Base_1?.toFixed(1) ?? "-"}</div>
+              <div><span className="block text-white/60">B2</span>{item.Calificacion_Base_2?.toFixed(1) ?? "-"}</div>
+              <div><span className="block text-white/60">B3</span>{item.Calificacion_Base_3?.toFixed(1) ?? "-"}</div>
+              <div><span className="block text-white/60">B4</span>{item.Calificacion_Base_4?.toFixed(1) ?? "-"}</div>
+              <div><span className="block text-white/60">B5</span>{item.Calificacion_Base_5?.toFixed(1) ?? "-"}</div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div>
+                <span className="font-bold text-sm">Promedio: </span>
+                <span className="font-bold">{item.Calificacion_Promedio?.toFixed(2) ?? "N/A"}</span>
+                <span className={`ml-2 text-xs ${getEstadoInfo(item.Calificacion_Promedio).color}`}>
+                  {getEstadoInfo(item.Calificacion_Promedio).texto}
+                </span>
+              </div>
+              <button
+                className="bg-primary text-white px-3 py-1 rounded text-xs hover:bg-primary-light transition"
+                onClick={() => {
+                  setEditModal({ ...item });
+                  setOriginalData({ ...item });
+                }}
+              >
+                Editar
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Vista desktop: tabla */}
+      <div className="hidden lg:block overflow-x-auto w-full max-w-7xl rounded-2xl bg-black/40 shadow-lg backdrop-blur-md">
         <table className="min-w-full border-collapse rounded-xl overflow-hidden">
           <thead>
-            <tr className="bg-purple-800 text-white">
-              <th className="p-3 text-left">Foto</th>
-              <th className="p-3 text-left">Nombre</th>
-              <th className="p-3 text-left">Correo</th>
-              <th className="p-3 text-left">Rol</th>
-              <th className="p-3 text-left">Grupo</th>
-              <th className="p-3 text-left">Base 1</th>
-              <th className="p-3 text-left">Base 2</th>
-              <th className="p-3 text-left">Base 3</th>
-              <th className="p-3 text-left">Base 4</th>
-              <th className="p-3 text-left">Base 5</th>
-              <th className="p-3 text-left">Promedio Final</th>
-              <th className="p-3 text-left">Estado</th>
-              <th className="p-3 text-left">Acciones</th>
+            <tr className="bg-primary-dark text-white">
+              <th className="p-2 sm:p-3 text-left text-sm">Foto</th>
+              <th className="p-2 sm:p-3 text-left text-sm">Nombre</th>
+              <th className="p-2 sm:p-3 text-left text-sm">Correo</th>
+              <th className="p-2 sm:p-3 text-left text-sm">Rol</th>
+              <th className="p-2 sm:p-3 text-left text-sm">Grupo</th>
+              <th className="p-2 sm:p-3 text-left text-sm">B1</th>
+              <th className="p-2 sm:p-3 text-left text-sm">B2</th>
+              <th className="p-2 sm:p-3 text-left text-sm">B3</th>
+              <th className="p-2 sm:p-3 text-left text-sm">B4</th>
+              <th className="p-2 sm:p-3 text-left text-sm">B5</th>
+              <th className="p-2 sm:p-3 text-left text-sm">Promedio</th>
+              <th className="p-2 sm:p-3 text-left text-sm">Estado</th>
+              <th className="p-2 sm:p-3 text-left text-sm">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {data.map((item) => (
               <tr
                 key={item.ID}
-                className="border-b border-purple-200 hover:bg-purple-50/70 transition"
+                className="border-b border-white/20 hover:bg-white/30 transition text-white bg-white/10"
               >
                 <td className="p-2">
                   <img
                     src={item.Foto && item.Foto.trim() !== "" ? item.Foto : "/userdefault.png"}
                     alt={item.Participante}
-                    className="w-80 h-40 rounded-full object-cover border-2 border-white shadow"
+                    className="w-16 h-16 rounded-full object-cover border-2 border-white shadow"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       if (target.src !== window.location.origin + "/userdefault.png") {
@@ -133,54 +230,38 @@ export default function DashboardTabla() {
                     }}
                   />
                 </td>
-                <td className="p-2 font-semibold">{item.Participante}</td>
-                <td className="p-2">{item.Correo}</td>
-                <td className="p-2">{item.role}</td>
-                <td className="p-2">{item.Grupo}</td>
-                <td className="p-2 text-center">
-                  {item.Calificacion_Base_1 != null
-                    ? item.Calificacion_Base_1.toFixed(2)
-                    : "-"}
+                <td className="p-2 font-semibold text-sm">{item.Participante}</td>
+                <td className="p-2 text-sm">{item.Correo}</td>
+                <td className="p-2 text-sm">
+                  {item.role === "1" ? "Infiltrado" : item.role === "0" ? "Aspirante" : item.role}
                 </td>
-                <td className="p-2 text-center">
-                  {item.Calificacion_Base_2 != null
-                    ? item.Calificacion_Base_2.toFixed(2)
-                    : "-"}
+                <td className="p-2 text-sm">{item.Grupo}</td>
+                <td className="p-2 text-center text-sm">
+                  {item.Calificacion_Base_1 != null ? item.Calificacion_Base_1.toFixed(2) : "-"}
                 </td>
-                <td className="p-2 text-center">
-                  {item.Calificacion_Base_3 != null
-                    ? item.Calificacion_Base_3.toFixed(2)
-                    : "-"}
+                <td className="p-2 text-center text-sm">
+                  {item.Calificacion_Base_2 != null ? item.Calificacion_Base_2.toFixed(2) : "-"}
                 </td>
-                <td className="p-2 text-center">
-                  {item.Calificacion_Base_4 != null
-                    ? item.Calificacion_Base_4.toFixed(2)
-                    : "-"}
+                <td className="p-2 text-center text-sm">
+                  {item.Calificacion_Base_3 != null ? item.Calificacion_Base_3.toFixed(2) : "-"}
                 </td>
-                <td className="p-2 text-center">
-                  {item.Calificacion_Base_5 != null
-                    ? item.Calificacion_Base_5.toFixed(2)
-                    : "-"}
+                <td className="p-2 text-center text-sm">
+                  {item.Calificacion_Base_4 != null ? item.Calificacion_Base_4.toFixed(2) : "-"}
                 </td>
-                <td className="p-2 font-bold text-center">
-                  {item.Calificacion_Promedio != null
-                    ? item.Calificacion_Promedio.toFixed(2)
-                    : "Sin calificación"}
+                <td className="p-2 text-center text-sm">
+                  {item.Calificacion_Base_5 != null ? item.Calificacion_Base_5.toFixed(2) : "-"}
                 </td>
-                <td className="p-2 font-bold text-center">
-                  <span
-                    className={
-                      item.Calificacion_Promedio != null && item.Calificacion_Promedio < 4
-                        ? "text-red-500"
-                        : "text-green-500"
-                    }
-                  >
-                    {item.Estado}
+                <td className="p-2 font-bold text-center text-sm">
+                  {item.Calificacion_Promedio != null ? item.Calificacion_Promedio.toFixed(2) : "N/A"}
+                </td>
+                <td className="p-2 font-bold text-center text-sm">
+                  <span className={getEstadoInfo(item.Calificacion_Promedio).color}>
+                    {getEstadoInfo(item.Calificacion_Promedio).texto}
                   </span>
                 </td>
                 <td className="p-2 text-center">
                   <button
-                    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
+                    className="bg-primary text-white px-3 py-1 rounded hover:bg-primary-light transition text-sm"
                     onClick={() => {
                       setEditModal({ ...item });
                       setOriginalData({ ...item });
@@ -197,33 +278,35 @@ export default function DashboardTabla() {
 
       {/* Modal para editar */}
       {editModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-purple-800 rounded-lg p-6 w-[90%] max-w-md">
-            <h2 className="text-xl font-bold mb-4 text-white">Editar Participante</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-primary-dark rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-white">Editar Participante</h2>
             <form onSubmit={handleUpdate}>
-              <label className="block mb-2 font-semibold text-white">Nombre</label>
+              <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Nombre</label>
               <input
                 type="text"
                 value={editModal.Participante}
                 onChange={(e) => setEditModal({ ...editModal, Participante: e.target.value })}
-                className="w-full border border-gray-300 px-3 py-2 rounded mb-4 text-black placeholder-black"
+                className="w-full border-2 border-primary px-3 py-2 rounded mb-4 text-black bg-white placeholder-gray-500 text-sm sm:text-base"
               />
 
-              <label className="block mb-2 font-semibold text-white">Correo</label>
+              <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Correo</label>
               <input
                 type="email"
                 value={editModal.Correo}
                 onChange={(e) => setEditModal({ ...editModal, Correo: e.target.value })}
-                className="w-full border border-gray-300 px-3 py-2 rounded mb-4 text-black placeholder-black"
+                className="w-full border-2 border-primary px-3 py-2 rounded mb-4 text-black bg-white placeholder-gray-500 text-sm sm:text-base"
               />
 
-              <label className="block mb-2 font-semibold text-white">Rol</label>
-              <input
-                type="text"
+              <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Rol</label>
+              <select
                 value={editModal.role}
                 onChange={(e) => setEditModal({ ...editModal, role: e.target.value })}
-                className="w-full border border-gray-300 px-3 py-2 rounded mb-4 text-black placeholder-black"
-              />
+                className="w-full border-2 border-primary px-3 py-2 rounded mb-4 text-black bg-white text-sm sm:text-base"
+              >
+                <option value="0">Aspirante</option>
+                <option value="1">Infiltrado</option>
+              </select>
 
               <div className="flex justify-end gap-2">
                 <button
@@ -232,13 +315,13 @@ export default function DashboardTabla() {
                     setEditModal(null);
                     setOriginalData(null);
                   }}
-                  className="px-4 py-2 rounded bg-gray-300"
+                  className="px-3 sm:px-4 py-2 rounded bg-white/80 text-black hover:bg-white text-sm sm:text-base"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
+                  className="px-3 sm:px-4 py-2 rounded bg-success text-white hover:bg-success-dark text-sm sm:text-base"
                 >
                   Guardar
                 </button>

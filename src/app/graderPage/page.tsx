@@ -139,7 +139,7 @@ const GraderPage: React.FC = () => {
         const id_calificador = parsedData?.id_Calificador;
         const id_base = parsedData?.id_base;
 
-        console.log("🧠 Datos del localStorage:", { id_calificador, id_base });
+    // datos extraídos del localStorage
 
         if (!id_calificador || !id_base) {
             alert("❌ Faltan datos esenciales (calificador o base)");
@@ -160,7 +160,7 @@ const GraderPage: React.FC = () => {
                 };
             });
 
-        console.log("📦 Payload a enviar:", payload);
+    // payload preparado para envío
 
         try {
             const response = await fetch('/api/add-calificaciones', {
@@ -178,7 +178,7 @@ const GraderPage: React.FC = () => {
             }
 
             if (data.nuevoGrupo) {
-                console.log("🌀 Grupo rotado a:", data.nuevoGrupo);
+                // grupo rotado exitosamente
                 localStorage.setItem("id_grupo", data.nuevoGrupo);
             }
 
@@ -196,65 +196,65 @@ const GraderPage: React.FC = () => {
     };
 
 
-    if (loading) return <p className="text-white">Cargando...</p>;
-    if (usuarios.length === 0) return <p className="text-white">No hay usuarios para calificar</p>;
+    if (loading) return <p className="text-white text-center mt-20">Cargando...</p>;
+    if (usuarios.length === 0) return <p className="text-white text-center mt-20">No hay usuarios para calificar</p>;
 
     return (
         <div
-            className="flex flex-col items-center justify-center min-h-screen py-2 bg-cover bg-center"
+            className="flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-4 bg-cover bg-center"
             style={{ backgroundImage: "url('/rosamorado.svg')" }}
         >
             {nombreCalificador && (
-                <h2 className="text-white text-xl font-bold mt-4 mb-6">
+                <h2 className="text-white text-lg sm:text-xl font-bold mt-4 mb-4 sm:mb-6 text-center">
                     Hola, {nombreCalificador}
                 </h2>
             )}
 
             {baseData && (
-                <div className="text-white max-w-xl mb-10 px-6 py-6 rounded-2xl shadow-lg bg-gradient-to-br from-pink-700/70 to-purple-800/60 border border-white/30 backdrop-blur-sm">
-                    <h2 className='text-2xl font-extrabold mb-2 text-center tracking-wide'>{baseData.Nombre}</h2>
-                    <h3 className='text-lg font-semibold mb-4 text-center italic text-white/90'>{baseData.Competencia}</h3>
-                    <p className='mb-6 text-sm text-justify text-white/80'>{baseData.Descripcion}</p>
-                    <div className='space-y-3 text-sm'>
-                        <div><span className='font-bold text-white'>🟣 Comportamiento 1:</span> {baseData.Comportamiento1}</div>
-                        <div><span className='font-bold text-white'>🟣 Comportamiento 2:</span> {baseData.Comportamiento2}</div>
-                        <div><span className='font-bold text-white'>🟣 Comportamiento 3:</span> {baseData.Comportamiento3}</div>
+                <div className="text-white w-full max-w-xl mb-6 sm:mb-10 px-4 sm:px-6 py-4 sm:py-6 rounded-2xl shadow-lg bg-primary-dark/80 border border-white/30 backdrop-blur-sm">
+                    <h2 className='text-xl sm:text-2xl font-extrabold mb-2 text-center tracking-wide'>{baseData.Nombre}</h2>
+                    <h3 className='text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-center italic text-white/90'>{baseData.Competencia}</h3>
+                    <p className='mb-4 sm:mb-6 text-xs sm:text-sm text-justify text-white/80'>{baseData.Descripcion}</p>
+                    <div className='space-y-2 sm:space-y-3 text-xs sm:text-sm'>
+                        <div><span className='font-bold text-primary-light'>🟣 Comportamiento 1:</span> {baseData.Comportamiento1}</div>
+                        <div><span className='font-bold text-primary-light'>🟣 Comportamiento 2:</span> {baseData.Comportamiento2}</div>
+                        <div><span className='font-bold text-primary-light'>🟣 Comportamiento 3:</span> {baseData.Comportamiento3}</div>
                     </div>
                 </div>
             )}
 
-            <div className='flex flex-col items-center gap-8 w-full'>
+            <div className='flex flex-col items-center gap-6 sm:gap-8 w-full'>
                 {usuarios.filter((usuario) => usuario.role !== 'Impostor').map((usuario) => (
                     <div
                         key={usuario.ID}
-                        className={`relative text-white px-6 pt-6 pb-6 rounded-lg bg-cover bg-center flex flex-col items-center mx-auto ${errores.includes(usuario.ID) ? 'border-4 border-yellow-400' : ''}`}
+                        className={`relative text-white px-4 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-6 rounded-lg bg-cover bg-center flex flex-col items-center mx-auto ${errores.includes(usuario.ID) ? 'border-4 border-yellow-400' : ''}`}
                         style={{
                             backgroundImage: "url('/Frame_general.svg')",
                             width: '100%',
-                            maxWidth: '400px',
-                            height: '500px',
+                            maxWidth: '360px',
+                            minHeight: '450px',
                             backgroundSize: '100% 100%',
                             backgroundRepeat: 'no-repeat',
                             backgroundPosition: 'center center',
                         }}
                     >
-                        <div className="absolute w-full flex justify-center mt-3">
+                        <div className="absolute w-full flex justify-center mt-2 sm:mt-3">
                             {usuario.Photo && (
                                 <img
                                     src={usuario.Photo}
                                     alt={`Foto de ${usuario.Nombre}`}
-                                    className="w-36 h-36 rounded-md object-cover shadow-lg border-4 border-white"
+                                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-md object-cover shadow-lg border-4 border-white"
                                 />
                             )}
                         </div>
 
-                        <div className='mt-40'></div>
-                        <p className='text-sm mb-1 font-bold'>ID: {usuario.ID}</p>
-                        <p className='text-sm mb-4 font-bold'>Nombre: {usuario.Nombre}</p>
+                        <div className='mt-32 sm:mt-40'></div>
+                        <p className='text-xs sm:text-sm mb-1 font-bold'>ID: {usuario.ID}</p>
+                        <p className='text-xs sm:text-sm mb-3 sm:mb-4 font-bold text-center'>Nombre: {usuario.Nombre}</p>
 
                         {[1, 2, 3].map(num => (
-                            <div key={num} className='mb-2 w-36 px-4'>
-                                <label className='text-sm font-semibold block mb-1'>Habilidad #{num}:</label>
+                            <div key={num} className='mb-2 w-32 sm:w-36 px-2 sm:px-4'>
+                                <label className='text-xs sm:text-sm font-semibold block mb-1'>Habilidad #{num}:</label>
                                 <input
                                     type="number"
                                     step="1"
@@ -262,8 +262,8 @@ const GraderPage: React.FC = () => {
                                     max="5"
                                     value={calificaciones[usuario.ID]?.[`Calificacion_${num}` as CalificacionKey] ?? ''}
                                     onChange={e => handleInputChange(usuario.ID, num, e.target.value)}
-                                    placeholder="Calificación"
-                                    className='w-full px-3 py-2 rounded bg-pink-600 text-white placeholder-white font-medium text-center shadow-md focus:outline-none focus:ring-2 focus:ring-white/70'
+                                    placeholder="1-5"
+                                    className='w-full px-2 sm:px-3 py-2 rounded bg-primary text-white placeholder-white/70 font-medium text-center shadow-md focus:outline-none focus:ring-2 focus:ring-white/70 text-sm'
                                 />
                             </div>
                         ))}
@@ -273,12 +273,12 @@ const GraderPage: React.FC = () => {
 
             <button
                 onClick={handleSubmitGeneral}
-                className="mt-10 px-6 py-3 bg-[#BD00FF] text-white font-semibold rounded-lg shadow-md hover:bg-[#9d00d3] transition"
+                className="mt-6 sm:mt-10 px-4 sm:px-6 py-2 sm:py-3 bg-primary-dark text-white font-semibold rounded-lg shadow-md hover:bg-primary transition text-sm sm:text-base"
             >
                 Enviar todas las calificaciones
             </button>
 
-            <p className='text-white text-xs italic mt-10'>POWERED BY <span className='font-bold text-[#BD00FF]'>NOVA</span></p>
+            <p className='text-white text-xs italic mt-6 sm:mt-10'>POWERED BY <span className='font-bold text-primary-light'>NOVA</span></p>
         </div>
     );
 };

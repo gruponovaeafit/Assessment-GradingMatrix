@@ -12,7 +12,7 @@ async function enviarCalificacion() {
     });
   
     const data = await response.json();
-    console.log(data);
+  // data recibido en test hook
   }
 
 export default enviarCalificacion;

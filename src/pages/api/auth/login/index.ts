@@ -38,6 +38,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Correo y contraseña son obligatorios' });
   }
 
+  // Verificar si es admin (credenciales en servidor)
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (email === adminEmail && password === adminPassword) {
+    return res.status(200).json({ role: 'admin' });
+  }
+
   let pool;
   try {
     pool = await connectToDatabase();

@@ -64,7 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Calificacion_3
       } = cal;
 
-      console.log("🔍 Recibido:", cal);
+  // recibido calificación
 
       if (
         ID_Persona === undefined || ID_Grupo === undefined || ID_Base === undefined || ID_Calificador === undefined ||
@@ -128,7 +128,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .input("NuevoGrupo", sql.Int, siguienteGrupo)
       .query("UPDATE Calificadores SET ID_Grupo = @NuevoGrupo WHERE ID = @ID");
 
-    console.log(`🔁 Calificador ${calificadorID} rotado del grupo ${grupoActual} al grupo ${siguienteGrupo}`);
+  // rotación de calificador realizada
 
     res.status(200).json({
       message: "✅ Calificaciones procesadas correctamente",

@@ -26,7 +26,7 @@ const dbConfig: SqlConfig = {
 
 const parseForm = (
   req: NextApiRequest
-): Promise<{ fields: any; files: { image?: File | File[] } }> => {
+): Promise<{ fields: Record<string, unknown>; files: { image?: File | File[] } }> => {
   const form = new IncomingForm({ keepExtensions: true });
 
   return new Promise((resolve, reject) => {
@@ -87,10 +87,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await pool.close();
 
     return res.status(200).json({ message: 'Persona registrada correctamente', url: photoUrl });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Error en el registro:', error);
 
-    if (error.number === 2627) {
+    // intentar detectar código de error de SQL si existe
+    const err: any = error;
+    if (err && err.number === 2627) {
       return res.status(400).json({ error: 'El correo ya está registrado' });
     }
 

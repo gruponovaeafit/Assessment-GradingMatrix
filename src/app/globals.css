@@ -5,11 +5,21 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Paleta principal */
+  --primary: #7C3AED;
+  --primary-light: #A78BFA;
+  --primary-dark: #5B21B6;
+  --accent: #9333EA;
+  
+  /* Estados */
+  --success: #22C55E;
+  --error: #EF4444;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #1a1a1a;
+    --background: #0f0f0f;
     --foreground: #ededed;
   }
 }
@@ -18,28 +28,36 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
-
 }
 
 button {
   transition: .3s ease-in;
 }
 
-button:hover{
-  background-color: rgba(68, 0, 255, 0.408);  
+button:hover {
+  background-color: var(--primary);
   color: white;
   transition: .3s ease-in-out;
 }
 
-.gradient_purple{
-  background-image:linear-gradient(
-    130deg,
-    #1c48ff,
-    #2f2cc9,
-    #2f2cc9,
-    #6822ff,
-    #a910fe,
-    #9e3ffc,
-    #6d81c8
+/* Gradiente principal morado */
+.gradient_purple {
+  background: linear-gradient(
+    135deg,
+    #5B21B6 0%,
+    #7C3AED 25%,
+    #9333EA 50%,
+    #7C3AED 75%,
+    #5B21B6 100%
+  );
+}
+
+/* Gradiente alternativo más suave */
+.gradient_purple_soft {
+  background: linear-gradient(
+    135deg,
+    #2E1065 0%,
+    #5B21B6 50%,
+    #7C3AED 100%
   );
 }

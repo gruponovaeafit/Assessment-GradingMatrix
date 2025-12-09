@@ -87,38 +87,38 @@ const GroupGeneration: React.FC = () => {
   };
 
   return (
-    <div className='flex flex-col items-center justify-center min-h-screen py-2'>
-      <h1 className='text-2xl font-bold mb-[40] mt-[40]'>Genera los Grupos</h1>
-      <form onSubmit={handleFormSubmit} className='flex flex-col items-center justify-center bg-white bg-opacity-5 rounded-lg p-4 m-[20] w-[300px]'>
+    <div className='flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-4 gradient_purple'>
+      <h1 className='text-xl sm:text-2xl font-bold mb-6 sm:mb-10 mt-4 sm:mt-10 text-white text-center'>Genera los Grupos</h1>
+      <form onSubmit={handleFormSubmit} className='flex flex-col items-center justify-center bg-white/10 rounded-lg p-4 w-full max-w-[300px] backdrop-blur-sm'>
         <input 
           type="number" 
           placeholder='Cantidad de grupos' 
           name='groups'
-          className='placeholder-white placeholder-bold bg-violet-700 border-none rounded-lg outline-none p-2 w-full'
+          className='placeholder-white/70 bg-primary-dark border-none rounded-lg outline-none p-2 w-full text-white text-sm sm:text-base'
         />
-        <button type='submit' className='mt-4 bg-gray-300 bg-opacity-10 text-white py-2 px-4 rounded-lg w-full'>Generar grupos</button>
-        <button className='mt-4 bg-gray-300 bg-opacity-10 text-white py-2 px-4 rounded-lg w-full' onClick={() => router.push('/dashboardadmin')}>
+        <button type='submit' className='mt-4 bg-primary hover:bg-primary-light text-white py-2 px-4 rounded-lg w-full font-semibold text-sm sm:text-base'>Generar grupos</button>
+        <button type='button' className='mt-4 bg-black/30 hover:bg-black/50 text-white py-2 px-4 rounded-lg w-full text-sm sm:text-base' onClick={() => router.push('/dashboardadmin')}>
           Ir al panel de calificaciones
         </button>
         {groupsGenerated.length > 0 && (
-          <button type='button' onClick={handleUploadGroups} className='mt-4 bg-green-500 text-white py-2 px-4 rounded-lg w-full'>
+          <button type='button' onClick={handleUploadGroups} className='mt-4 bg-success hover:bg-success-dark text-white py-2 px-4 rounded-lg w-full font-semibold text-sm sm:text-base'>
             Subir Grupos a la Base de Datos
           </button>
         )}
       </form>
 
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2 m-[20]'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 sm:mt-8 w-full max-w-4xl px-2'>
         {groupsGenerated.map((group, index) => (
-          <div key={index} className='flex flex-col justify-center items-center p-4 bg-white bg-opacity-5 rounded-lg shadow-md w-[360px] mb-[20] shadow-gray-300/20'>
-            <h2 className='text-lg font-semibold text-white mb-[10]'>Grupo {index + 1}</h2>
-            <ul>
+          <div key={index} className='flex flex-col justify-center items-center p-3 sm:p-4 bg-white/10 rounded-lg shadow-md w-full mb-4 shadow-black/20 backdrop-blur-sm'>
+            <h2 className='text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3'>Grupo {index + 1}</h2>
+            <ul className='w-full'>
               {group.map((member) => (
-                <li key={member.ID} className='flex flex-col gap-[2px] bg-gray-300 bg-opacity-10 rounded-lg mb-[10] p-[5]'>
-                  <span className='text-violet-700 font-bold'>#{member.ID}</span>
-                  <span className='text-white'>
-                    {member.Participante} <span className='text-gray-400'>({member.Correo})</span>
+                <li key={member.ID} className='flex flex-col gap-1 bg-black/20 rounded-lg mb-2 sm:mb-3 p-2 sm:p-3'>
+                  <span className='text-primary-light font-bold text-sm'>#{member.ID}</span>
+                  <span className='text-white text-sm'>
+                    {member.Participante} <span className='text-white/60 text-xs'>({member.Correo})</span>
                   </span>
-                  <span className='text-white text-sm'>Rol: {member.role} | Grupo: {member.Grupo}</span>
+                  <span className='text-white/80 text-xs'>Rol: {member.role} | Grupo: {member.Grupo}</span>
                 </li>
               ))}
             </ul>

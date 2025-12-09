@@ -37,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Datos de grupos inválidos' });
   }
 
-  console.log('📦 Datos recibidos para insertar:', JSON.stringify(groups, null, 2));
+  // debug: payload received for insertion
   let pool;
   let transaction;
   try {
@@ -76,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       for (const member of groups[i]) {
         if (member.ID && grupoID) {
           const insertQuery = 'INSERT INTO PersonasPorGrupo (ID_Persona, ID_Grupo) VALUES (@ID_Persona, @ID_Grupo)';
-          console.log(`Preparando inserción: ${insertQuery} con ID_Persona=${member.ID}, ID_Grupo=${grupoID}`);
+          // preparación de inserción de miembro
           const insertRequest = new sql.Request(transaction);
           insertRequest.input('ID_Persona', sql.Int, member.ID);
           insertRequest.input('ID_Grupo', sql.Int, grupoID);

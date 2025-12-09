@@ -55,8 +55,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     else {
       res.status(405).json({ error: 'Método no permitido' });
     }
-  } catch (error: any) {
-    if (req.method === 'POST' && error.number === 2627) {
+  } catch (error: unknown) {
+    const err: any = error;
+    if (req.method === 'POST' && err && err.number === 2627) {
       res.status(400).json({ error: 'El correo ya está registrado' });
     } else {
       console.error('❌ Error al procesar la solicitud:', error);

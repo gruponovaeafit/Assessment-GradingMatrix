@@ -118,10 +118,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     });
 
-    res.status(200).json(data);
-    res.status(200).json(data);
+  res.status(200).json(data);
     await pool.close();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("❌ Error en dashboardadmin:", error);
     res.status(500).json({ error: "Error interno al cargar datos" });
   }

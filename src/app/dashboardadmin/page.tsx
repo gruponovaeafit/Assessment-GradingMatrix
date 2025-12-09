@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
+import { useAdminAuth } from '../Hooks/useAdminAuth';
 
 interface Calificacion {
   Grupo: string;
@@ -12,12 +13,18 @@ interface Calificacion {
 }
 
 export default function Dashboard() {
+  const { isAdmin, isLoading: authLoading, requireAdmin, logout } = useAdminAuth();
   const [data, setData] = useState<Calificacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState('');
   const [editModal, setEditModal] = useState<Calificacion | null>(null);
   const [originalData, setOriginalData] = useState<Calificacion | null>(null);
+
+  // Proteger la ruta - redirige si no es admin
+  useEffect(() => {
+    requireAdmin();
+  }, [isAdmin, authLoading]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,7 +53,7 @@ export default function Dashboard() {
     e.preventDefault();
     if (!editModal || !originalData) return;
 
-    const updates: any = { id: editModal.ID };
+  const updates: Record<string, string | number> = { id: editModal.ID };
     if (editModal.Participante !== originalData.Participante) updates.nombre = editModal.Participante;
     if (editModal.Correo !== originalData.Correo) updates.correo = editModal.Correo;
     if (editModal.role !== originalData.role) updates.role = editModal.role;
@@ -75,38 +82,56 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return <p className="text-center mt-20">Cargando datos...</p>;
-  if (error) return <p className="text-center mt-20 text-red-500">{error}</p>;
+  // Mostrar loading mientras verifica autenticación
+  if (authLoading || !isAdmin) {
+    return (
+      <div className="flex items-center justify-center min-h-screen gradient_purple">
+        <p className="text-white text-xl">Verificando acceso...</p>
+      </div>
+    );
+  }
+
+  if (loading) return <p className="text-center mt-20 text-white">Cargando datos...</p>;
+  if (error) return <p className="text-center mt-20 text-error">{error}</p>;
 
   return (
     <div
-      className="flex flex-col items-center justify-center min-h-screen py-2 bg-cover bg-center"
-      style={{ backgroundImage: "url('/rosamorado.svg')" }}
+      className="flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-4 bg-cover bg-center gradient_purple"
     >
-      <h1 className="text-2xl font-bold mt-6 text-white">Panel de Calificaciones</h1>
+      {/* Header con título y botón logout */}
+      <div className="w-full max-w-[900px] flex justify-between items-center mb-4 px-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-white">Panel de Calificaciones</h1>
+        <button
+          onClick={logout}
+          className="bg-error hover:bg-error-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+        >
+          Cerrar Sesión
+        </button>
+      </div>
 
       {mensaje && (
-        <p className="mt-4 text-lg font-medium text-center text-white bg-black/40 px-4 py-2 rounded">
+        <p className="mt-4 text-base sm:text-lg font-medium text-center text-white bg-black/40 px-4 py-2 rounded">
           {mensaje}
         </p>
       )}
 
-      <div className="flex flex-col gap-4 max-w-[800px] w-[350] rounded-md p-4 mt-4">
+      <div className="flex flex-wrap justify-center gap-4 max-w-[900px] w-full rounded-md p-2 sm:p-4 mt-4">
         {data.map((item) => (
           <div
             key={item.ID}
-            className="flex flex-col justify-center items-center text-white px-6 py-4 rounded-lg bg-cover bg-center"
+            className="flex flex-col justify-center items-center text-white px-4 sm:px-6 py-3 sm:py-4 rounded-lg bg-cover bg-center"
             style={{
               backgroundImage: "url('/marcoH.svg')",
-              width: '340px',
-              height: '260px',
+              width: '100%',
+              maxWidth: '320px',
+              minHeight: '240px',
               backgroundSize: 'contain',
               backgroundRepeat: 'no-repeat',
-              backgroundPosition: '0% center',
+              backgroundPosition: 'center',
             }}
           >
             <div className="w-full flex justify-center mb-2">
-              <h2 className="text-sm font-bold text-white text-center w-[100%] leading-tight">
+              <h2 className="text-xs sm:text-sm font-bold text-white text-center w-full leading-tight">
                 {item.Participante}
               </h2>
             </div>
@@ -115,10 +140,10 @@ export default function Dashboard() {
               <div className="border-t border-white/50" style={{ width: '95%' }} />
             </div>
 
-            <div className="text-left w-full leading-6 text-sm">
+            <div className="text-left w-full leading-5 sm:leading-6 text-xs sm:text-sm">
               <p><span className="font-bold">ID:</span> {item.ID}</p>
               <p><span className="font-bold">Grupo:</span> {item.Grupo}</p>
-              <p><span className="font-bold">Correo:</span> {item.Correo}</p>
+              <p className="truncate"><span className="font-bold">Correo:</span> {item.Correo}</p>
               <p><span className="font-bold">Rol:</span> {item.role}</p>
               <p>
                 <span className="font-bold">Promedio:</span>{" "}
@@ -128,7 +153,7 @@ export default function Dashboard() {
               </p>
               <p>
                 <span className="font-bold">Estado:</span>{' '}
-                <span className={item.Calificacion_Promedio < 4 ? 'text-red-400' : 'text-green-400'}>
+                <span className={item.Calificacion_Promedio < 4 ? 'text-error' : 'text-success'}>
                   {item.Estado}
                 </span>
               </p>
@@ -139,7 +164,7 @@ export default function Dashboard() {
                 setEditModal({ ...item });
                 setOriginalData({ ...item });
               }}
-              className="mt-2 text-sm bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
+              className="mt-2 text-xs sm:text-sm bg-primary hover:bg-primary-light text-white px-3 sm:px-4 py-1 rounded"
             >
               Editar
             </button>
@@ -148,32 +173,32 @@ export default function Dashboard() {
       </div>
 
       {editModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-purple-800 rounded-lg p-6 w-[90%] max-w-md">
-            <h2 className="text-xl font-bold mb-4 text-white">Editar Participante</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-primary-dark rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-white">Editar Participante</h2>
             <form onSubmit={handleUpdate}>
-              <label className="block mb-2 font-semibold text-white">Nombre</label>
+              <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Nombre</label>
               <input
                 type="text"
                 value={editModal.Participante}
                 onChange={(e) => setEditModal({ ...editModal, Participante: e.target.value })}
-                className="w-full border border-gray-300 px-3 py-2 rounded mb-4 text-black placeholder-black"
+                className="w-full border-2 border-primary px-3 py-2 rounded mb-4 text-black bg-white placeholder-gray-500 text-sm sm:text-base"
               />
 
-              <label className="block mb-2 font-semibold text-white">Correo</label>
+              <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Correo</label>
               <input
                 type="email"
                 value={editModal.Correo}
                 onChange={(e) => setEditModal({ ...editModal, Correo: e.target.value })}
-                className="w-full border border-gray-300 px-3 py-2 rounded mb-4 text-black placeholder-black"
+                className="w-full border-2 border-primary px-3 py-2 rounded mb-4 text-black bg-white placeholder-gray-500 text-sm sm:text-base"
               />
 
-              <label className="block mb-2 font-semibold text-white">Rol</label>
+              <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Rol</label>
               <input
                 type="text"
                 value={editModal.role}
                 onChange={(e) => setEditModal({ ...editModal, role: e.target.value })}
-                className="w-full border border-gray-300 px-3 py-2 rounded mb-4 text-black placeholder-black"
+                className="w-full border-2 border-primary px-3 py-2 rounded mb-4 text-black bg-white placeholder-gray-500 text-sm sm:text-base"
               />
 
               <div className="flex justify-end gap-2">
@@ -183,13 +208,13 @@ export default function Dashboard() {
                     setEditModal(null);
                     setOriginalData(null);
                   }}
-                  className="px-4 py-2 rounded bg-gray-300"
+                  className="px-3 sm:px-4 py-2 rounded bg-white/80 text-black hover:bg-white text-sm sm:text-base"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
+                  className="px-3 sm:px-4 py-2 rounded bg-success text-white hover:bg-success-dark text-sm sm:text-base"
                 >
                   Guardar
                 </button>
