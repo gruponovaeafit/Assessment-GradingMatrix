@@ -9,30 +9,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        // Paleta principal: morado, blanco, negro
-        primary: {
-          DEFAULT: "#7C3AED", // violet-600
-          light: "#A78BFA",   // violet-400
-          dark: "#5B21B6",    // violet-800
-          950: "#2E1065",     // violet-950
-        },
-        accent: {
-          DEFAULT: "#9333EA", // purple-600
-          light: "#C084FC",   // purple-400
-          dark: "#6B21A8",    // purple-800
-        },
-        // Estados: verde y rojo
+        bg: "var(--color-bg)",
+        surface: "var(--color-surface)",
+        text: "var(--color-text)",
+        muted: "var(--color-muted)",
+        accent: "var(--color-accent)",
         success: {
-          DEFAULT: "#22C55E", // green-500
-          light: "#4ADE80",   // green-400
-          dark: "#16A34A",    // green-600
+          DEFAULT: "var(--success)",
         },
         error: {
-          DEFAULT: "#EF4444", // red-500
-          light: "#F87171",   // red-400
-          dark: "#DC2626",    // red-600
+          DEFAULT: "var(--error)",
         },
       },
     },

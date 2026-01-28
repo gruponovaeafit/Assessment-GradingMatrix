@@ -1,18 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import sql, { config as SqlConfig } from "mssql";
-
-// Configuración MSSQL
-export const dbConfig: SqlConfig = {
-  user: process.env.DB_USER as string,
-  password: process.env.DB_PASS as string,
-  database: process.env.DB_NAME as string,
-  server: process.env.DB_SERVER as string,
-  port: parseInt(process.env.DB_PORT ?? "1433", 10),
-  options: {
-    encrypt: true,
-    trustServerCertificate: false,
-  },
-};
+import { connectToDatabase } from "./db";
 
 function normalizaBase(nombre: string) {
   // Deja solo los números del nombre y lo devuelve como "Base N"
@@ -22,7 +9,7 @@ function normalizaBase(nombre: string) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const pool = await sql.connect(dbConfig);
+    const pool = await connectToDatabase();
 
     const personasResult = await pool.request().query(`
       SELECT 

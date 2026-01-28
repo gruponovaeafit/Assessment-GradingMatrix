@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { connectToDatabase } from './dashboardadmin';
+import { connectToDatabase } from './db';
 import sql from 'mssql';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -17,9 +17,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Debe enviarse al menos un campo para actualizar' });
   }
 
-  let pool;
   try {
-    pool = await connectToDatabase();
+    const pool = await connectToDatabase();
     const request = pool.request().input('ID', sql.Int, id);
     const updateFields: string[] = [];
 
@@ -50,7 +49,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error) {
     console.error('❌ Error al actualizar participante:', error);
     return res.status(500).json({ error: 'Error al actualizar participante' });
-  } finally {
-    if (pool) await pool.close();
   }
 }

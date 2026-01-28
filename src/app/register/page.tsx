@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Spinner } from "../components/UI/Loading";
 
 export default function RegisterPerson() {
   const [nombre, setNombre] = useState("");
@@ -64,40 +65,39 @@ export default function RegisterPerson() {
   }, [mensaje]);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full min-h-screen bg-no-repeat bg-cover bg-center gradient_purple px-4 py-8">
+    <div className="flex flex-col items-center justify-center w-full min-h-screen bg-white px-4 py-8">
       <div
-        className="relative bg-no-repeat bg-center bg-contain w-full max-w-[400px] h-auto min-h-[500px] flex items-center justify-center"
-        style={{ backgroundImage: "url('/Frame_general.svg')" }}
+        className="w-full max-w-md mx-auto flex items-center justify-center"
       >
-        <form onSubmit={handleSubmit} className="flex flex-col items-center gap-3 sm:gap-4 p-4 sm:p-6 w-full max-w-[320px]">
-          <h1 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-4 text-black text-center">Inscribir Aspirante</h1>
+        <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 p-8 w-full max-w-[380px] bg-white shadow-lg rounded-2xl border border-gray-100">
+          <h1 className="text-3xl font-extrabold mb-4 text-gray-900 text-center">Inscribir Aspirante</h1>
 
-          <div className="mb-1 sm:mb-2 w-full">
-            <label className="block text-lg sm:text-xl font-bold mb-1 text-black text-center">Nombre</label>
+          <div className="mb-2 w-full">
+            <label className="block text-lg font-semibold mb-1 text-gray-800">Nombre</label>
             <input
               type="text"
               placeholder="Nombre del aspirante"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               required
-              className="w-full px-3 py-2 border-2 border-primary bg-white text-black rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder-gray-500 text-sm sm:text-base"
+              className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)] placeholder-gray-400 text-base"
             />
           </div>
 
-          <div className="mb-1 sm:mb-2 w-full">
-            <label className="block text-lg sm:text-xl font-bold mb-1 text-black text-center">Correo Electrónico</label>
+          <div className="mb-2 w-full">
+            <label className="block text-lg font-semibold mb-1 text-gray-800">Correo Electrónico</label>
             <input
               type="email"
               placeholder="Correo del aspirante"
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
               required
-              className="w-full px-3 py-2 border-2 border-primary bg-white text-black rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder-gray-500 text-sm sm:text-base"
+              className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)] placeholder-gray-400 text-base"
             />
           </div>
 
-          <div className="mb-1 sm:mb-2 w-full">
-            <label className="block text-lg sm:text-xl font-bold mb-1 text-black text-center">Foto de Aspirante</label>
+          <div className="mb-2 w-full">
+            <label className="block text-lg font-semibold mb-1 text-gray-800">Foto de Aspirante</label>
             <input
               type="file"
               accept="image/*"
@@ -105,22 +105,29 @@ export default function RegisterPerson() {
                 const file = e.target.files?.[0];
                 setImagen(file || null);
               }}
-              className="w-full text-black text-sm file:rounded-md file:border-0 file:bg-primary-dark file:text-white file:px-3 file:py-2 file:cursor-pointer file:hover:bg-primary"
+              className="w-full text-gray-900 text-base file:rounded-md file:border-0 file:bg-[color:var(--color-accent)] file:text-white file:px-3 file:py-2 file:cursor-pointer file:hover:bg-[#5B21B6]"
             />
           </div>
 
           {Photo && (
             <div className="w-full text-center">
-              <img src={Photo} alt="Imagen subida" className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto mt-2 border-4 border-primary" />
+              <img src={Photo} alt="Imagen subida" className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto mt-2 border-4 border-[color:var(--color-accent)]" />
             </div>
           )}
 
           <button
             type="submit"
+            className="w-full mt-2 rounded-lg bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white text-lg font-semibold py-3 transition shadow flex items-center justify-center gap-2"
             disabled={enviando}
-            className={`w-full rounded-md bg-primary-dark hover:bg-primary text-white text-lg sm:text-xl p-3 sm:p-4 font-semibold ${enviando ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            {enviando ? "Enviando..." : "Inscribir"}
+            {enviando ? (
+              <>
+                <Spinner size="sm" />
+                <span>Inscribiendo...</span>
+              </>
+            ) : (
+              "Inscribir"
+            )}
           </button>
 
           {mensaje && (

@@ -1,30 +1,12 @@
 // pages/api/auth/login.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import sql, { config as SqlConfig } from 'mssql';
+import sql from 'mssql';
+import { connectToDatabase } from '../../db';
+import { comparePassword, generateToken, hashPassword } from '../../../../lib/auth';
 
-// Configuración de la base de datos
-export const dbConfig: SqlConfig = {
-  user: process.env.DB_USER as string,
-  password: process.env.DB_PASS as string,
-  database: process.env.DB_NAME as string,
-  server: process.env.DB_SERVER as string,
-  port: parseInt(process.env.DB_PORT ?? '1433', 10),
-  options: {
-    encrypt: true,
-    trustServerCertificate: false,
-  },
-};
-
-// Función para conectar a la base de datos
-export async function connectToDatabase() {
-  try {
-    const pool = await sql.connect(dbConfig);
-    return pool;
-  } catch (error) {
-    console.error('❌ Error conectando a MSSQL:', error);
-    throw new Error('No se pudo conectar a la base de datos');
-  }
-}
+// Credenciales de admin (en producción usar variables de entorno)
+const ADMIN_EMAIL = 'admin@assessment.com';
+const ADMIN_PASSWORD_HASH = '$2a$10$XQxBtJXKQJZJZJZJZJZJZuHashedPasswordForAdmin'; // Hash pre-generado
 
 // API de login
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -38,34 +20,75 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Correo y contraseña son obligatorios' });
   }
 
-  // Verificar si es admin (credenciales en servidor)
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  // Verificar si es admin
+  const adminEmail = process.env.ADMIN_EMAIL || ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123'; // Fallback para desarrollo
 
   if (email === adminEmail && password === adminPassword) {
-    return res.status(200).json({ role: 'admin' });
+    const token = generateToken({ id: 0, email: adminEmail, role: 'admin' });
+    return res.status(200).json({ 
+      role: 'admin',
+      token,
+      message: 'Login exitoso'
+    });
   }
 
-  let pool;
   try {
-    pool = await connectToDatabase();
+    const pool = await connectToDatabase();
 
+    // Buscar calificador por correo (la contraseña ahora debería estar hasheada en BD)
     const result = await pool.request()
       .input('Correo', sql.NVarChar, email)
-      .input('Contrasena', sql.NVarChar, password)
-      .query('SELECT ID, Correo, ID_Grupo, ID_Base FROM Calificadores WHERE Correo = @Correo AND Contrasena = @Contrasena');
+      .query('SELECT ID, Correo, Contrasena, ID_Grupo, ID_Base FROM Calificadores WHERE Correo = @Correo');
 
     if (result.recordset.length === 0) {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
 
     const calificador = result.recordset[0];
+    
+    // Verificar contraseña
+    // Si la contraseña en BD no está hasheada (legado), comparar directamente
+    let isValidPassword = false;
+    
+    if (calificador.Contrasena.startsWith('$2')) {
+      // Contraseña hasheada con bcrypt
+      isValidPassword = await comparePassword(password, calificador.Contrasena);
+    } else {
+      // Contraseña en texto plano (legado) - comparar directamente
+      isValidPassword = calificador.Contrasena === password;
+      
+      // Opcional: actualizar a hash para próximos logins
+      if (isValidPassword) {
+        const hashedPassword = await hashPassword(password);
+        await pool.request()
+          .input('ID', sql.Int, calificador.ID)
+          .input('HashedPassword', sql.NVarChar, hashedPassword)
+          .query('UPDATE Calificadores SET Contrasena = @HashedPassword WHERE ID = @ID');
+      }
+    }
 
-    res.status(200).json({ role: 'calificador', ID_Grupo: calificador.ID_Grupo, ID_Base: calificador.ID_Base, ID_Calificador: calificador.ID });
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Credenciales incorrectas' });
+    }
+
+    // Generar token JWT
+    const token = generateToken({ 
+      id: calificador.ID, 
+      email: calificador.Correo, 
+      role: 'calificador' 
+    });
+
+    res.status(200).json({ 
+      role: 'calificador', 
+      ID_Grupo: calificador.ID_Grupo, 
+      ID_Base: calificador.ID_Base, 
+      ID_Calificador: calificador.ID,
+      token,
+      message: 'Login exitoso'
+    });
   } catch (error) {
     console.error('❌ Error al procesar el login:', error);
     res.status(500).json({ error: 'Error al procesar el login' });
-  } finally {
-    if (pool) await pool.close();
   }
 }

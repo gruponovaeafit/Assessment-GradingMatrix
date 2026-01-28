@@ -3,24 +3,12 @@ import { promises as fs } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { BlobServiceClient } from '@azure/storage-blob';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import sql, { config as SqlConfig } from 'mssql';
+import sql from 'mssql';
+import { connectToDatabase } from './db';
 
 export const config = {
   api: {
     bodyParser: false,
-  },
-};
-
-// MSSQL config
-const dbConfig: SqlConfig = {
-  user: process.env.DB_USER as string,
-  password: process.env.DB_PASS as string,
-  database: process.env.DB_NAME as string,
-  server: process.env.DB_SERVER as string,
-  port: parseInt(process.env.DB_PORT ?? '1433', 10),
-  options: {
-    encrypt: true,
-    trustServerCertificate: false,
   },
 };
 
@@ -76,15 +64,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const photoUrl = blockBlobClient.url;
 
     // Insertar en base de datos MSSQL
-    const pool = await sql.connect(dbConfig);
+    const pool = await connectToDatabase();
 
     await pool.request()
       .input('Nombre', sql.NVarChar, nombre)
       .input('Correo', sql.NVarChar, correo)
       .input('Photo', sql.NVarChar, photoUrl)
       .query('INSERT INTO Personas (Nombre, Correo, Photo) VALUES (@Nombre, @Correo, @Photo)');
-
-    await pool.close();
 
     return res.status(200).json({ message: 'Persona registrada correctamente', url: photoUrl });
   } catch (error: unknown) {

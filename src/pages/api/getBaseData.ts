@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { connectToDatabase } from './dashboardadmin';
+import { connectToDatabase } from './db';
 import sql from 'mssql';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -13,9 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'El campo id_base es obligatorio' });
   }
 
-  let pool;
   try {
-    pool = await connectToDatabase();
+    const pool = await connectToDatabase();
 
     const result = await pool.request()
       .input('id_base', sql.Int, id_base)
@@ -39,7 +38,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error) {
     console.error('❌ Error al obtener la base:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
-  } finally {
-    if (pool) await pool.close();
   }
 }

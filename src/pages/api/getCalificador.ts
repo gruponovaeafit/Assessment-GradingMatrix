@@ -1,7 +1,7 @@
 // pages/api/getCalificador.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import sql from 'mssql';
-import { dbConfig } from './dashboardadmin'; // reutilizas la config de conexión
+import { connectToDatabase } from './db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const pool = await sql.connect(dbConfig);
+    const pool = await connectToDatabase();
     const result = await pool
       .request()
       .input('ID', sql.Int, id_calificador)
@@ -32,5 +32,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ error: 'Error interno al obtener calificador' });
   }
 }
-// Removed unused setNombreCalificador function.
 

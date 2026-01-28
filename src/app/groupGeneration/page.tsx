@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAdminAuth } from '../Hooks/useAdminAuth';
 
 interface Persona {
   ID: number;
@@ -14,6 +15,11 @@ const GroupGeneration: React.FC = () => {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [groupsGenerated, setGroupsGenerated] = useState<Persona[][]>([]);
   const router = useRouter();
+  const { isAdmin, isLoading: authLoading, requireAdmin } = useAdminAuth();
+  // Proteger la ruta - redirige si no es admin
+  useEffect(() => {
+    requireAdmin();
+  }, [isAdmin, authLoading]);
 
   useEffect(() => {
     const fetchPersonas = async () => {
@@ -85,6 +91,16 @@ const GroupGeneration: React.FC = () => {
       alert('Hubo un error al subir los grupos');
     }
   };
+
+  // Mostrar loading mientras verifica autenticación
+  if (authLoading || !isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[color:var(--color-accent)]"></div>
+        <p className="text-[color:var(--color-text)] text-xl mt-4">Verificando acceso...</p>
+      </div>
+    );
+  }
 
   return (
     <div className='flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-4 gradient_purple'>

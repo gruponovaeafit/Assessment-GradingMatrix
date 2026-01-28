@@ -1,27 +1,47 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import sql, { config as SqlConfig } from "mssql";
+import sql, { config as SqlConfig, ConnectionPool } from "mssql";
 
-// Renombrar la constante para que no se llame "config"
+// Configuración de la base de datos
 export const dbConfig: SqlConfig = {
   user: process.env.DB_USER as string,
   password: process.env.DB_PASS as string,
   database: process.env.DB_NAME as string,
   server: process.env.DB_SERVER as string,
   port: parseInt(process.env.DB_PORT ?? "1433", 10),
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000,
+  },
   options: {
     encrypt: true,
     trustServerCertificate: false,
   },
 };
 
-// Función para conectar a la base de datos
-export async function connectToDatabase() {
+// Pool global para reutilizar conexiones (singleton pattern)
+let globalPool: ConnectionPool | null = null;
+
+// Función para conectar a la base de datos con connection pooling
+export async function connectToDatabase(): Promise<ConnectionPool> {
   try {
-    const pool = await sql.connect(dbConfig); // usar dbConfig
-    return pool;
+    if (globalPool && globalPool.connected) {
+      return globalPool;
+    }
+    
+    globalPool = await sql.connect(dbConfig);
+    return globalPool;
   } catch (error) {
     console.error("❌ Error conectando a MSSQL en la nube:", error);
     throw new Error("No se pudo conectar a la base de datos en la nube");
+  }
+}
+
+// Función helper para cerrar la conexión (solo para casos especiales)
+export async function closeDatabase(): Promise<void> {
+  if (globalPool) {
+    await globalPool.close();
+    globalPool = null;
   }
 }
 

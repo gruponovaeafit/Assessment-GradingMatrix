@@ -2,9 +2,18 @@
 
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useStoredId } from "../Hooks/UseStoreId";
+import { useAdminAuth } from "../Hooks/useAdminAuth";
+import { Spinner, SkeletonBaseInfo, SkeletonUserCard } from '../components/UI/Loading';
+import { showToast } from '../components/UI/Toast';
+import { useConfirmModal } from '../components/UI/ConfirmModal';
 
 const GraderPage: React.FC = () => {
     const { storedData } = useStoredId();
+    const { isAdmin, isLoading: authLoading, requireAdmin } = useAdminAuth();
+        // Proteger la ruta - redirige si no es admin
+        React.useEffect(() => {
+            requireAdmin();
+        }, [isAdmin, authLoading]);
     const [usuarios, setUsuarios] = useState<{
         ID: number; Nombre: ReactNode; ID_Persona: number; Grupo: string; role: string; Photo?: string;
     }[]>([]);
@@ -29,6 +38,8 @@ const GraderPage: React.FC = () => {
 
     const [calificaciones, setCalificaciones] = useState<CalificacionesType>({});
     const [errores, setErrores] = useState<number[]>([]);
+    const [submitting, setSubmitting] = useState(false);
+    const { confirm, setIsLoading, ConfirmModalComponent } = useConfirmModal();
 
     useEffect(() => {
         const storedData = localStorage.getItem("storedData");
@@ -130,10 +141,23 @@ const GraderPage: React.FC = () => {
 
     const handleSubmitGeneral = async () => {
         if (!validarTodasLasCalificaciones()) {
-            alert('⚠️ Todos los participantes deben tener las 3 calificaciones asignadas antes de enviar.');
+            showToast.error('Todos los participantes deben tener las 3 calificaciones asignadas');
             return;
         }
 
+        // Mostrar modal de confirmación
+        const confirmed = await confirm({
+            title: 'Confirmar envío',
+            message: `¿Estás seguro de enviar las calificaciones para ${usuarios.filter(u => u.role !== 'Impostor').length} participantes? Esta acción no se puede deshacer.`,
+            confirmText: 'Sí, enviar',
+            cancelText: 'Cancelar',
+            variant: 'warning',
+        });
+
+        if (!confirmed) return;
+
+        setSubmitting(true);
+        setIsLoading(true);
         const storedData = localStorage.getItem("storedData");
         const parsedData = storedData ? JSON.parse(storedData) : null;
         const id_calificador = parsedData?.id_Calificador;
@@ -142,7 +166,9 @@ const GraderPage: React.FC = () => {
     // datos extraídos del localStorage
 
         if (!id_calificador || !id_base) {
-            alert("❌ Faltan datos esenciales (calificador o base)");
+            showToast.error('Faltan datos esenciales (calificador o base)');
+            setSubmitting(false);
+            setIsLoading(false);
             return;
         }
 
@@ -182,43 +208,73 @@ const GraderPage: React.FC = () => {
                 localStorage.setItem("id_grupo", data.nuevoGrupo);
             }
 
-            alert('✅ Todas las calificaciones fueron enviadas correctamente.');
+            showToast.success('¡Calificaciones enviadas correctamente!');
             setCalificaciones({});
             setErrores([]);
             setTimeout(() => {
                 window.location.reload();
-            }, 1000);
+            }, 1500);
 
         } catch (error) {
             console.error('❌ Error al enviar calificaciones múltiples:', error);
-            alert('Error al enviar las calificaciones. Intenta de nuevo.');
+            showToast.error('Error al enviar las calificaciones. Intenta de nuevo.');
+        } finally {
+            setSubmitting(false);
+            setIsLoading(false);
         }
     };
 
-
-    if (loading) return <p className="text-white text-center mt-20">Cargando...</p>;
-    if (usuarios.length === 0) return <p className="text-white text-center mt-20">No hay usuarios para calificar</p>;
+    if (loading) {
+        return (
+            <div
+                className="flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-4 bg-white"
+            >
+                <div className="flex items-center gap-3 mb-6">
+                    <Spinner size="lg" color="primary-light" />
+                    <span className="text-gray-500 text-xl font-medium">Cargando datos...</span>
+                </div>
+                <SkeletonBaseInfo />
+                <div className="flex flex-col items-center gap-6 sm:gap-8 w-full mt-6">
+                    {[1, 2].map((i) => (
+                        <SkeletonUserCard key={i} />
+                    ))}
+                </div>
+            </div>
+        );
+    }
+    
+    if (usuarios.length === 0) {
+        return (
+            <div
+                className="flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-4 bg-white"
+            >
+                <div className="text-center text-gray-900">
+                    <p className="text-xl mb-4">No hay usuarios para calificar</p>
+                    <p className="text-sm text-gray-500">Contacta al administrador si esto es un error.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div
-            className="flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-4 bg-cover bg-center"
-            style={{ backgroundImage: "url('/rosamorado.svg')" }}
+            className="flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-4 bg-[color:var(--color-bg)]"
         >
             {nombreCalificador && (
-                <h2 className="text-white text-lg sm:text-xl font-bold mt-4 mb-4 sm:mb-6 text-center">
+                <h2 className="text-[color:var(--color-accent)] text-lg sm:text-xl font-bold mt-4 mb-4 sm:mb-6 text-center">
                     Hola, {nombreCalificador}
                 </h2>
             )}
 
             {baseData && (
-                <div className="text-white w-full max-w-xl mb-6 sm:mb-10 px-4 sm:px-6 py-4 sm:py-6 rounded-2xl shadow-lg bg-primary-dark/80 border border-white/30 backdrop-blur-sm">
-                    <h2 className='text-xl sm:text-2xl font-extrabold mb-2 text-center tracking-wide'>{baseData.Nombre}</h2>
-                    <h3 className='text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-center italic text-white/90'>{baseData.Competencia}</h3>
-                    <p className='mb-4 sm:mb-6 text-xs sm:text-sm text-justify text-white/80'>{baseData.Descripcion}</p>
+                <div className="w-full max-w-xl mb-6 sm:mb-10 px-4 sm:px-6 py-4 sm:py-6 rounded-2xl shadow-lg bg-[color:var(--color-surface)] border border-[color:var(--color-muted)]">
+                    <h2 className='text-xl sm:text-2xl font-extrabold mb-2 text-center tracking-wide text-[color:var(--color-accent)]'>{baseData.Nombre}</h2>
+                    <h3 className='text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-center italic text-[color:var(--color-text)]/90'>{baseData.Competencia}</h3>
+                    <p className='mb-4 sm:mb-6 text-xs sm:text-sm text-justify text-[color:var(--color-muted)]'>{baseData.Descripcion}</p>
                     <div className='space-y-2 sm:space-y-3 text-xs sm:text-sm'>
-                        <div><span className='font-bold text-primary-light'>🟣 Comportamiento 1:</span> {baseData.Comportamiento1}</div>
-                        <div><span className='font-bold text-primary-light'>🟣 Comportamiento 2:</span> {baseData.Comportamiento2}</div>
-                        <div><span className='font-bold text-primary-light'>🟣 Comportamiento 3:</span> {baseData.Comportamiento3}</div>
+                        <div><span className='font-bold text-[color:var(--color-accent)]'>🟣 Comportamiento 1:</span> {baseData.Comportamiento1}</div>
+                        <div><span className='font-bold text-[color:var(--color-accent)]'>🟣 Comportamiento 2:</span> {baseData.Comportamiento2}</div>
+                        <div><span className='font-bold text-[color:var(--color-accent)]'>🟣 Comportamiento 3:</span> {baseData.Comportamiento3}</div>
                     </div>
                 </div>
             )}
@@ -229,7 +285,6 @@ const GraderPage: React.FC = () => {
                         key={usuario.ID}
                         className={`relative text-white px-4 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-6 rounded-lg bg-cover bg-center flex flex-col items-center mx-auto ${errores.includes(usuario.ID) ? 'border-4 border-yellow-400' : ''}`}
                         style={{
-                            backgroundImage: "url('/Frame_general.svg')",
                             width: '100%',
                             maxWidth: '360px',
                             minHeight: '450px',
@@ -252,35 +307,42 @@ const GraderPage: React.FC = () => {
                         <p className='text-xs sm:text-sm mb-1 font-bold'>ID: {usuario.ID}</p>
                         <p className='text-xs sm:text-sm mb-3 sm:mb-4 font-bold text-center'>Nombre: {usuario.Nombre}</p>
 
-                        {[1, 2, 3].map(num => (
-                            <div key={num} className='mb-2 w-32 sm:w-36 px-2 sm:px-4'>
-                                <label className='text-xs sm:text-sm font-semibold block mb-1'>Habilidad #{num}:</label>
-                                <input
-                                    type="number"
-                                    step="1"
-                                    min="1"
-                                    max="5"
-                                    value={calificaciones[usuario.ID]?.[`Calificacion_${num}` as CalificacionKey] ?? ''}
-                                    onChange={e => handleInputChange(usuario.ID, num, e.target.value)}
-                                    placeholder="1-5"
-                                    className='w-full px-2 sm:px-3 py-2 rounded bg-primary text-white placeholder-white/70 font-medium text-center shadow-md focus:outline-none focus:ring-2 focus:ring-white/70 text-sm'
-                                />
-                            </div>
-                        ))}
+                        {[1, 2, 3].map(num => {
+                            const comportamiento = baseData?.[`Comportamiento${num}` as keyof typeof baseData] as string;
+                            return (
+                                <div key={num} className='mb-3 w-full max-w-xs px-2 sm:px-4'>
+                                    <p className='text-xs text-white/80 italic mb-1 text-center'>{comportamiento}</p>
+                                    <label className='text-xs sm:text-sm font-semibold block mb-1 text-center'>Comportamiento #{num}:</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={5}
+                                        step={1}
+                                        className="w-full rounded-lg px-3 py-2 text-black text-center font-bold text-lg bg-white border-2 border-[color:var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)]"
+                                        value={calificaciones[usuario.ID]?.[`Calificacion_${num}` as keyof typeof calificaciones[typeof usuario.ID]] ?? ''}
+                                        onChange={e => handleInputChange(usuario.ID, num, e.target.value)}
+                                        disabled={submitting}
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 ))}
             </div>
 
-            <button
-                onClick={handleSubmitGeneral}
-                className="mt-6 sm:mt-10 px-4 sm:px-6 py-2 sm:py-3 bg-primary-dark text-white font-semibold rounded-lg shadow-md hover:bg-primary transition text-sm sm:text-base"
-            >
-                Enviar todas las calificaciones
-            </button>
+            <div className="w-full flex flex-col items-center mt-8">
+                <button
+                    onClick={handleSubmitGeneral}
+                    disabled={submitting}
+                    className="bg-[color:var(--color-accent)] text-white font-bold px-8 py-3 rounded-lg shadow hover:bg-[#5B21B6] transition disabled:opacity-60"
+                >
+                    {submitting ? 'Enviando...' : 'Enviar calificaciones'}
+                </button>
+            </div>
 
-            <p className='text-white text-xs italic mt-6 sm:mt-10'>POWERED BY <span className='font-bold text-primary-light'>NOVA</span></p>
+            <ConfirmModalComponent />
         </div>
-    );
-};
+        );
+    }
 
-export default GraderPage;
+    export default GraderPage;

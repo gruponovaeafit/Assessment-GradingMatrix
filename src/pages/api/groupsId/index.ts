@@ -1,24 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import sql, { config as SqlConfig } from 'mssql';
-
-export const dbConfig: SqlConfig = {
-  user: process.env.DB_USER as string,
-  password: process.env.DB_PASS as string,
-  database: process.env.DB_NAME as string,
-  server: process.env.DB_SERVER as string,
-  port: parseInt(process.env.DB_PORT ?? '1433', 10),
-  options: {
-    encrypt: true,
-    trustServerCertificate: false,
-  },
-};
+import sql from 'mssql';
+import { connectToDatabase } from '../db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido. Usa POST.' });
   }
 
-  let pool: sql.ConnectionPool | null = null;
   try {
     const { idCalificador } = req.body;
 
@@ -26,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'ID de calificador inválido' });
     }
 
-    pool = await sql.connect(dbConfig);
+    const pool = await connectToDatabase();
 
     const request = new sql.Request(pool);
     request.input('ID_Calificador', sql.Int, Number(idCalificador));
@@ -54,9 +42,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error) {
     console.error('❌ Error al obtener los miembros del grupo:', error);
     res.status(500).json({ error: 'Error al obtener los miembros del grupo' });
-  } finally {
-    if (pool) {
-      try { await pool.close(); } catch (e) {}
-    }
   }
 }

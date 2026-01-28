@@ -2,62 +2,143 @@
 @tailwind components;
 @tailwind utilities;
 
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  
-  /* Paleta principal */
-  --primary: #7C3AED;
-  --primary-light: #A78BFA;
-  --primary-dark: #5B21B6;
-  --accent: #9333EA;
-  
-  /* Estados */
+  --color-bg: #f7f7fa;         /* Fondo principal neutro */
+  --color-surface: #ffffff;    /* Tarjetas, modales */
+  --color-text: #23272f;       /* Texto principal */
+  --color-muted: #8a8fa3;      /* Texto secundario, bordes */
+  --color-accent: #7C3AED;     /* Morado/acento */
+  /* Estados/accesorios */
   --success: #22C55E;
   --error: #EF4444;
 }
 
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f0f0f;
-    --foreground: #ededed;
+    --color-bg: #181924;
+    --color-surface: #232336;
+    --color-text: #ededed;
+    --color-muted: #6b6f85;
+    --color-accent: #a78bfa;
   }
 }
 
+
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
 }
+
 
 button {
-  transition: .3s ease-in;
+  transition: .2s background, .2s color;
+  border-radius: 0.5rem;
+  font-weight: 500;
 }
-
-button:hover {
-  background-color: var(--primary);
-  color: white;
-  transition: .3s ease-in-out;
+button, .btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+}
+button:hover, .btn-primary:hover {
+  background: #5B21B6;
+  color: #fff;
+}
+button:disabled {
+  background: var(--color-muted);
+  color: #fff;
+  opacity: 0.7;
 }
 
 /* Gradiente principal morado */
+
+/* Fondo principal sobrio */
 .gradient_purple {
-  background: linear-gradient(
-    135deg,
-    #5B21B6 0%,
-    #7C3AED 25%,
-    #9333EA 50%,
-    #7C3AED 75%,
-    #5B21B6 100%
-  );
+  background: linear-gradient(120deg, var(--color-bg) 0%, var(--color-surface) 100%);
 }
 
 /* Gradiente alternativo más suave */
+
 .gradient_purple_soft {
-  background: linear-gradient(
-    135deg,
-    #2E1065 0%,
-    #5B21B6 50%,
-    #7C3AED 100%
-  );
+  background: linear-gradient(120deg, var(--color-surface) 0%, var(--color-bg) 100%);
+}
+
+/* ============ ANIMACIONES ============ */
+
+/* Fade in sutil */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Scale in para modales */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.15s ease-out;
+}
+
+/* Slide in desde arriba */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Slide in desde abajo */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.2s ease-out;
+}
+
+/* Pulse suave para highlights */
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulseSubtle {
+  animation: pulseSubtle 2s ease-in-out infinite;
 }

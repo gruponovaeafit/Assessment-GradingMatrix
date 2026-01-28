@@ -1,28 +1,7 @@
 // pages/api/add-calificaciones.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import sql, { config as SqlConfig } from "mssql";
-
-export const dbConfig: SqlConfig = {
-  user: process.env.DB_USER as string,
-  password: process.env.DB_PASS as string,
-  database: process.env.DB_NAME as string,
-  server: process.env.DB_SERVER as string,
-  port: parseInt(process.env.DB_PORT ?? "1433", 10),
-  options: {
-    encrypt: true,
-    trustServerCertificate: false,
-  },
-};
-
-export async function connectToDatabase() {
-  try {
-    const pool = await sql.connect(dbConfig);
-    return pool;
-  } catch (error) {
-    console.error("❌ Error conectando a MSSQL:", error);
-    throw new Error("No se pudo conectar a la base de datos");
-  }
-}
+import sql from "mssql";
+import { connectToDatabase } from "../db";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
