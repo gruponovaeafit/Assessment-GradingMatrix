@@ -10,7 +10,6 @@ import { useConfirmModal } from '../components/UI/ConfirmModal';
 const GraderPage: React.FC = () => {
     const { storedData } = useStoredId();
     const { isAdmin, isLoading: authLoading, requireAdmin } = useAdminAuth();
-        // Proteger la ruta - redirige si no es admin
         React.useEffect(() => {
             requireAdmin();
         }, [isAdmin, authLoading]);
