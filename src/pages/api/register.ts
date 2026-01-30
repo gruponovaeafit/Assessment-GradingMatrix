@@ -13,10 +13,16 @@ export const config = {
   },
 };
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
 const parseForm = (
   req: NextApiRequest
 ): Promise<{ fields: Record<string, unknown>; files: { image?: File | File[] } }> => {
-  const form = new IncomingForm({ keepExtensions: true });
+  const form = new IncomingForm({
+    keepExtensions: true,
+    maxFileSize: MAX_FILE_SIZE,
+  });
 
   return new Promise((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
@@ -42,6 +48,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!nombre || !correo || !file || !file.filepath) {
       return res.status(400).json({ error: 'Nombre, correo e imagen son obligatorios' });
+    }
+
+    if (!ALLOWED_MIME_TYPES.has(file.mimetype || '')) {
+      await fs.unlink(file.filepath);
+      return res.status(400).json({ error: 'Formato de imagen no permitido' });
+    }
+
+    if ((file.size || 0) > MAX_FILE_SIZE) {
+      await fs.unlink(file.filepath);
+      return res.status(400).json({ error: 'La imagen supera el tamaño permitido' });
     }
 
     // Subir imagen a Azure Blob

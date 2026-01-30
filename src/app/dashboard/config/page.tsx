@@ -32,6 +32,8 @@ export default function Dashboard() {
   const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [creatingStaff, setCreatingStaff] = useState(false);
   const [assigningGroup, setAssigningGroup] = useState(false);
+  const [autoGroupCount, setAutoGroupCount] = useState("");
+  const [autoGrouping, setAutoGrouping] = useState(false);
   const [staffAssessmentId, setStaffAssessmentId] = useState<string>("");
   const [staffCorreo, setStaffCorreo] = useState("");
   const [staffPassword, setStaffPassword] = useState("");
@@ -110,48 +112,48 @@ export default function Dashboard() {
     fetchAssessments();
   }, [authLoading, isAdmin, router]);
 
-  useEffect(() => {
-    if (authLoading || !isAdmin) return;
-    const loadParticipantsAndGroups = async () => {
-      if (!configAssessmentId) {
-        setParticipants([]);
-        setGroups([]);
+  const loadParticipantsAndGroups = async (assessmentId: string) => {
+    if (!assessmentId) {
+      setParticipants([]);
+      setGroups([]);
+      return;
+    }
+
+    try {
+      const [participantsRes, groupsRes] = await Promise.all([
+        authFetch(
+          `/api/participante/list?assessmentId=${assessmentId}`,
+          { headers: { ...getAuthHeaders() } },
+          () => logout()
+        ),
+        authFetch(
+          `/api/assessment/groups?assessmentId=${assessmentId}`,
+          { headers: { ...getAuthHeaders() } },
+          () => logout()
+        ),
+      ]);
+
+      if (participantsRes.status === 401 || groupsRes.status === 401) {
+        router.push('/auth/login');
         return;
       }
-
-      try {
-        const [participantsRes, groupsRes] = await Promise.all([
-          authFetch(
-            `/api/participante/list?assessmentId=${configAssessmentId}`,
-            { headers: { ...getAuthHeaders() } },
-            () => logout()
-          ),
-          authFetch(
-            `/api/assessment/groups?assessmentId=${configAssessmentId}`,
-            { headers: { ...getAuthHeaders() } },
-            () => logout()
-          ),
-        ]);
-
-        if (participantsRes.status === 401 || groupsRes.status === 401) {
-          router.push('/auth/login');
-          return;
-        }
-        if (participantsRes.ok) {
-          const participantsData = await participantsRes.json();
-          setParticipants(participantsData || []);
-        }
-
-        if (groupsRes.ok) {
-          const groupsData = await groupsRes.json();
-          setGroups(groupsData || []);
-        }
-      } catch (err) {
-        console.error(err);
+      if (participantsRes.ok) {
+        const participantsData = await participantsRes.json();
+        setParticipants(participantsData || []);
       }
-    };
 
-    loadParticipantsAndGroups();
+      if (groupsRes.ok) {
+        const groupsData = await groupsRes.json();
+        setGroups(groupsData || []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (authLoading || !isAdmin) return;
+    loadParticipantsAndGroups(configAssessmentId);
   }, [authLoading, isAdmin, configAssessmentId, router]);
 
   // Obtener lista única de grupos
@@ -360,6 +362,66 @@ export default function Dashboard() {
       showToast.error(message);
     } finally {
       setAssigningGroup(false);
+    }
+  };
+
+  const handleAutoGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!configAssessmentId) {
+      showToast.error('Selecciona un assessment');
+      return;
+    }
+
+    const numGroups = Number(autoGroupCount);
+    if (!autoGroupCount || Number.isNaN(numGroups) || numGroups <= 0) {
+      showToast.error('Ingresa una cantidad válida de grupos');
+      return;
+    }
+
+    try {
+      setAutoGrouping(true);
+      const response = await authFetch(
+        '/api/assessment/auto-groups',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({
+            assessmentId: Number(configAssessmentId),
+            numGroups,
+          }),
+        },
+        () => logout()
+      );
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Error al sortear grupos');
+      }
+
+      showToast.success('Grupos creados y sorteados correctamente');
+      setAutoGroupCount('');
+      setSelectedParticipant('');
+      setSelectedGroup('');
+      setData([]);
+      setLoading(true);
+      const refresh = await authFetch(
+        '/api/dashboard/config',
+        { headers: { ...getAuthHeaders() } },
+        () => logout()
+      );
+      if (refresh.ok) {
+        const refreshed = await refresh.json();
+        setData(refreshed);
+      }
+      await loadParticipantsAndGroups(configAssessmentId);
+      setLoading(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al sortear grupos';
+      showToast.error(message);
+      setLoading(false);
+    } finally {
+      setAutoGrouping(false);
     }
   };
 
@@ -665,6 +727,46 @@ export default function Dashboard() {
               </button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
+        <div className="bg-white rounded-xl p-4 shadow border border-gray-100">
+          <h2 className="text-lg font-bold text-gray-900 mb-3">Crear y Sortear Grupos</h2>
+          <form onSubmit={handleAutoGroup} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <select
+              value={configAssessmentId}
+              onChange={(e) => setConfigAssessmentId(e.target.value)}
+              className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
+            >
+              <option value="">Assessment</option>
+              {assessments.map((assessment) => (
+                <option key={assessment.id} value={assessment.id}>
+                  {assessment.nombre}
+                </option>
+              ))}
+            </select>
+            <input
+              type="number"
+              min={1}
+              placeholder="Cantidad de grupos"
+              value={autoGroupCount}
+              onChange={(e) => setAutoGroupCount(e.target.value)}
+              className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
+            />
+            <div className="sm:col-span-1 sm:flex sm:items-center sm:justify-end">
+              <button
+                type="submit"
+                disabled={autoGrouping}
+                className="w-full px-4 py-2 rounded-lg bg-success hover:bg-success-dark text-white text-sm font-medium transition disabled:opacity-60"
+              >
+                {autoGrouping ? 'Sorteando...' : 'Crear y sortear'}
+              </button>
+            </div>
+          </form>
+          <p className="text-xs text-gray-500 mt-2">
+            Distribuye participantes de forma equitativa. Si hay impostores (rol=1), se reparte 1 por grupo hasta que se acaben.
+          </p>
         </div>
       </div>
 

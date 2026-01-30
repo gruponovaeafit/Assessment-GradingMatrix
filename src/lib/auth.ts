@@ -3,9 +3,13 @@ import jwt from 'jsonwebtoken';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 // Constantes de configuración
-const JWT_SECRET = process.env.JWT_SECRET || 'assessment-grading-matrix-secret-key-2026';
+const JWT_SECRET = process.env.JWT_SECRET;
 const SALT_ROUNDS = 10;
 const TOKEN_EXPIRY = '8h';
+
+if (!JWT_SECRET) {
+  throw new Error('Missing JWT_SECRET environment variable');
+}
 
 // Tipos
 export interface TokenPayload {

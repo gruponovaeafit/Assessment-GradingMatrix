@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="apolo.eafit.edu.co" id="64e7fa6e-ad16-44b2-aacc-d0cd4c714183" port="22" nameFormat="DESCRIPTIVE" username="srodrigu24" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>

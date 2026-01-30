@@ -34,7 +34,7 @@ export default function RotationsDashboard() {
 
   useEffect(() => {
     requireAdmin();
-  }, [requireAdmin]);
+  }, [isAdmin, authLoading]);
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
@@ -53,7 +53,7 @@ export default function RotationsDashboard() {
       }
     };
     loadAssessments();
-  }, [authLoading, isAdmin, getAuthHeaders]);
+  }, [authLoading, isAdmin]);
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
@@ -79,7 +79,7 @@ export default function RotationsDashboard() {
       }
     };
     loadStaff();
-  }, [authLoading, isAdmin, selectedAssessment, getAuthHeaders]);
+  }, [authLoading, isAdmin, selectedAssessment]);
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
@@ -90,7 +90,7 @@ export default function RotationsDashboard() {
     const loadGroups = async () => {
       try {
         const res = await authFetch(
-          `/api/assessment/groups?assessmentId=${selectedAssessment}`,
+          `/api/assessment/groups-active?assessmentId=${selectedAssessment}`,
           { headers: { ...getAuthHeaders() } },
           () => logout()
         );
@@ -102,7 +102,7 @@ export default function RotationsDashboard() {
       }
     };
     loadGroups();
-  }, [authLoading, isAdmin, selectedAssessment, getAuthHeaders]);
+  }, [authLoading, isAdmin, selectedAssessment]);
 
   const filteredStaff = useMemo(() => {
     const shows = staff.filter((item) => item.rol === "calificador");

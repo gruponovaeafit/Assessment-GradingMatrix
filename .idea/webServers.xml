@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="9ba222b1-a214-42ee-b23c-4e8be9e4783f" name="Apolo2">
+        <fileTransfer rootFolder="/home/srodrigu24" accessType="SFTP" host="apolo.eafit.edu.co" port="22" sshConfigId="64e7fa6e-ad16-44b2-aacc-d0cd4c714183" sshConfig="srodrigu24@apolo.eafit.edu.co:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

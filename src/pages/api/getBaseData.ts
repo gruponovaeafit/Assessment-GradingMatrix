@@ -1,13 +1,11 @@
+
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabaseServer';
-import { requireRoles } from '@/lib/apiAuth';
+import { supabase } from '../lib/supabaseClient';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
-
-  if (!requireRoles(req, res, ['admin', 'calificador'])) return;
 
   const { id_base } = req.body;
 
@@ -26,15 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: 'Base no encontrada' });
     }
 
-    return res.status(200).json({
-      ID_Base: data.ID_Base,
-      Nombre: data.Nombre_Base,
-      Competencia: data.Competencia_Base,
-      Descripcion: data.Descripcion_Base,
-      Comportamiento1: data.Comportamiento1_Base,
-      Comportamiento2: data.Comportamiento2_Base,
-      Comportamiento3: data.Comportamiento3_Base,
-    });
+    return res.status(200).json(data);
   } catch (error) {
     console.error('❌ Error al obtener la base:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });

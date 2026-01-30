@@ -3,10 +3,6 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabaseServer';
 import { comparePassword, generateToken, hashPassword } from '../../../../lib/auth';
 
-// Credenciales de admin (en producción usar variables de entorno)
-const ADMIN_EMAIL = 'admin@assessment.com';
-const ADMIN_PASSWORD_HASH = '$2a$10$XQxBtJXKQJZJZJZJZJZJZuHashedPasswordForAdmin'; // Hash pre-generado
-
 // API de login
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -20,16 +16,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Verificar si es admin
-  const adminEmail = process.env.ADMIN_EMAIL || ADMIN_EMAIL;
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123'; // Fallback para desarrollo
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
 
-  if (email === adminEmail && password === adminPassword) {
-    const token = generateToken({ id: 0, email: adminEmail, role: 'admin' });
-    return res.status(200).json({
-      role: 'admin',
-      token,
-      message: 'Login exitoso',
-    });
+  if (!adminEmail || (!adminPassword && !adminPasswordHash)) {
+    return res.status(500).json({ error: 'Configuración de admin incompleta' });
+  }
+
+  if (email === adminEmail) {
+    const isAdminPasswordValid = adminPasswordHash
+      ? await comparePassword(password, adminPasswordHash)
+      : password === adminPassword;
+
+    if (isAdminPasswordValid) {
+      const token = generateToken({ id: 0, email: adminEmail, role: 'admin' });
+      return res.status(200).json({
+        role: 'admin',
+        token,
+        message: 'Login exitoso',
+      });
+    }
   }
 
   try {
