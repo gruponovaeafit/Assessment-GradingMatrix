@@ -1,7 +1,6 @@
 // pages/api/auth/login.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import sql from 'mssql';
-import { connectToDatabase } from '../../db';
+import { supabase } from '@/lib/supabaseServer';
 import { comparePassword, generateToken, hashPassword } from '../../../../lib/auth';
 
 // Credenciales de admin (en producción usar variables de entorno)
@@ -26,45 +25,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (email === adminEmail && password === adminPassword) {
     const token = generateToken({ id: 0, email: adminEmail, role: 'admin' });
-    return res.status(200).json({ 
+    return res.status(200).json({
       role: 'admin',
       token,
-      message: 'Login exitoso'
+      message: 'Login exitoso',
     });
   }
 
   try {
-    const pool = await connectToDatabase();
+    const { data: staff, error } = await supabase
+      .from('Staff')
+      .select('ID_Staff, Correo_Staff, Contrasena_Staff, ID_Base, Rol_Staff')
+      .eq('Correo_Staff', email)
+      .single();
 
-    // Buscar calificador por correo (la contraseña ahora debería estar hasheada en BD)
-    const result = await pool.request()
-      .input('Correo', sql.NVarChar, email)
-      .query('SELECT ID, Correo, Contrasena, ID_Grupo, ID_Base FROM Calificadores WHERE Correo = @Correo');
-
-    if (result.recordset.length === 0) {
+    if (error || !staff) {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
 
-    const calificador = result.recordset[0];
-    
     // Verificar contraseña
     // Si la contraseña en BD no está hasheada (legado), comparar directamente
     let isValidPassword = false;
-    
-    if (calificador.Contrasena.startsWith('$2')) {
+
+    if (staff.Contrasena_Staff?.startsWith('$2')) {
       // Contraseña hasheada con bcrypt
-      isValidPassword = await comparePassword(password, calificador.Contrasena);
+      isValidPassword = await comparePassword(password, staff.Contrasena_Staff);
     } else {
       // Contraseña en texto plano (legado) - comparar directamente
-      isValidPassword = calificador.Contrasena === password;
-      
+      isValidPassword = staff.Contrasena_Staff === password;
+
       // Opcional: actualizar a hash para próximos logins
       if (isValidPassword) {
         const hashedPassword = await hashPassword(password);
-        await pool.request()
-          .input('ID', sql.Int, calificador.ID)
-          .input('HashedPassword', sql.NVarChar, hashedPassword)
-          .query('UPDATE Calificadores SET Contrasena = @HashedPassword WHERE ID = @ID');
+        await supabase
+          .from('Staff')
+          .update({ Contrasena_Staff: hashedPassword })
+          .eq('ID_Staff', staff.ID_Staff);
       }
     }
 
@@ -73,19 +69,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Generar token JWT
-    const token = generateToken({ 
-      id: calificador.ID, 
-      email: calificador.Correo, 
-      role: 'calificador' 
+    let role: 'admin' | 'registrador' | 'calificador' = 'calificador';
+    if (staff.Rol_Staff === 'admin') {
+      role = 'admin';
+    } else if (staff.Rol_Staff === 'registrador') {
+      role = 'registrador';
+    }
+
+    const token = generateToken({
+      id: staff.ID_Staff,
+      email: staff.Correo_Staff,
+      role,
     });
 
-    res.status(200).json({ 
-      role: 'calificador', 
-      ID_Grupo: calificador.ID_Grupo, 
-      ID_Base: calificador.ID_Base, 
-      ID_Calificador: calificador.ID,
+    res.status(200).json({
+      role,
+      ID_Grupo: null,
+      ID_Base: staff.ID_Base,
+      ID_Calificador: staff.ID_Staff,
       token,
-      message: 'Login exitoso'
+      message: 'Login exitoso',
     });
   } catch (error) {
     console.error('❌ Error al procesar el login:', error);

@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import {useRouter} from "next/navigation"
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const router = useRouter()
@@ -12,16 +12,16 @@ export default function Home() {
         <div className="flex flex-col gap-6 bg-white shadow-lg rounded-2xl px-8 py-10 border border-gray-100">
           <h2 className="text-2xl font-bold text-gray-800 text-center mb-4">¿Qué quieres hacer?</h2>
           <button
-            onClick={() => router.push("/register")}
-            className="rounded-lg bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white text-lg font-semibold py-3 transition shadow"
-          >
-            Registrar
-          </button>
-          <button
             onClick={() => router.push("/auth/login")}
             className="rounded-lg bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white text-lg font-semibold py-3 transition shadow"
           >
             Iniciar Sesion
+          </button>
+          <button
+            onClick={() => router.push("/info")}
+            className="rounded-lg bg-white border border-gray-300 hover:border-[color:var(--color-accent)] text-gray-800 text-lg font-semibold py-3 transition shadow"
+          >
+            Leer información
           </button>
         </div>
       </div>

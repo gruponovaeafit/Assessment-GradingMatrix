@@ -3,8 +3,9 @@ import { promises as fs } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { BlobServiceClient } from '@azure/storage-blob';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import sql from 'mssql';
-import { connectToDatabase } from './db';
+import { supabase } from '@/lib/supabaseServer';
+import { getDefaultAssessmentId } from '@/lib/assessment';
+import { requireRoles } from '@/lib/apiAuth';
 
 export const config = {
   api: {
@@ -31,6 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    if (!requireRoles(req, res, ['admin', 'registrador'])) return;
+
     const { fields, files } = await parseForm(req);
     const file = Array.isArray(files.image) ? files.image[0] : files.image;
 
@@ -63,25 +66,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const photoUrl = blockBlobClient.url;
 
-    // Insertar en base de datos MSSQL
-    const pool = await connectToDatabase();
+    // Insertar en base de datos Supabase
+    const assessmentId = await getDefaultAssessmentId();
 
-    await pool.request()
-      .input('Nombre', sql.NVarChar, nombre)
-      .input('Correo', sql.NVarChar, correo)
-      .input('Photo', sql.NVarChar, photoUrl)
-      .query('INSERT INTO Personas (Nombre, Correo, Photo) VALUES (@Nombre, @Correo, @Photo)');
+    const { error } = await supabase
+      .from('Participante')
+      .insert({
+        ID_Assessment: assessmentId,
+        Nombre_Participante: nombre,
+        Correo_Participante: correo,
+        Rol_Participante: '0',
+        FotoUrl_Participante: photoUrl,
+      });
+
+    if (error) {
+      if (error.code === '23505') {
+        return res.status(400).json({ error: 'El correo ya está registrado' });
+      }
+      throw new Error(error.message);
+    }
 
     return res.status(200).json({ message: 'Persona registrada correctamente', url: photoUrl });
   } catch (error: unknown) {
     console.error('❌ Error en el registro:', error);
-
-    // intentar detectar código de error de SQL si existe
-    const err: any = error;
-    if (err && err.number === 2627) {
-      return res.status(400).json({ error: 'El correo ya está registrado' });
-    }
-
     return res.status(500).json({ error: 'Error al registrar la persona' });
   }
 }

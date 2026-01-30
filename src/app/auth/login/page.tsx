@@ -39,10 +39,16 @@ export default function Login() {
       if (data.token) {
         localStorage.setItem("authToken", data.token);
       }
+
+      if (data.role) {
+        localStorage.setItem("authRole", data.role);
+      }
       
       if (data.role === "admin") {
         loginAsAdmin(data.token);
-        router.push("/final");
+        router.push("/admin");
+      } else if (data.role === "registrador") {
+        router.push("/register");
       } else if (data.role === "calificador") {
         saveData(data.ID_Grupo, data.ID_Calificador, data.ID_Base);
         router.push(`/graderPage`);

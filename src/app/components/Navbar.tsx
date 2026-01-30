@@ -3,8 +3,10 @@ import Image from "next/image";
 
 const navLinks = [
   { href: "/", label: "Inicio" },
-  { href: "/dashboardadmin", label: "Dashboard" },
-  { href: "/final", label: "Final" },
+  { href: "/admin", label: "Admin" },
+  { href: "/dashboard/gh", label: "Gestión" },
+  { href: "/dashboard/config", label: "Config" },
+  { href: "/dashboard/rotations", label: "Rotaciones" },
   { href: "/graderPage", label: "Calificar" },
   { href: "/groupGeneration", label: "Grupos" },
 ];

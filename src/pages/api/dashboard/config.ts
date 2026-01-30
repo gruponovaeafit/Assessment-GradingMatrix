@@ -1,0 +1,84 @@
+// pages/api/dashboard/config.ts
+import type { NextApiRequest, NextApiResponse } from "next";
+import { supabase } from '@/lib/supabaseServer';
+import { getDefaultAssessmentId } from "@/lib/assessment";
+import { requireRoles } from "@/lib/apiAuth";
+
+// API para obtener datos del dashboard admin
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    if (!requireRoles(req, res, ["admin"])) return;
+    const assessmentId = await getDefaultAssessmentId();
+
+    const { data: participantes, error: participantesError } = await supabase
+      .from('Participante')
+      .select(
+        'ID_Participante, Nombre_Participante, Correo_Participante, Rol_Participante, FotoUrl_Participante, Grupo:GrupoAssessment(Nombre_GrupoAssessment)'
+      )
+      .eq('ID_Assessment', assessmentId)
+      .order('ID_Participante', { ascending: true });
+
+    if (participantesError) {
+      throw new Error(participantesError.message);
+    }
+
+    const { data: calificaciones, error: calificacionesError } = await supabase
+      .from('CalificacionesPorPersona')
+      .select('ID_Participante, ID_Base, Calificacion_1, Calificacion_2, Calificacion_3')
+      .eq('ID_Assessment', assessmentId);
+
+    if (calificacionesError) {
+      throw new Error(calificacionesError.message);
+    }
+
+    const basePromByPersona: Record<number, Record<number, number>> = {};
+
+    for (const cal of calificaciones || []) {
+      const id = cal.ID_Participante as number;
+      const baseId = cal.ID_Base as number;
+      const califs = [cal.Calificacion_1, cal.Calificacion_2, cal.Calificacion_3].filter(
+        (x) => x !== null && x !== undefined
+      ) as number[];
+
+      if (califs.length === 0) {
+        continue;
+      }
+
+      const promedio = califs.reduce((a, b) => a + b, 0) / califs.length;
+
+      if (!basePromByPersona[id]) {
+        basePromByPersona[id] = {};
+      }
+
+      basePromByPersona[id][baseId] = promedio;
+    }
+
+    const generalPromByPersona: Record<number, number | null> = {};
+
+    for (const [idString, bases] of Object.entries(basePromByPersona)) {
+      const proms = Object.values(bases);
+      generalPromByPersona[Number(idString)] =
+        proms.length > 0 ? proms.reduce((a, b) => a + b, 0) / proms.length : null;
+    }
+
+    const data = (participantes || []).map((p) => {
+      const promedio = generalPromByPersona[p.ID_Participante] ?? null;
+
+      return {
+        Grupo: p.Grupo?.Nombre_GrupoAssessment ?? 'Sin grupo',
+        ID: p.ID_Participante,
+        Participante: p.Nombre_Participante,
+        Correo: p.Correo_Participante,
+        role: p.Rol_Participante ?? '0',
+        Photo: p.FotoUrl_Participante ?? null,
+        Calificacion_Promedio: promedio,
+        Estado: promedio != null && promedio >= 4.0 ? 'Aprobado' : 'Reprobado',
+      };
+    });
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("❌ Error al obtener los datos del dashboard:", error);
+    res.status(500).json({ error: "Error al obtener los datos del dashboard" });
+  }
+}

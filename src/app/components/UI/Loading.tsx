@@ -143,17 +143,17 @@ export const SkeletonTableRow: React.FC = () => (
 // Skeleton para dashboard card
 export const SkeletonDashboardCard: React.FC = () => (
   <div
-    className="bg-[color:var(--color-surface)]/60 backdrop-blur-sm rounded-lg p-4 flex flex-col items-center border border-[color:var(--color-muted)]/30"
+    className="bg-white rounded-lg p-4 flex flex-col items-center border border-gray-100 shadow"
     style={{ width: '100%', maxWidth: '320px', minHeight: '240px' }}
   >
-    <Skeleton className="h-5 w-3/4 mb-4" />
-    <Skeleton className="h-px w-full mb-4" />
+    <div className="h-5 w-3/4 mb-4 bg-gray-200 rounded" />
+    <div className="h-px w-full mb-4 bg-gray-100" />
     <div className="w-full space-y-2">
-      <Skeleton className="h-4 w-1/4" />
-      <Skeleton className="h-4 w-1/2" />
-      <Skeleton className="h-4 w-2/3" />
-      <Skeleton className="h-4 w-1/3" />
-      <Skeleton className="h-4 w-1/2" />
+      <div className="h-4 w-1/4 bg-gray-200 rounded" />
+      <div className="h-4 w-1/2 bg-gray-200 rounded" />
+      <div className="h-4 w-2/3 bg-gray-200 rounded" />
+      <div className="h-4 w-1/3 bg-gray-200 rounded" />
+      <div className="h-4 w-1/2 bg-gray-200 rounded" />
     </div>
   </div>
 );

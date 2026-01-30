@@ -1,6 +1,5 @@
 // Sistema de logs de auditoría
-import sql from 'mssql';
-import { connectToDatabase } from '../pages/api/db';
+import { supabase } from '@/lib/supabaseServer';
 
 export interface AuditLog {
   accion: string;
@@ -16,18 +15,18 @@ export interface AuditLog {
  */
 export async function logAudit(log: AuditLog): Promise<void> {
   try {
-    const pool = await connectToDatabase();
-    
-    await pool.request()
-      .input('Accion', sql.NVarChar, log.accion)
-      .input('UsuarioID', sql.Int, log.usuario_id)
-      .input('UsuarioEmail', sql.NVarChar, log.usuario_email)
-      .input('Detalles', sql.NVarChar, log.detalles)
-      .input('IP', sql.NVarChar, log.ip || 'unknown')
-      .query(`
-        INSERT INTO AuditLogs (Accion, UsuarioID, UsuarioEmail, Detalles, IP, Fecha)
-        VALUES (@Accion, @UsuarioID, @UsuarioEmail, @Detalles, @IP, GETDATE())
-      `);
+    const { error } = await supabase.from('AuditLogs').insert({
+      Accion: log.accion,
+      UsuarioID: log.usuario_id,
+      UsuarioEmail: log.usuario_email,
+      Detalles: log.detalles,
+      IP: log.ip || 'unknown',
+      Fecha: (log.fecha ?? new Date()).toISOString(),
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
   } catch (error) {
     // Si falla el log, solo registrar en consola (no debe romper la app)
     console.error('⚠️ Error guardando log de auditoría:', error);

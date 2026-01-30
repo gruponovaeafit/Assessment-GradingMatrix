@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@azure/storage-blob": "^12.28.0",
+    "@supabase/supabase-js": "^2.93.2",
     "bcryptjs": "^3.0.3",
+    "csv-stringify": "^6.6.0",
     "file-saver": "^2.0.5",
     "formidable": "^3.5.4",
     "formidable-serverless": "^1.1.1",
@@ -21,8 +23,7 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-hot-toast": "^2.6.0",
-    "uuid": "^11.1.0",
-    "xlsx": "^0.18.5"
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

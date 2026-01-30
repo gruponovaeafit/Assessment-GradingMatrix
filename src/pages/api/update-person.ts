@@ -1,11 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { connectToDatabase } from './db';
-import sql from 'mssql';
+import { supabase } from '@/lib/supabaseServer';
+import { getDefaultAssessmentId } from '@/lib/assessment';
+import { requireRoles } from '@/lib/apiAuth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'PUT') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
+
+  if (!requireRoles(req, res, ['admin'])) return;
 
   const { id, nombre, correo, role } = req.body;
 
@@ -18,32 +21,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const pool = await connectToDatabase();
-    const request = pool.request().input('ID', sql.Int, id);
-    const updateFields: string[] = [];
+    const assessmentId = await getDefaultAssessmentId();
+    const updateData: Record<string, unknown> = {};
 
     if (nombre !== undefined) {
-      request.input('Nombre', sql.NVarChar, nombre);
-      updateFields.push('Nombre = @Nombre');
+      updateData.Nombre_Participante = nombre;
     }
 
     if (correo !== undefined) {
-      request.input('Correo', sql.NVarChar, correo);
-      updateFields.push('Correo = @Correo');
+      updateData.Correo_Participante = correo;
     }
 
     if (role !== undefined) {
-      request.input('role', sql.NVarChar, role);
-      updateFields.push('role = @role');
+      updateData.Rol_Participante = role;
     }
 
-    const updateQuery = `
-      UPDATE Personas
-      SET ${updateFields.join(', ')}
-      WHERE ID = @ID
-    `;
+    const { error } = await supabase
+      .from('Participante')
+      .update(updateData)
+      .eq('ID_Participante', id)
+      .eq('ID_Assessment', assessmentId);
 
-    await request.query(updateQuery);
+    if (error) {
+      if (error.code === '23505') {
+        return res.status(400).json({ error: 'El correo ya está registrado' });
+      }
+      throw new Error(error.message);
+    }
 
     return res.status(200).json({ message: 'Participante actualizado correctamente' });
   } catch (error) {

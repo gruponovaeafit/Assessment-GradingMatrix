@@ -67,6 +67,7 @@ export const useAdminAuth = () => {
     localStorage.removeItem(ADMIN_KEY);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem("storedData");
+    localStorage.removeItem("authRole");
     setIsAdmin(false);
     setToken(null);
     router.push("/auth/login");
@@ -81,7 +82,14 @@ export const useAdminAuth = () => {
 
   // Función para obtener headers con token de autenticación
   const getAuthHeaders = (): HeadersInit => {
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
+    }
+    if (typeof window !== "undefined") {
+      const storedToken = localStorage.getItem(TOKEN_KEY);
+      return storedToken ? { Authorization: `Bearer ${storedToken}` } : {};
+    }
+    return {};
   };
 
   return { isAdmin, isLoading, token, loginAsAdmin, logout, requireAdmin, getAuthHeaders };

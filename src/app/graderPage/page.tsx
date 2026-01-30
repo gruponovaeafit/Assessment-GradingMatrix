@@ -45,6 +45,8 @@ const GraderPage: React.FC = () => {
         const parsedData = storedData ? JSON.parse(storedData) : null;
         const idBase = parsedData?.id_base;
         const id_Calificador = parsedData?.id_Calificador;
+        const authToken = localStorage.getItem("authToken");
+        const authHeaders = authToken ? { Authorization: `Bearer ${authToken}` } : {};
 
         if (!idBase || !id_Calificador) {
             console.error("❌ No se encontró id_base o id_Calificador en localStorage.");
@@ -56,7 +58,7 @@ const GraderPage: React.FC = () => {
             try {
                 const response = await fetch('/api/groupsId', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', ...authHeaders },
                     body: JSON.stringify({ idCalificador: id_Calificador }),
                 });
                 if (!response.ok) throw new Error("Error en la API de usuarios");
@@ -73,7 +75,7 @@ const GraderPage: React.FC = () => {
             try {
                 const response = await fetch('/api/getBaseData', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', ...authHeaders },
                     body: JSON.stringify({ id_base: idBase }),
                 });
                 if (!response.ok) throw new Error("Error en la API de base");
@@ -88,7 +90,7 @@ const GraderPage: React.FC = () => {
             try {
                 const response = await fetch('/api/getCalificador', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', ...authHeaders },
                     body: JSON.stringify({ id_calificador: id_Calificador }),
                 });
                 if (!response.ok) throw new Error('Error al obtener calificador');
@@ -190,7 +192,7 @@ const GraderPage: React.FC = () => {
         try {
             const response = await fetch('/api/add-calificaciones', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
                 body: JSON.stringify(payload),
             });
 

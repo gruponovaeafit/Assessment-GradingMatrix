@@ -11,7 +11,7 @@ const TOKEN_EXPIRY = '8h';
 export interface TokenPayload {
   id: number;
   email: string;
-  role: 'admin' | 'calificador';
+  role: 'admin' | 'calificador' | 'registrador';
   iat?: number;
   exp?: number;
 }
@@ -64,7 +64,7 @@ export type AuthenticatedHandler = (
  * Middleware para proteger rutas de API
  * Verifica el token en el header Authorization o en cookies
  */
-export function withAuth(handler: AuthenticatedHandler, allowedRoles?: ('admin' | 'calificador')[]) {
+export function withAuth(handler: AuthenticatedHandler, allowedRoles?: ('admin' | 'calificador' | 'registrador')[]) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
     try {
       // Obtener token del header Authorization o cookies

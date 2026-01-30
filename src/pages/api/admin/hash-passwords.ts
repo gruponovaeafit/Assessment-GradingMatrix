@@ -1,9 +1,9 @@
 // pages/api/admin/hash-passwords.ts
 // Utilidad para migrar contraseñas en texto plano a hash (solo admin)
 import type { NextApiRequest, NextApiResponse } from 'next';
-import sql from 'mssql';
-import { connectToDatabase } from '../db';
+import { supabase } from '@/lib/supabaseServer';
 import { hashPassword, withAdminAuth } from '../../../lib/auth';
+import { requireRoles } from '@/lib/apiAuth';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -11,41 +11,48 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    const pool = await connectToDatabase();
+    if (!requireRoles(req, res, ['admin'])) return;
+    const { data: staffList, error } = await supabase
+      .from('Staff')
+      .select('ID_Staff, Contrasena_Staff')
+      .not('Contrasena_Staff', 'like', '$2%');
 
-    // Obtener todos los calificadores con contraseñas sin hashear
-    const result = await pool.request()
-      .query(`
-        SELECT ID, Contrasena 
-        FROM Calificadores 
-        WHERE Contrasena NOT LIKE '$2%'
-      `);
+    if (error) {
+      throw new Error(error.message);
+    }
 
-    if (result.recordset.length === 0) {
-      return res.status(200).json({ 
+    if (!staffList || staffList.length === 0) {
+      return res.status(200).json({
         message: 'Todas las contraseñas ya están hasheadas',
-        updated: 0 
+        updated: 0,
       });
     }
 
     let updatedCount = 0;
 
-    for (const calificador of result.recordset) {
-      const hashedPassword = await hashPassword(calificador.Contrasena);
-      
-      await pool.request()
-        .input('ID', sql.Int, calificador.ID)
-        .input('HashedPassword', sql.NVarChar, hashedPassword)
-        .query('UPDATE Calificadores SET Contrasena = @HashedPassword WHERE ID = @ID');
-      
+    for (const staff of staffList) {
+      if (!staff.Contrasena_Staff) {
+        continue;
+      }
+
+      const hashedPassword = await hashPassword(staff.Contrasena_Staff);
+
+      const { error: updateError } = await supabase
+        .from('Staff')
+        .update({ Contrasena_Staff: hashedPassword })
+        .eq('ID_Staff', staff.ID_Staff);
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
       updatedCount++;
     }
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: `Se hashearon ${updatedCount} contraseñas correctamente`,
-      updated: updatedCount 
+      updated: updatedCount,
     });
-
   } catch (error) {
     console.error('❌ Error al hashear contraseñas:', error);
     res.status(500).json({ error: 'Error al procesar las contraseñas' });

@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Spinner } from "../components/UI/Loading";
 
 export default function RegisterPerson() {
+  const router = useRouter();
   const [nombre, setNombre] = useState("");
   const [correo, setCorreo] = useState("");
   const [imagen, setImagen] = useState<File | null>(null);
@@ -10,6 +12,7 @@ export default function RegisterPerson() {
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,8 +31,11 @@ export default function RegisterPerson() {
       formData.append("correo", correo);
       formData.append("image", imagen);
 
+      const token = localStorage.getItem("authToken");
+
       const response = await fetch("/api/register", {
         method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: formData,
       });
 
@@ -56,6 +62,18 @@ export default function RegisterPerson() {
   };
 
   useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    const role = localStorage.getItem("authRole");
+
+    if (!token || (role !== "registrador" && role !== "admin")) {
+      router.push("/auth/login");
+      return;
+    }
+
+    setCheckingAuth(false);
+  }, [router]);
+
+  useEffect(() => {
     if (mensaje) {
       const timer = setTimeout(() => {
         setMensaje("");
@@ -63,6 +81,15 @@ export default function RegisterPerson() {
       return () => clearTimeout(timer);
     }
   }, [mensaje]);
+
+  if (checkingAuth) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full min-h-screen bg-white px-4 py-8">
+        <Spinner size="lg" />
+        <p className="text-gray-600 mt-4">Verificando acceso...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-screen bg-white px-4 py-8">

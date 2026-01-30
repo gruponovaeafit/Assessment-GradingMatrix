@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../Hooks/useAdminAuth';
+import { authFetch } from '@/lib/authFetch';
 
 interface Persona {
   ID: number;
@@ -15,7 +16,7 @@ const GroupGeneration: React.FC = () => {
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [groupsGenerated, setGroupsGenerated] = useState<Persona[][]>([]);
   const router = useRouter();
-  const { isAdmin, isLoading: authLoading, requireAdmin } = useAdminAuth();
+  const { isAdmin, isLoading: authLoading, requireAdmin, getAuthHeaders, logout } = useAdminAuth();
   // Proteger la ruta - redirige si no es admin
   useEffect(() => {
     requireAdmin();
@@ -24,7 +25,11 @@ const GroupGeneration: React.FC = () => {
   useEffect(() => {
     const fetchPersonas = async () => {
       try {
-        const response = await fetch("/api/users");
+        const response = await authFetch(
+          "/api/users",
+          { headers: { ...getAuthHeaders() } },
+          () => logout()
+        );
         if (!response.ok) throw new Error('Error al cargar las personas');
         const data = await response.json();
         setPersonas(data);
@@ -75,11 +80,15 @@ const GroupGeneration: React.FC = () => {
 
   const handleUploadGroups = async () => {
     try {
-      const response = await fetch('/api/groups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groups: groupsGenerated })
-      });
+      const response = await authFetch(
+        '/api/groups',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({ groups: groupsGenerated })
+        },
+        () => logout()
+      );
 
       if (!response.ok) {
         throw new Error('Error al subir los grupos a la base de datos');
@@ -113,8 +122,8 @@ const GroupGeneration: React.FC = () => {
           className='placeholder-white/70 bg-primary-dark border-none rounded-lg outline-none p-2 w-full text-white text-sm sm:text-base'
         />
         <button type='submit' className='mt-4 bg-primary hover:bg-primary-light text-white py-2 px-4 rounded-lg w-full font-semibold text-sm sm:text-base'>Generar grupos</button>
-        <button type='button' className='mt-4 bg-black/30 hover:bg-black/50 text-white py-2 px-4 rounded-lg w-full text-sm sm:text-base' onClick={() => router.push('/dashboardadmin')}>
-          Ir al panel de calificaciones
+        <button type='button' className='mt-4 bg-black/30 hover:bg-black/50 text-white py-2 px-4 rounded-lg w-full text-sm sm:text-base' onClick={() => router.push('/dashboard/config')}>
+          Ir al panel de configuración
         </button>
         {groupsGenerated.length > 0 && (
           <button type='button' onClick={handleUploadGroups} className='mt-4 bg-success hover:bg-success-dark text-white py-2 px-4 rounded-lg w-full font-semibold text-sm sm:text-base'>
