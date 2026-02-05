@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 // Constantes de configuración
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET ?? '';
 const SALT_ROUNDS = 10;
 const TOKEN_EXPIRY = '8h';
 

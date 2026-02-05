@@ -245,7 +245,7 @@ export default function GhDashboard() {
   if (authLoading || !isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-        <Spinner size="xl" color="var(--color-accent)" />
+        <Spinner size="xl" color="custom" customColor="var(--color-accent)" />
         <p className="text-[color:var(--color-text)] text-xl mt-4">Verificando acceso...</p>
       </div>
     );
@@ -259,7 +259,7 @@ export default function GhDashboard() {
         </div>
 
         <div className="flex items-center gap-3 mb-6">
-          <Spinner size="lg" color="var(--color-accent)" />
+          <Spinner size="lg" color="custom" customColor="var(--color-accent)" />
           <span className="text-[color:var(--color-muted)] text-lg">Cargando datos...</span>
         </div>
 

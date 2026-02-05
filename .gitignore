@@ -1,3 +1,17 @@
+
+JWT_SECRET=ajHg8lH3L4zPM0w4Z9sWKTuViMuupk4fV
+
+# Credenciales de administrador
+ADMIN_EMAIL=admin@assessment.com
+ADMIN_PASSWORD=admin123
+
+# Azure Blob Storage (para fotos - REVISAR)
+AZURE_STORAGE_CONNECTION_STRING=
+
+NEXT_PUBLIC_SUPABASE_URL=https://utniorkgfeslmqvhkxre.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_bys_IqMKx4l0YQQJGUc80A_8FQRn6EK
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0bmlvcmtnZmVzbG1xdmhreHJlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTYzNzAyOSwiZXhwIjoyMDg1MjEzMDI5fQ.dqaH29C9_1okKdSWw0ScrSEtP7BEwEZoeIZUW5QcDgY
+
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies

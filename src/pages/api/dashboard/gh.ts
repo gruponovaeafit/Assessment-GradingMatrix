@@ -80,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Correo: p.Correo_Participante,
         role: p.Rol_Participante ?? '0',
         Foto: p.FotoUrl_Participante ?? null,
-        Grupo: p.Grupo?.Nombre_GrupoAssessment ?? 'Sin grupo',
+        Grupo: p.Grupo?.[0]?.Nombre_GrupoAssessment ?? 'Sin grupo',
         Estado: promedio != null ? "Completado" : "Pendiente",
         Calificacion_Promedio: promedio,
         ...calificacionesBases,

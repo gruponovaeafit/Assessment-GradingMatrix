@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ID: p.ID_Participante,
       Nombre: p.Nombre_Participante,
       role: p.Rol_Participante ?? '0',
-      Grupo: p.Grupo?.Nombre_GrupoAssessment ?? null,
+      Grupo: p.Grupo?.[0]?.Nombre_GrupoAssessment ?? null,
       Photo: p.FotoUrl_Participante ?? null,
     }));
 

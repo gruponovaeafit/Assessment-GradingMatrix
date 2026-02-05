@@ -9,6 +9,20 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="0f8c4817-b9e4-461c-a4c0-36ecf0efac51" name="apolo3">
+        <fileTransfer rootFolder="/home/srodrigu24/" accessType="SFTP" host="200.12.187.180" port="22" sshConfigId="c36b29d2-d9ff-4998-be11-fa903e065636" sshConfig="srodrigu24@200.12.187.180:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="653cc136-a05c-47c6-9dfd-be120d2504d0" name="scar-apolo3">
+        <fileTransfer rootFolder="/home/scar-test/" accessType="SFTP" host="200.12.187.180" port="22" sshConfigId="5787e98e-e39c-4364-b04e-4b97ee1ccf77" sshConfig="scar-test@200.12.187.180:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

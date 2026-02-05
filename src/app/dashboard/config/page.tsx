@@ -471,7 +471,7 @@ export default function Dashboard() {
   if (authLoading || !isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-        <Spinner size="xl" color="var(--color-accent)" />
+        <Spinner size="xl" color="custom" customColor="var(--color-accent)" />
         <p className="text-gray-600 text-xl mt-4">Verificando acceso...</p>
       </div>
     );
@@ -484,7 +484,7 @@ export default function Dashboard() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[color:var(--color-accent)]">Configuración del Assessment</h1>
         </div>
         <div className="flex items-center gap-3 mb-6">
-          <Spinner size="lg" color="var(--color-accent)" />
+          <Spinner size="lg" color="custom" customColor="var(--color-accent)" />
           <span className="text-gray-500 text-lg">Cargando datos...</span>
         </div>
         <div className="flex flex-wrap justify-center gap-4 max-w-[900px] w-full">

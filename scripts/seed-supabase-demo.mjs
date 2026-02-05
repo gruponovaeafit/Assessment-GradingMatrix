@@ -126,7 +126,7 @@ try {
     {
       ID_Assessment: assessment.ID_Assessment,
       Correo_Staff: `calificador_${suffix}@demo.com`,
-      Contrasena_Staff: 'califica123',
+      Contrasena_Staff: '3',
       Rol_Staff: 'calificador',
       ID_Base: base.ID_Base,
     },

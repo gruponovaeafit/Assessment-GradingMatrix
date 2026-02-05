@@ -65,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const promedio = generalPromByPersona[p.ID_Participante] ?? null;
 
       return {
-        Grupo: p.Grupo?.Nombre_GrupoAssessment ?? 'Sin grupo',
+        Grupo: p.Grupo?.[0]?.Nombre_GrupoAssessment ?? 'Sin grupo',
         ID: p.ID_Participante,
         Participante: p.Nombre_Participante,
         Correo: p.Correo_Participante,

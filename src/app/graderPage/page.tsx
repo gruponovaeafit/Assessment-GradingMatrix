@@ -40,13 +40,24 @@ const GraderPage: React.FC = () => {
     const [submitting, setSubmitting] = useState(false);
     const { confirm, setIsLoading, ConfirmModalComponent } = useConfirmModal();
 
+    const getInitials = (name: ReactNode) => {
+        if (typeof name !== 'string') return 'NA';
+        const parts = name.trim().split(/\s+/).filter(Boolean);
+        const initials = parts.slice(0, 2).map((part) => part[0]).join('');
+        return initials ? initials.toUpperCase() : 'NA';
+    };
+
     useEffect(() => {
         const storedData = localStorage.getItem("storedData");
         const parsedData = storedData ? JSON.parse(storedData) : null;
         const idBase = parsedData?.id_base;
         const id_Calificador = parsedData?.id_Calificador;
         const authToken = localStorage.getItem("authToken");
-        const authHeaders = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+        const authHeaders: HeadersInit = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+        const jsonHeaders: HeadersInit = {
+            'Content-Type': 'application/json',
+            ...authHeaders,
+        };
 
         if (!idBase || !id_Calificador) {
             console.error("❌ No se encontró id_base o id_Calificador en localStorage.");
@@ -58,7 +69,7 @@ const GraderPage: React.FC = () => {
             try {
                 const response = await fetch('/api/groupsId', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', ...authHeaders },
+                    headers: jsonHeaders,
                     body: JSON.stringify({ idCalificador: id_Calificador }),
                 });
                 if (!response.ok) throw new Error("Error en la API de usuarios");
@@ -75,7 +86,7 @@ const GraderPage: React.FC = () => {
             try {
                 const response = await fetch('/api/getBaseData', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', ...authHeaders },
+                    headers: jsonHeaders,
                     body: JSON.stringify({ id_base: idBase }),
                 });
                 if (!response.ok) throw new Error("Error en la API de base");
@@ -90,7 +101,7 @@ const GraderPage: React.FC = () => {
             try {
                 const response = await fetch('/api/getCalificador', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', ...authHeaders },
+                    headers: jsonHeaders,
                     body: JSON.stringify({ id_calificador: id_Calificador }),
                 });
                 if (!response.ok) throw new Error('Error al obtener calificador');
@@ -190,9 +201,16 @@ const GraderPage: React.FC = () => {
     // payload preparado para envío
 
         try {
+            const authToken = localStorage.getItem("authToken");
+            const authHeaders: HeadersInit = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+            const jsonHeaders: HeadersInit = {
+                'Content-Type': 'application/json',
+                ...authHeaders,
+            };
+
             const response = await fetch('/api/add-calificaciones', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...authHeaders },
+                headers: jsonHeaders,
                 body: JSON.stringify(payload),
             });
 
@@ -259,79 +277,99 @@ const GraderPage: React.FC = () => {
 
     return (
         <div
-            className="flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-4 bg-[color:var(--color-bg)]"
+            className="flex flex-col items-center justify-center min-h-screen py-6 sm:py-10 px-4 bg-white"
         >
-            {nombreCalificador && (
-                <h2 className="text-[color:var(--color-accent)] text-lg sm:text-xl font-bold mt-4 mb-4 sm:mb-6 text-center">
-                    Hola, {nombreCalificador}
-                </h2>
-            )}
+            <div className="w-full max-w-6xl">
+                {nombreCalificador && (
+                    <h2 className="text-[color:var(--color-accent)] text-lg sm:text-xl font-bold mt-2 mb-4 sm:mb-6 text-center">
+                        Hola, {nombreCalificador}
+                    </h2>
+                )}
 
-            {baseData && (
-                <div className="w-full max-w-xl mb-6 sm:mb-10 px-4 sm:px-6 py-4 sm:py-6 rounded-2xl shadow-lg bg-[color:var(--color-surface)] border border-[color:var(--color-muted)]">
-                    <h2 className='text-xl sm:text-2xl font-extrabold mb-2 text-center tracking-wide text-[color:var(--color-accent)]'>{baseData.Nombre}</h2>
-                    <h3 className='text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-center italic text-[color:var(--color-text)]/90'>{baseData.Competencia}</h3>
-                    <p className='mb-4 sm:mb-6 text-xs sm:text-sm text-justify text-[color:var(--color-muted)]'>{baseData.Descripcion}</p>
-                    <div className='space-y-2 sm:space-y-3 text-xs sm:text-sm'>
-                        <div><span className='font-bold text-[color:var(--color-accent)]'>🟣 Comportamiento 1:</span> {baseData.Comportamiento1}</div>
-                        <div><span className='font-bold text-[color:var(--color-accent)]'>🟣 Comportamiento 2:</span> {baseData.Comportamiento2}</div>
-                        <div><span className='font-bold text-[color:var(--color-accent)]'>🟣 Comportamiento 3:</span> {baseData.Comportamiento3}</div>
-                    </div>
-                </div>
-            )}
-
-            <div className='flex flex-col items-center gap-6 sm:gap-8 w-full'>
-                {usuarios.filter((usuario) => usuario.role !== 'Impostor').map((usuario) => (
-                    <div
-                        key={usuario.ID}
-                        className={`relative text-white px-4 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-6 rounded-lg bg-cover bg-center flex flex-col items-center mx-auto ${errores.includes(usuario.ID) ? 'border-4 border-yellow-400' : ''}`}
-                        style={{
-                            width: '100%',
-                            maxWidth: '360px',
-                            minHeight: '450px',
-                            backgroundSize: '100% 100%',
-                            backgroundRepeat: 'no-repeat',
-                            backgroundPosition: 'center center',
-                        }}
-                    >
-                        <div className="absolute w-full flex justify-center mt-2 sm:mt-3">
-                            {usuario.Photo && (
-                                <img
-                                    src={usuario.Photo}
-                                    alt={`Foto de ${usuario.Nombre}`}
-                                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-md object-cover shadow-lg border-4 border-white"
-                                />
-                            )}
+                <div className="w-full max-w-3xl mx-auto mb-6 sm:mb-10 px-5 sm:px-6 py-5 sm:py-6 rounded-2xl shadow-lg bg-white border border-gray-100">
+                    {baseData ? (
+                        <>
+                            <h2 className='text-xl sm:text-2xl font-extrabold mb-2 text-center tracking-wide text-[color:var(--color-accent)]'>{baseData.Nombre}</h2>
+                            <div className="text-sm sm:text-base text-gray-800 mb-3 sm:mb-4 text-center font-semibold">
+                                Competencia: <span className="font-normal italic">{baseData.Competencia}</span>
+                            </div>
+                            <div className="mb-4 sm:mb-6 text-xs sm:text-sm text-gray-500">
+                                <span className="font-semibold text-gray-700">Descripcion:</span> {baseData.Descripcion}
+                            </div>
+                            <div className='space-y-2 sm:space-y-3 text-xs sm:text-sm text-gray-700'>
+                                <div><span className='font-bold text-[color:var(--color-accent)]'>🟣 Comportamiento 1:</span> {baseData.Comportamiento1}</div>
+                                <div><span className='font-bold text-[color:var(--color-accent)]'>🟣 Comportamiento 2:</span> {baseData.Comportamiento2}</div>
+                                <div><span className='font-bold text-[color:var(--color-accent)]'>🟣 Comportamiento 3:</span> {baseData.Comportamiento3}</div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center text-gray-500 text-sm sm:text-base">
+                            No se pudieron cargar los datos de la base.
                         </div>
+                    )}
+                </div>
 
-                        <div className='mt-32 sm:mt-40'></div>
-                        <p className='text-xs sm:text-sm mb-1 font-bold'>ID: {usuario.ID}</p>
-                        <p className='text-xs sm:text-sm mb-3 sm:mb-4 font-bold text-center'>Nombre: {usuario.Nombre}</p>
-
-                        {[1, 2, 3].map(num => {
-                            const comportamiento = baseData?.[`Comportamiento${num}` as keyof typeof baseData] as string;
-                            return (
-                                <div key={num} className='mb-3 w-full max-w-xs px-2 sm:px-4'>
-                                    <p className='text-xs text-white/80 italic mb-1 text-center'>{comportamiento}</p>
-                                    <label className='text-xs sm:text-sm font-semibold block mb-1 text-center'>Comportamiento #{num}:</label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        max={5}
-                                        step={1}
-                                        className="w-full rounded-lg px-3 py-2 text-black text-center font-bold text-lg bg-white border-2 border-[color:var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)]"
-                                        value={calificaciones[usuario.ID]?.[`Calificacion_${num}` as keyof typeof calificaciones[typeof usuario.ID]] ?? ''}
-                                        onChange={e => handleInputChange(usuario.ID, num, e.target.value)}
-                                        disabled={submitting}
-                                    />
+                <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 w-full'>
+                    {usuarios.filter((usuario) => usuario.role !== 'Impostor').map((usuario) => {
+                        const photoUrl = typeof usuario.Photo === 'string' ? usuario.Photo.trim() : '';
+                        return (
+                            <div
+                                key={usuario.ID}
+                                className={`relative px-4 sm:px-5 pt-5 sm:pt-6 pb-5 sm:pb-6 rounded-2xl bg-white border-2 shadow-lg ${errores.includes(usuario.ID) ? 'border-yellow-400 ring-2 ring-yellow-300' : 'border-gray-300'}`}
+                            >
+                                <div className="flex flex-col items-center gap-3 mb-4">
+                                    <div className="w-40 h-40 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-2xl overflow-hidden bg-gray-100 border-2 border-gray-300 shadow flex items-center justify-center">
+                                        {photoUrl ? (
+                                            <img
+                                                src={photoUrl}
+                                                alt={`Foto de ${usuario.Nombre}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <span className="text-lg sm:text-xl font-bold text-[color:var(--color-accent)]">
+                                                {getInitials(usuario.Nombre)}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0 text-center">
+                                        <p className='text-xs text-gray-500'>ID: {usuario.ID}</p>
+                                        <p className='text-base sm:text-lg font-bold text-gray-900 truncate'>{usuario.Nombre}</p>
+                                        {usuario.Grupo && (
+                                            <p className='text-xs text-gray-500'>Grupo: {usuario.Grupo}</p>
+                                        )}
+                                    </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                ))}
+
+                                <div className="space-y-4">
+                                    {[1, 2, 3].map(num => {
+                                        const comportamiento = baseData?.[`Comportamiento${num}` as keyof typeof baseData] as string;
+                                        return (
+                                            <div key={num} className='w-full'>
+                                                <p className='text-xs sm:text-sm font-semibold text-center text-[color:var(--color-accent)]'>
+                                                    Comportamiento {num}
+                                                </p>
+                                                <p className='text-xs text-gray-500 italic mb-1 text-center'>{comportamiento}</p>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    max={5}
+                                                    step={1}
+                                                    className="w-full rounded-lg px-3 py-2 text-gray-900 text-center font-bold text-lg bg-white border-2 border-[color:var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)]"
+                                                    value={calificaciones[usuario.ID]?.[`Calificacion_${num}` as keyof typeof calificaciones[typeof usuario.ID]] ?? ''}
+                                                    onChange={e => handleInputChange(usuario.ID, num, e.target.value)}
+                                                    disabled={submitting}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
-            <div className="w-full flex flex-col items-center mt-8">
+            <div className="w-full flex flex-col items-center mt-8 sm:mt-10">
                 <button
                     onClick={handleSubmitGeneral}
                     disabled={submitting}

@@ -14,7 +14,7 @@ export default function AdminHub() {
   if (authLoading || !isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-        <Spinner size="xl" color="var(--color-accent)" />
+        <Spinner size="xl" color="custom" customColor="var(--color-accent)" />
         <p className="text-[color:var(--color-text)] text-xl mt-4">Verificando acceso...</p>
       </div>
     );

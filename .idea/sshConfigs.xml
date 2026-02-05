@@ -3,6 +3,8 @@
   <component name="SshConfigs">
     <configs>
       <sshConfig authType="PASSWORD" host="apolo.eafit.edu.co" id="64e7fa6e-ad16-44b2-aacc-d0cd4c714183" port="22" nameFormat="DESCRIPTIVE" username="srodrigu24" useOpenSSHConfig="true" />
+      <sshConfig authType="PASSWORD" host="200.12.187.180" id="c36b29d2-d9ff-4998-be11-fa903e065636" port="22" nameFormat="DESCRIPTIVE" username="srodrigu24" useOpenSSHConfig="true" />
+      <sshConfig authType="PASSWORD" host="200.12.187.180" id="5787e98e-e39c-4364-b04e-4b97ee1ccf77" port="22" nameFormat="DESCRIPTIVE" username="scar-test" useOpenSSHConfig="true" />
     </configs>
   </component>
 </project>
