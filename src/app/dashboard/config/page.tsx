@@ -539,6 +539,12 @@ export default function Dashboard() {
         </h1>
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
           <button
+            onClick={() => router.push('/dashboard/bases')}
+            className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+          >
+            Gestionar Bases
+          </button>
+          <button
             onClick={() => (window.location.href = "/admin")}
             className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
@@ -551,6 +557,7 @@ export default function Dashboard() {
             Cerrar Sesión
           </button>
         </div>
+
       </div>
 
       <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
