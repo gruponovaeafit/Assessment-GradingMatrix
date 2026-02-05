@@ -1,7 +1,7 @@
 import { IncomingForm, File } from 'formidable';
 import { promises as fs } from 'fs';
+import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
-import { BlobServiceClient } from '@azure/storage-blob';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabaseServer';
 import { getDefaultAssessmentId } from '@/lib/assessment';
@@ -13,12 +13,29 @@ export const config = {
   },
 };
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB (entrada)
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
+// 🔒 unlink seguro (Windows-friendly)
+const safeUnlink = async (path: string, retries = 5) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await fs.unlink(path);
+      return;
+    } catch (err: any) {
+      if (err.code === 'EBUSY' || err.code === 'EPERM') {
+        await new Promise(res => setTimeout(res, 150));
+      } else {
+        return;
+      }
+    }
+  }
+};
+
+// 📦 Parse multipart/form-data
 const parseForm = (
   req: NextApiRequest
-): Promise<{ fields: Record<string, unknown>; files: { image?: File | File[] } }> => {
+): Promise<{ fields: Record<string, any>; files: { image?: File | File[] } }> => {
   const form = new IncomingForm({
     keepExtensions: true,
     maxFileSize: MAX_FILE_SIZE,
@@ -37,7 +54,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
+  let tmpPath: string | null = null;
+
   try {
+    // 🔐 Roles
     if (!requireRoles(req, res, ['admin', 'registrador'])) return;
 
     const { fields, files } = await parseForm(req);
@@ -46,46 +66,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const nombre = fields.nombre?.toString().trim();
     const correo = fields.correo?.toString().trim();
 
-    if (!nombre || !correo || !file || !file.filepath) {
+    if (!nombre || !correo || !file?.filepath) {
       return res.status(400).json({ error: 'Nombre, correo e imagen son obligatorios' });
     }
 
     if (!ALLOWED_MIME_TYPES.has(file.mimetype || '')) {
-      await fs.unlink(file.filepath);
       return res.status(400).json({ error: 'Formato de imagen no permitido' });
     }
 
     if ((file.size || 0) > MAX_FILE_SIZE) {
-      await fs.unlink(file.filepath);
       return res.status(400).json({ error: 'La imagen supera el tamaño permitido' });
     }
 
-    // Subir imagen a Azure Blob
-    const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_STORAGE_CONNECTION_STRING!;
-    const containerName = 'assessment';
-    const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
-    const containerClient = blobServiceClient.getContainerClient(containerName);
+    tmpPath = file.filepath;
 
-    await containerClient.createIfNotExists();
+    // 🔥 OPTIMIZACIÓN EXTREMA (≈ 0.01 MB)
+    const optimizedBuffer = await sharp(tmpPath)
+      .resize(256, 256, { fit: 'cover' })
+      .webp({ quality: 55 })
+      .toBuffer();
 
-    const extension = file.originalFilename?.split('.').pop() || 'jpg';
-    const blobName = `${uuidv4()}.${extension}`;
-    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    // 🗂️ Subir a Supabase Storage
+    const fileName = `participantes/${uuidv4()}.webp`;
 
-    await blockBlobClient.uploadFile(file.filepath, {
-      blobHTTPHeaders: {
-        blobContentType: file.mimetype || 'application/octet-stream',
-      },
-    });
+    const { error: uploadError } = await supabase.storage
+      .from('imagenes_participantes') 
+      .upload(fileName, optimizedBuffer, {
+        contentType: 'image/webp',
+        upsert: false,
+      });
 
-    await fs.unlink(file.filepath); // limpiar archivo temporal
+    if (uploadError) {
+      throw uploadError;
+    }
 
-    const photoUrl = blockBlobClient.url;
+    const { data: publicData } = supabase.storage
+      .from('images')
+      .getPublicUrl(fileName);
 
-    // Insertar en base de datos Supabase
+    const photoUrl = publicData.publicUrl;
+
+    // 🧠 Insertar en DB
     const assessmentId = await getDefaultAssessmentId();
 
-    const { error } = await supabase
+    const { error: dbError } = await supabase
       .from('Participante')
       .insert({
         ID_Assessment: assessmentId,
@@ -95,16 +119,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         FotoUrl_Participante: photoUrl,
       });
 
-    if (error) {
-      if (error.code === '23505') {
+    if (dbError) {
+      if (dbError.code === '23505') {
         return res.status(400).json({ error: 'El correo ya está registrado' });
       }
-      throw new Error(error.message);
+      throw dbError;
     }
 
-    return res.status(200).json({ message: 'Persona registrada correctamente', url: photoUrl });
-  } catch (error: unknown) {
+    return res.status(200).json({
+      message: 'Persona registrada correctamente',
+      url: photoUrl,
+      sizeKB: Math.round(optimizedBuffer.length / 1024),
+    });
+
+  } catch (error) {
     console.error('❌ Error en el registro:', error);
     return res.status(500).json({ error: 'Error al registrar la persona' });
+  } finally {
+    if (tmpPath) {
+      await safeUnlink(tmpPath);
+    }
   }
 }
