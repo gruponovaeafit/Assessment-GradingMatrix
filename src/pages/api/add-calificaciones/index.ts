@@ -35,6 +35,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const assessmentId = staff.ID_Assessment;
+    const idBase = Number(calificaciones[0].ID_Base);
+
+    // ✅ NUEVA VALIDACIÓN: Verificar si ya existen calificaciones previas
+    const { data: existingGrades, error: checkError } = await supabase
+      .from('CalificacionesPorPersona')
+      .select('ID_Calificacion')
+      .eq('ID_Assessment', assessmentId)
+      .eq('ID_Base', idBase)
+      .eq('ID_Staff', calificadorId)
+      .limit(1);
+
+    if (checkError) {
+      throw new Error(`Error al verificar calificaciones previas: ${checkError.message}`);
+    }
+
+    // ✅ Si ya calificó antes, bloquear el intento
+    if (existingGrades && existingGrades.length > 0) {
+      return res.status(400).json({
+        error: 'Ya has calificado a este grupo anteriormente. No puedes volver a calificar.',
+        code: 'ALREADY_GRADED',
+        message: 'No es posible recalificar al mismo grupo ni a las mismas personas.',
+      });
+    }
 
     const upsertPayload = calificaciones.map((cal) => {
       const ID_Participante = Number(cal.ID_Persona ?? cal.ID_Participante);
@@ -68,14 +91,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
     });
 
-    const { error: upsertError } = await supabase
+    // ✅ CAMBIO: Usar INSERT en lugar de UPSERT para no permitir updates
+    const { error: insertError } = await supabase
       .from('CalificacionesPorPersona')
-      .upsert(upsertPayload, {
-        onConflict: 'ID_Assessment,ID_Base,ID_Staff,ID_Participante',
-      });
+      .insert(upsertPayload);
 
-    if (upsertError) {
-      throw new Error(`Error al guardar calificación: ${upsertError.message}`);
+    if (insertError) {
+      throw new Error(`Error al guardar calificación: ${insertError.message}`);
     }
 
     res.status(200).json({
