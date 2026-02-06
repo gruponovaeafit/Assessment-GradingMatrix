@@ -46,7 +46,7 @@ export default function Login() {
       
       if (data.role === "admin") {
         loginAsAdmin(data.token);
-        router.push("/admin");
+        router.push("/k7v9x2q0m5p8n1t6z3r4w9y1");
       } else if (data.role === "registrador") {
         router.push("/register");
       } else if (data.role === "calificador") {

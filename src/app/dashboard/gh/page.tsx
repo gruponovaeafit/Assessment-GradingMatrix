@@ -49,15 +49,51 @@ export default function GhDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [exporting, setExporting] = useState(false);
+  const [classificationRanges, setClassificationRanges] = useState({
+    group: 4.7,
+    interview: 4.0,
+    discussion: 3.6,
+  });
+  const rangesStorageKey = "ghClassificationRanges";
+
+  const normalizeRanges = (next: typeof classificationRanges) => {
+    const group = Math.max(0, Math.min(5, next.group));
+    const interview = Math.max(0, Math.min(5, Math.min(next.interview, group)));
+    const discussion = Math.max(3.6, Math.min(5, Math.min(next.discussion, interview)));
+    return { group, interview, discussion };
+  };
+
+  useEffect(() => {
+    const stored = localStorage.getItem(rangesStorageKey);
+    if (!stored) return;
+    try {
+      const parsed = JSON.parse(stored) as Partial<typeof classificationRanges>;
+      if (
+        typeof parsed.group === "number" &&
+        typeof parsed.interview === "number" &&
+        typeof parsed.discussion === "number"
+      ) {
+        setClassificationRanges(normalizeRanges(parsed as typeof classificationRanges));
+      }
+    } catch {
+      localStorage.removeItem(rangesStorageKey);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(rangesStorageKey, JSON.stringify(classificationRanges));
+  }, [classificationRanges]);
 
   // Confirm modal (lo dejo tal cual, por si lo usas después)
   const { confirm, setIsLoading: setModalLoading, ConfirmModalComponent } = useConfirmModal();
 
   const getEstadoInfo = (promedio: number | null) => {
     if (promedio == null) return { texto: "Pendiente", color: "text-white/60" };
-    if (promedio >= 4.7) return { texto: "✅ Pasa al grupo", color: "text-success" };
-    if (promedio >= 4) return { texto: "📋 Pasa a entrevista", color: "text-success-light" };
-    if (promedio >= 3.599) return { texto: "⚠️ Pasa a discusión", color: "text-yellow-400" };
+    if (promedio >= classificationRanges.group) return { texto: "✅ Pasa al grupo", color: "text-success" };
+    if (promedio >= classificationRanges.interview)
+      return { texto: "📋 Pasa a entrevista", color: "text-success-light" };
+    if (promedio >= classificationRanges.discussion)
+      return { texto: "⚠️ Pasa a discusión", color: "text-yellow-400" };
     return { texto: "❌ No pasa", color: "text-error" };
   };
 
@@ -506,6 +542,70 @@ export default function GhDashboard() {
                 Limpiar filtros
               </button>
             )}
+          </div>
+
+          <div className="rounded-xl border border-gray-100 bg-white p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="font-semibold text-gray-900">Rangos de clasificación</p>
+                <p className="text-xs text-gray-500">
+                  Ajusta los mínimos para cada estado. No se guardan en la base.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full sm:w-auto">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  Grupo
+                  <input
+                    type="number"
+                    min={0}
+                    max={5}
+                    step={0.1}
+                    value={classificationRanges.group}
+                    onChange={(e) => {
+                      const next = Number(e.target.value);
+                      if (!Number.isNaN(next)) {
+                        setClassificationRanges((prev) => normalizeRanges({ ...prev, group: next }));
+                      }
+                    }}
+                    className="w-20 px-2 py-1 rounded-md border border-gray-300 text-gray-900 focus:border-[color:var(--color-accent)] focus:outline-none"
+                  />
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  Entrevista
+                  <input
+                    type="number"
+                    min={0}
+                    max={5}
+                    step={0.1}
+                    value={classificationRanges.interview}
+                    onChange={(e) => {
+                      const next = Number(e.target.value);
+                      if (!Number.isNaN(next)) {
+                        setClassificationRanges((prev) => normalizeRanges({ ...prev, interview: next }));
+                      }
+                    }}
+                    className="w-20 px-2 py-1 rounded-md border border-gray-300 text-gray-900 focus:border-[color:var(--color-accent)] focus:outline-none"
+                  />
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  Discusión
+                  <input
+                    type="number"
+                    min={0}
+                    max={5}
+                    step={0.1}
+                    value={classificationRanges.discussion}
+                    onChange={(e) => {
+                      const next = Number(e.target.value);
+                      if (!Number.isNaN(next)) {
+                        setClassificationRanges((prev) => normalizeRanges({ ...prev, discussion: next }));
+                      }
+                    }}
+                    className="w-20 px-2 py-1 rounded-md border border-gray-300 text-gray-900 focus:border-[color:var(--color-accent)] focus:outline-none"
+                  />
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
