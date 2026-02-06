@@ -85,6 +85,7 @@ create table public."Staff" (
   "Correo_Staff" varchar(100) not null,
   "Contrasena_Staff" varchar(255) not null,
   "Rol_Staff" varchar(100) not null,
+  "Active" boolean not null default false,
 
   "ID_Base" integer null,
   "ID_GrupoAssessment" integer null,

@@ -33,6 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const token = generateToken({ id: 0, email: adminEmail, role: 'admin' });
       return res.status(200).json({
         role: 'admin',
+        superAdmin: true,
         token,
         message: 'Login exitoso',
       });
@@ -42,12 +43,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { data: staff, error } = await supabase
       .from('Staff')
-      .select('ID_Staff, Correo_Staff, Contrasena_Staff, ID_Base, Rol_Staff')
+      .select('ID_Staff, Correo_Staff, Contrasena_Staff, ID_Base, Rol_Staff, Active')
       .eq('Correo_Staff', email)
       .single();
 
     if (error || !staff) {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
+    }
+
+    if (staff.Active) {
+      return res.status(409).json({ error: 'Sesión ya activa para este usuario' });
     }
 
     // Verificar contraseña
@@ -89,8 +94,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       role,
     });
 
+    await supabase
+      .from('Staff')
+      .update({ Active: true })
+      .eq('ID_Staff', staff.ID_Staff);
+
     res.status(200).json({
       role,
+      superAdmin: false,
       ID_Grupo: null,
       ID_Base: staff.ID_Base,
       ID_Calificador: staff.ID_Staff,

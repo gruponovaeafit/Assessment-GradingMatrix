@@ -18,12 +18,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { data: staff, error: staffError } = await supabase
       .from('Staff')
-      .select('ID_Assessment')
+      .select('ID_Assessment, ID_GrupoAssessment')
       .eq('ID_Staff', Number(idCalificador))
       .single();
 
     if (staffError || !staff) {
       return res.status(404).json({ message: 'Calificador no encontrado' });
+    }
+
+    if (!staff.ID_GrupoAssessment) {
+      return res.status(400).json({ error: 'Calificador sin grupo asignado' });
     }
 
     const { data: participantes, error: participantesError } = await supabase
@@ -32,6 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         'ID_Participante, Nombre_Participante, Rol_Participante, FotoUrl_Participante, Grupo:GrupoAssessment(Nombre_GrupoAssessment)'
       )
       .eq('ID_Assessment', staff.ID_Assessment)
+      .eq('ID_GrupoAssessment', staff.ID_GrupoAssessment)
       .order('ID_Participante', { ascending: true });
 
     if (participantesError) {

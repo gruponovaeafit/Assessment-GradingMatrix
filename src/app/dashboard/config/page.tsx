@@ -17,7 +17,14 @@ interface Calificacion {
 }
 
 export default function Dashboard() {
-  const { isAdmin, isLoading: authLoading, requireAdmin, logout, getAuthHeaders } = useAdminAuth();
+  const {
+    isAdmin,
+    isSuperAdmin,
+    isLoading: authLoading,
+    requireAdmin,
+    logout,
+    getAuthHeaders,
+  } = useAdminAuth();
   const router = useRouter();
   const [data, setData] = useState<Calificacion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +118,23 @@ export default function Dashboard() {
 
     fetchAssessments();
   }, [authLoading, isAdmin, router]);
+
+  const visibleAssessments = useMemo(() => {
+    if (isSuperAdmin) return assessments;
+    return assessments.filter((assessment) => assessment.activo);
+  }, [assessments, isSuperAdmin]);
+
+  useEffect(() => {
+    if (isSuperAdmin) return;
+    if (visibleAssessments.length === 0) return;
+    const fallbackId = String(visibleAssessments[0].id);
+    if (!configAssessmentId || !visibleAssessments.some((item) => String(item.id) === configAssessmentId)) {
+      setConfigAssessmentId(fallbackId);
+    }
+    if (!staffAssessmentId || !visibleAssessments.some((item) => String(item.id) === staffAssessmentId)) {
+      setStaffAssessmentId(fallbackId);
+    }
+  }, [visibleAssessments, isSuperAdmin, configAssessmentId, staffAssessmentId]);
 
   const loadParticipantsAndGroups = async (assessmentId: string) => {
     if (!assessmentId) {
@@ -257,6 +281,10 @@ export default function Dashboard() {
   };
 
   const handleToggleAssessment = async (assessmentId: number, activo: boolean) => {
+    if (!isSuperAdmin) {
+      showToast.error('No tienes permisos para cambiar el estado de assessments');
+      return;
+    }
     try {
       const response = await authFetch(
         '/api/assessment/toggle-active',
@@ -597,20 +625,30 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {assessments.map((assessment) => (
+            {visibleAssessments.map((assessment) => (
               <div key={assessment.id} className="border border-gray-100 rounded-lg p-3 flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-gray-900">{assessment.nombre}</p>
                   <p className="text-xs text-gray-500">ID: {assessment.id}</p>
                 </div>
-                <button
-                  onClick={() => handleToggleAssessment(assessment.id, assessment.activo)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    assessment.activo ? "bg-success text-white" : "bg-gray-200 text-gray-700"
-                  }`}
-                >
-                  {assessment.activo ? "Activo" : "Inactivo"}
-                </button>
+                {isSuperAdmin ? (
+                  <button
+                    onClick={() => handleToggleAssessment(assessment.id, assessment.activo)}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      assessment.activo ? "bg-success text-white" : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {assessment.activo ? "Activo" : "Inactivo"}
+                  </button>
+                ) : (
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      assessment.activo ? "bg-success text-white" : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {assessment.activo ? "Activo" : "Inactivo"}
+                  </span>
+                )}
               </div>
             ))}
             {assessments.length === 0 && (
@@ -630,7 +668,7 @@ export default function Dashboard() {
               className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
             >
               <option value="">Assessment</option>
-              {assessments.map((assessment) => (
+              {visibleAssessments.map((assessment) => (
                 <option key={assessment.id} value={assessment.id}>
                   {assessment.nombre}
                 </option>
@@ -687,7 +725,7 @@ export default function Dashboard() {
               className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
             >
               <option value="">Assessment</option>
-              {assessments.map((assessment) => (
+              {visibleAssessments.map((assessment) => (
                 <option key={assessment.id} value={assessment.id}>
                   {assessment.nombre}
                 </option>
@@ -740,7 +778,7 @@ export default function Dashboard() {
               className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
             >
               <option value="">Assessment</option>
-              {assessments.map((assessment) => (
+              {visibleAssessments.map((assessment) => (
                 <option key={assessment.id} value={assessment.id}>
                   {assessment.nombre}
                 </option>

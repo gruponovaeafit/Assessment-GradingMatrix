@@ -20,11 +20,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .from('Assessment')
       .update({ Activo_Assessment: Boolean(activo) })
       .eq('ID_Assessment', Number(assessmentId))
-      .select('ID_Assessment, Activo_Assessment')
+      .select('ID_Assessment, Activo_Assessment, ID_GrupoEstudiantil')
       .single();
 
     if (error || !data) {
       throw new Error(error?.message || 'Error actualizando assessment');
+    }
+
+    if (Boolean(activo)) {
+      const groupId = data.ID_GrupoEstudiantil as number;
+      const { error: deactivateError } = await supabase
+        .from('Assessment')
+        .update({ Activo_Assessment: false })
+        .eq('ID_GrupoEstudiantil', Number(groupId))
+        .neq('ID_Assessment', Number(assessmentId));
+
+      if (deactivateError) {
+        throw new Error(deactivateError.message);
+      }
     }
 
     res.status(200).json({ message: 'Assessment actualizado', ...data });

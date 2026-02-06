@@ -48,6 +48,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error(error?.message || 'Error actualizando assessment');
     }
 
+    if (activo === true) {
+      let targetGroupId = updatePayload.ID_GrupoEstudiantil as number | undefined;
+      if (!targetGroupId) {
+        const { data: current, error: currentError } = await supabase
+          .from('Assessment')
+          .select('ID_GrupoEstudiantil')
+          .eq('ID_Assessment', Number(assessmentId))
+          .single();
+        if (currentError || !current) {
+          throw new Error(currentError?.message || 'No se pudo resolver el grupo del assessment');
+        }
+        targetGroupId = current.ID_GrupoEstudiantil as number;
+      }
+
+      const { error: deactivateError } = await supabase
+        .from('Assessment')
+        .update({ Activo_Assessment: false })
+        .eq('ID_GrupoEstudiantil', Number(targetGroupId))
+        .neq('ID_Assessment', Number(assessmentId));
+
+      if (deactivateError) {
+        throw new Error(deactivateError.message);
+      }
+    }
+
     res.status(200).json({ message: 'Assessment actualizado', id: data.ID_Assessment });
   } catch (error) {
     console.error('❌ Error al actualizar assessment:', error);

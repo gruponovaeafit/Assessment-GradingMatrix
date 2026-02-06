@@ -5,6 +5,8 @@ import { useAdminAuth } from "../Hooks/useAdminAuth";
 import { Spinner } from "../components/UI/Loading";
 import { showToast } from "../components/UI/Toast";
 import { authFetch } from "@/lib/authFetch";
+import { stringify } from "csv-stringify/sync";
+import { saveAs } from "file-saver";
 
 type GrupoEstudiantil = {
   id: number;
@@ -29,82 +31,87 @@ type AdminUser = {
   grupoNombre: string | null;
 };
 
+type MassActionItem = {
+  key: string;
+  title: string;
+  subtitle?: string;
+  status: "crear" | "omitir";
+};
+
 export default function AdminAdminPanel() {
-  const { isAdmin, isLoading: authLoading, requireAdmin, logout, getAuthHeaders } = useAdminAuth();
+  const { isAdmin, isSuperAdmin, isLoading: authLoading, requireSuperAdmin, logout, getAuthHeaders } =
+    useAdminAuth();
 
   const [gruposEstudiantiles, setGruposEstudiantiles] = useState<GrupoEstudiantil[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
-  const [assessmentNombre, setAssessmentNombre] = useState("");
-  const [assessmentDescripcion, setAssessmentDescripcion] = useState("");
-  const [assessmentGrupoId, setAssessmentGrupoId] = useState("");
   const [assessmentActivo, setAssessmentActivo] = useState(true);
-  const [creatingAssessment, setCreatingAssessment] = useState(false);
-  const [autoAssessmentName, setAutoAssessmentName] = useState(true);
   const [creatingBulkAssessments, setCreatingBulkAssessments] = useState(false);
   const [creatingBulkAdmins, setCreatingBulkAdmins] = useState(false);
-  const [bulkAdminResults, setBulkAdminResults] = useState<
-    { correo: string; password: string; assessment: string }[]
-  >([]);
+  const [massAction, setMassAction] = useState<{
+    title: string;
+    description: string;
+    items: MassActionItem[];
+    onConfirm: () => void;
+  } | null>(null);
 
-  const [adminAssessmentId, setAdminAssessmentId] = useState("");
-  const [adminNombre, setAdminNombre] = useState("");
-  const [adminPersonalEmail, setAdminPersonalEmail] = useState("");
-  const [adminCorreo, setAdminCorreo] = useState("");
-  const [adminPassword, setAdminPassword] = useState("");
   const [creatingAdmin, setCreatingAdmin] = useState(false);
-  const [autoAdminCreds, setAutoAdminCreds] = useState(false);
-  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loadingAdmins, setLoadingAdmins] = useState(true);
-  const [adminEdits, setAdminEdits] = useState<
-    Record<number, { correo: string; assessmentId: string; password: string }>
-  >({});
+  const [adminEdits, setAdminEdits] = useState<Record<number, { correo: string; password: string }>>({});
   const [assessmentEdits, setAssessmentEdits] = useState<
     Record<number, { descripcion: string; activo: boolean; grupoId: string }>
   >({});
+  const [assessmentFilter, setAssessmentFilter] = useState<"activos" | "inactivos" | "todos">(
+    "activos"
+  );
+  const [assessmentSearch, setAssessmentSearch] = useState("");
+  const [assessmentGroupFilter, setAssessmentGroupFilter] = useState<string>("todos");
+  const [assessmentYearFilter, setAssessmentYearFilter] = useState<string>("todos");
+  const [adminFilter, setAdminFilter] = useState<"activos" | "todos">("activos");
+  const [adminSearch, setAdminSearch] = useState("");
+  const [adminGroupFilter, setAdminGroupFilter] = useState<string>("todos");
+  const [adminYearFilter, setAdminYearFilter] = useState<string>("todos");
 
   useEffect(() => {
-    requireAdmin();
-  }, [requireAdmin]);
+    requireSuperAdmin();
+  }, [requireSuperAdmin]);
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
     const loadData = async () => {
       try {
-        const [groupsResponse, assessmentsResponse] = await Promise.all([
-          authFetch(
-            "/api/grupo-estudiantil/list",
-            { headers: { ...getAuthHeaders() } },
-            () => logout()
-          ),
-          authFetch(
-            "/api/assessment/list-with-group",
-            { headers: { ...getAuthHeaders() } },
-            () => logout()
-          ),
-        ]);
-
-        if (!groupsResponse.ok) {
-          const error = await groupsResponse.json();
-          throw new Error(error?.error || "Error al cargar grupos estudiantiles");
+        const response = await authFetch(
+          "/api/admin/panel-data",
+          { headers: { ...getAuthHeaders() } },
+          () => logout()
+        );
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload?.error || "Error al cargar datos");
         }
-
-        if (!assessmentsResponse.ok) {
-          const error = await assessmentsResponse.json();
-          throw new Error(error?.error || "Error al cargar assessments");
-        }
-
-        const groupsData = await groupsResponse.json();
-        const assessmentsData = await assessmentsResponse.json();
-        setGruposEstudiantiles(groupsData || []);
-        setAssessments(assessmentsData || []);
+        setGruposEstudiantiles(payload.groups || []);
+        setAssessments(payload.assessments || []);
+        setAdmins(payload.admins || []);
+        setAdminEdits((prev) => {
+          const next = { ...prev };
+          (payload.admins || []).forEach((admin: AdminUser) => {
+            if (!next[admin.id]) {
+              next[admin.id] = {
+                correo: admin.correo,
+                password: "",
+              };
+            }
+          });
+          return next;
+        });
       } catch (error) {
         const message = error instanceof Error ? error.message : "Error al cargar datos";
         showToast.error(message);
       } finally {
         setLoadingData(false);
+        setLoadingAdmins(false);
       }
     };
 
@@ -128,64 +135,6 @@ export default function AdminAdminPanel() {
     });
   }, [assessments]);
 
-  useEffect(() => {
-    if (authLoading || !isAdmin) return;
-    const loadAdmins = async () => {
-      setLoadingAdmins(true);
-      try {
-        const response = await authFetch(
-          "/api/staff/admins",
-          { headers: { ...getAuthHeaders() } },
-          () => logout()
-        );
-        const payload = await response.json();
-        if (!response.ok) {
-          throw new Error(payload?.error || "Error al cargar admins");
-        }
-        setAdmins(payload || []);
-        setAdminEdits((prev) => {
-          const next = { ...prev };
-          (payload || []).forEach((admin: AdminUser) => {
-            if (!next[admin.id]) {
-              next[admin.id] = {
-                correo: admin.correo,
-                assessmentId: String(admin.assessmentId),
-                password: "",
-              };
-            }
-          });
-          return next;
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Error al cargar admins";
-        showToast.error(message);
-      } finally {
-        setLoadingAdmins(false);
-      }
-    };
-
-    loadAdmins();
-  }, [authLoading, isAdmin, getAuthHeaders, logout]);
-
-  const selectedGroupLabel = useMemo(() => {
-    if (!assessmentGrupoId) return null;
-    const match = gruposEstudiantiles.find((group) => String(group.id) === assessmentGrupoId);
-    return match ? match.nombre : null;
-  }, [assessmentGrupoId, gruposEstudiantiles]);
-
-  const buildAssessmentName = () => {
-    if (!assessmentGrupoId) return "";
-    const now = new Date();
-    const year = now.getFullYear();
-    const semester = now.getMonth() < 6 ? 1 : 2;
-    const groupName = selectedGroupLabel ?? "Grupo";
-    const sanitizedGroup = groupName
-      .trim()
-      .replace(/[^a-zA-Z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "")
-      .replace(/_+/g, "_");
-    return `Assessment_${sanitizedGroup}_${year}_S${semester}`;
-  };
 
   const generatePassword = (length = 16) => {
     const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -238,166 +187,145 @@ export default function AdminAdminPanel() {
     return `${hash}_${assessmentId}@${domainSlug || "grupo"}.agm`;
   };
 
-  const generateAdminCreds = (assessmentId: string) => {
-    if (!assessmentId) return;
-    setAdminCorreo(buildAdminEmail(assessmentId, adminNombre, adminPersonalEmail));
-    setAdminPassword(generatePassword());
-    setShowAdminPassword(true);
+  const activeAssessments = useMemo(() => {
+    const actives = assessments.filter((assessment) => assessment.activo);
+    const byGroup = new Map<number | string, Assessment>();
+    actives.forEach((assessment) => {
+      const key = assessment.grupoId ?? `no-group-${assessment.id}`;
+      const current = byGroup.get(key);
+      if (!current || assessment.id > current.id) {
+        byGroup.set(key, assessment);
+      }
+    });
+    return Array.from(byGroup.values());
+  }, [assessments]);
+
+  const getBulkAssessmentPayloads = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const semester = now.getMonth() < 6 ? 1 : 2;
+    const existingNames = new Set(assessments.map((item) => item.nombre.toLowerCase()));
+    return gruposEstudiantiles.map((grupo) => {
+      const nombre = `Assessment_${grupo.nombre
+        .trim()
+        .replace(/[^a-zA-Z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .replace(/_+/g, "_")}_${year}_S${semester}`;
+      return {
+        nombre,
+        grupoEstudiantilId: grupo.id,
+        exists: existingNames.has(nombre.toLowerCase()),
+      };
+    });
   };
 
-  useEffect(() => {
-    if (!autoAssessmentName) return;
-    const nextName = buildAssessmentName();
-    if (nextName) {
-      setAssessmentNombre(nextName);
-    }
-  }, [autoAssessmentName, assessmentGrupoId, selectedGroupLabel]);
+  const getBulkAdminPayloads = () => {
+    const existingEmails = new Set(admins.map((admin) => admin.correo.toLowerCase()));
+    return activeAssessments.map((assessment) => {
+      const correo = buildAdminEmail(String(assessment.id));
+      return {
+        assessment,
+        correo,
+        exists: existingEmails.has(correo.toLowerCase()),
+      };
+    });
+  };
 
-  useEffect(() => {
-    if (!autoAdminCreds || !adminAssessmentId) return;
-    generateAdminCreds(adminAssessmentId);
-  }, [autoAdminCreds, adminAssessmentId]);
-
-  const handleCreateAssessment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!assessmentNombre || !assessmentGrupoId) {
-      showToast.error("Nombre y Grupo Estudiantil son obligatorios.");
+  const openBulkAssessmentPreview = () => {
+    if (gruposEstudiantiles.length === 0) {
+      showToast.error("No hay grupos estudiantiles disponibles.");
       return;
     }
+    const payloads = getBulkAssessmentPayloads();
+    const items: MassActionItem[] = payloads.map((item) => ({
+      key: `${item.grupoEstudiantilId}-${item.nombre}`,
+      title: item.nombre,
+      subtitle: gruposEstudiantiles.find((g) => g.id === item.grupoEstudiantilId)?.nombre ?? "",
+      status: item.exists ? "omitir" : "crear",
+    }));
+    setMassAction({
+      title: "Crear assessments para todos los grupos",
+      description: "Se omitirán los assessments que ya existan.",
+      items,
+      onConfirm: () => {
+        setMassAction(null);
+        handleCreateAssessmentsForAllGroups(payloads);
+      },
+    });
+  };
 
-    setCreatingAssessment(true);
+  const openBulkAdminPreview = () => {
+    if (activeAssessments.length === 0) {
+      showToast.error("No hay assessments activos.");
+      return;
+    }
+    const payloads = getBulkAdminPayloads();
+    const items: MassActionItem[] = payloads.map((item) => ({
+      key: `${item.assessment.id}-${item.correo}`,
+      title: item.correo,
+      subtitle: item.assessment.nombre,
+      status: item.exists ? "omitir" : "crear",
+    }));
+    setMassAction({
+      title: "Crear admins para assessments activos",
+      description: "Se omitirán los admins ya existentes.",
+      items,
+      onConfirm: () => {
+        setMassAction(null);
+        handleCreateAdminsForAllAssessments(payloads);
+      },
+    });
+  };
+
+  const handleCreateAssessmentsForAllGroups = async (
+    payloads: { nombre: string; grupoEstudiantilId: number; exists: boolean }[]
+  ) => {
+    setCreatingBulkAssessments(true);
     try {
       const response = await authFetch(
-        "/api/assessment/create",
+        "/api/assessment/bulk-create",
         {
           method: "POST",
           headers: { "Content-Type": "application/json", ...getAuthHeaders() },
           body: JSON.stringify({
-            nombre: assessmentNombre,
-            descripcion: assessmentDescripcion,
-            grupoEstudiantilId: assessmentGrupoId,
+            grupoIds: payloads.map((item) => item.grupoEstudiantilId),
             activo: assessmentActivo,
           }),
         },
         () => logout()
       );
-
-      const payload = await response.json();
+      const result = await response.json();
       if (!response.ok) {
-        throw new Error(payload?.error || "Error al crear assessment");
+        throw new Error(result?.error || "Error al crear assessments");
       }
 
-      showToast.success("Assessment creado correctamente");
-      setAssessmentNombre("");
-      setAssessmentDescripcion("");
-      setAssessmentGrupoId("");
-      setAssessmentActivo(true);
-      setAssessments((prev) => [
-        ...prev,
-        {
-          id: payload.ID_Assessment,
-          nombre: assessmentNombre,
-          descripcion: assessmentDescripcion || null,
-          activo: assessmentActivo,
-          grupoId: assessmentGrupoId ? Number(assessmentGrupoId) : null,
-          grupoNombre:
-            gruposEstudiantiles.find((group) => String(group.id) === assessmentGrupoId)?.nombre ?? null,
-        },
-      ]);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al crear assessment";
-      showToast.error(message);
-    } finally {
-      setCreatingAssessment(false);
-    }
-  };
+      const created = result.created || [];
+      const skipped = result.skipped || [];
 
-  const handleCreateAssessmentsForAllGroups = async () => {
-    if (gruposEstudiantiles.length === 0) {
-      showToast.error("No hay grupos estudiantiles disponibles.");
-      return;
-    }
-
-    setCreatingBulkAssessments(true);
-    try {
-      const now = new Date();
-      const year = now.getFullYear();
-      const semester = now.getMonth() < 6 ? 1 : 2;
-      const existingNames = new Set(assessments.map((item) => item.nombre.toLowerCase()));
-      const payloads = gruposEstudiantiles.map((grupo) => {
-        const nombre = `Assessment_${grupo.nombre
-          .trim()
-          .replace(/[^a-zA-Z0-9]+/g, "_")
-          .replace(/^_+|_+$/g, "")
-          .replace(/_+/g, "_")}_${year}_S${semester}`;
-        return {
-          nombre,
-          grupoEstudiantilId: grupo.id,
-          exists: existingNames.has(nombre.toLowerCase()),
-        };
-      });
-
-      const results = await Promise.all(
-        payloads.map((body) => {
-          if (body.exists) {
-            return Promise.resolve({
-              ok: false,
-              skipped: true,
-              payload: { error: "Assessment ya existe" },
-              nombre: body.nombre,
-              idGrupo: body.grupoEstudiantilId,
-            });
-          }
-          return authFetch(
-            "/api/assessment/create",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-              body: JSON.stringify({
-                nombre: body.nombre,
-                descripcion: "",
-                grupoEstudiantilId: body.grupoEstudiantilId,
-                activo: assessmentActivo,
-              }),
-            },
-            () => logout()
-          ).then(async (response) => {
-            const payload = await response.json();
-            const message = String(payload?.error || "").toLowerCase();
-            const skippedByError = !response.ok && (message.includes("duplicate") || message.includes("existe"));
-            return {
-              ok: response.ok,
-              skipped: skippedByError,
-              payload,
-              nombre: body.nombre,
-              idGrupo: body.grupoEstudiantilId,
-            };
-          });
-        })
-      );
-
-      const successes = results.filter((item) => item.ok);
-      const failures = results.filter((item) => !item.ok && !item.skipped);
-      const skipped = results.filter((item) => item.skipped);
-
-      if (successes.length > 0) {
-        setAssessments((prev) => [
-          ...prev,
-          ...successes.map((item) => ({
-            id: item.payload.ID_Assessment,
-            nombre: item.nombre,
-            descripcion: "",
-            activo: assessmentActivo,
-            grupoId: item.idGrupo,
-            grupoNombre: gruposEstudiantiles.find((g) => g.id === item.idGrupo)?.nombre ?? null,
-          })),
-        ]);
-        showToast.success(`Assessments creados: ${successes.length}`);
+      if (created.length > 0) {
+        setAssessments((prev) => {
+          const normalized = assessmentActivo
+            ? prev.map((item) =>
+                created.some((createdItem: { grupoId: number }) => createdItem.grupoId === item.grupoId)
+                  ? { ...item, activo: false }
+                  : item
+              )
+            : prev;
+          return [
+            ...normalized,
+            ...created.map((item: { id: number; nombre: string; grupoId: number; activo: boolean }) => ({
+              id: item.id,
+              nombre: item.nombre,
+              descripcion: "",
+              activo: item.activo,
+              grupoId: item.grupoId,
+              grupoNombre: gruposEstudiantiles.find((g) => g.id === item.grupoId)?.nombre ?? null,
+            })),
+          ];
+        });
+        showToast.success(`Assessments creados: ${created.length}`);
       }
 
-      if (failures.length > 0) {
-        showToast.error(`No se pudieron crear: ${failures.length}`);
-      }
       if (skipped.length > 0) {
         showToast.error(`Omitidos (ya existen): ${skipped.length}`);
       }
@@ -409,164 +337,72 @@ export default function AdminAdminPanel() {
     }
   };
 
-  const handleCreateAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adminAssessmentId || !adminCorreo || !adminPassword) {
-      showToast.error("Assessment, correo y contraseña son obligatorios.");
-      return;
-    }
 
-    setCreatingAdmin(true);
+  const handleCreateAdminsForAllAssessments = async (
+    payloads: { assessment: Assessment; correo: string; exists: boolean }[]
+  ) => {
+    setCreatingBulkAdmins(true);
     try {
       const response = await authFetch(
-        "/api/staff/create",
+        "/api/staff/bulk-create-admins",
         {
           method: "POST",
           headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-          body: JSON.stringify({
-            assessmentId: adminAssessmentId,
-            correo: adminCorreo,
-            password: adminPassword,
-            rol: "admin",
-          }),
+          body: JSON.stringify({ assessmentIds: payloads.map((item) => item.assessment.id) }),
         },
         () => logout()
       );
-
-      const payload = await response.json();
+      const result = await response.json();
       if (!response.ok) {
-        throw new Error(payload?.error || "Error al crear administrador");
+        throw new Error(result?.error || "Error al crear admins");
       }
 
-      showToast.success("Administrador creado correctamente");
-      setAdminAssessmentId("");
-      setAdminNombre("");
-      setAdminPersonalEmail("");
-      setAdminCorreo("");
-      setAdminPassword("");
-      setAdmins((prev) => [
-        ...prev,
-        {
-          id: payload.ID_Staff,
-          correo: adminCorreo,
-          assessmentId: Number(adminAssessmentId),
-          assessmentNombre:
-            assessments.find((assessment) => String(assessment.id) === adminAssessmentId)?.nombre ?? null,
-          grupoNombre:
-            assessments.find((assessment) => String(assessment.id) === adminAssessmentId)?.grupoNombre ??
-            null,
-        },
-      ]);
-      setAdminEdits((prev) => ({
-        ...prev,
-        [payload.ID_Staff]: {
-          correo: adminCorreo,
-          assessmentId: adminAssessmentId,
-          password: "",
-        },
-      }));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al crear administrador";
-      showToast.error(message);
-    } finally {
-      setCreatingAdmin(false);
-    }
-  };
+      const created = result.created || [];
+      const skipped = result.skipped || [];
 
-  const handleCreateAdminsForAllAssessments = async () => {
-    if (assessments.length === 0) {
-      showToast.error("No hay assessments disponibles.");
-      return;
-    }
-
-    setBulkAdminResults([]);
-    setCreatingBulkAdmins(true);
-    try {
-      const existingEmails = new Set(admins.map((admin) => admin.correo.toLowerCase()));
-      const results = await Promise.all(
-        assessments.map((assessment) => {
-          const correo = buildAdminEmail(String(assessment.id));
-          const password = generatePassword();
-          if (existingEmails.has(correo.toLowerCase())) {
-            return Promise.resolve({
-              ok: false,
-              skipped: true,
-              correo,
-              password,
-              assessment: assessment.nombre,
-              assessmentId: assessment.id,
-            });
-          }
-          return authFetch(
-            "/api/staff/create",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-              body: JSON.stringify({
-                assessmentId: assessment.id,
-                correo,
-                password,
-                rol: "admin",
-              }),
-            },
-            () => logout()
-          ).then(async (response) => {
-            const payload = await response.json();
-            const message = String(payload?.error || "").toLowerCase();
-            const skippedByError = !response.ok && (message.includes("duplicate") || message.includes("existe"));
-            return {
-              ok: response.ok,
-              skipped: skippedByError,
-              payload,
-              correo,
-              password,
-              assessment: assessment.nombre,
-              assessmentId: assessment.id,
-            };
-          });
-        })
-      );
-
-      const successes = results.filter((item) => item.ok);
-      const failures = results.filter((item) => !item.ok && !item.skipped);
-      const skipped = results.filter((item) => item.skipped);
-
-      if (successes.length > 0) {
-        setBulkAdminResults(
-          successes.map((item) => ({
-            correo: item.correo,
-            password: item.password,
-            assessment: item.assessment,
-          }))
-        );
-        showToast.success(`Admins creados: ${successes.length}`);
+      if (created.length > 0) {
+        showToast.success(`Admins creados: ${created.length}`);
         setAdmins((prev) => [
           ...prev,
-          ...successes.map((item) => ({
-            id: item.payload.ID_Staff,
+          ...created.map((item: AdminUser & { password?: string | null }) => ({
+            id: item.id,
             correo: item.correo,
             assessmentId: item.assessmentId,
-            assessmentNombre: item.assessment,
-            grupoNombre:
-              assessments.find((assessment) => assessment.id === item.assessmentId)?.grupoNombre ?? null,
+            assessmentNombre: item.assessmentNombre,
+            grupoNombre: item.grupoNombre,
           })),
         ]);
         setAdminEdits((prev) => {
           const next = { ...prev };
-          successes.forEach((item) => {
-            next[item.payload.ID_Staff] = {
+          created.forEach((item: AdminUser) => {
+            next[item.id] = {
               correo: item.correo,
-              assessmentId: String(item.assessmentId),
               password: "",
             };
           });
           return next;
         });
+
+        const csvRows = created.map(
+          (item: AdminUser & { password?: string | null }) => ({
+            Assessment: item.assessmentNombre ?? "",
+            Correo: item.correo,
+            Contrasena: item.password ?? "",
+          })
+        );
+        if (csvRows.length > 0) {
+          const csv = stringify(csvRows, {
+            header: true,
+            columns: Object.keys(csvRows[0] ?? {}),
+            delimiter: ";",
+          });
+          const bom = "\uFEFF";
+          const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8" });
+          const fecha = new Date().toISOString().split("T")[0];
+          saveAs(blob, `admins_${fecha}.csv`);
+        }
       }
 
-      if (failures.length > 0) {
-        showToast.error(`No se pudieron crear admins: ${failures.length}`);
-      }
       if (skipped.length > 0) {
         showToast.error(`Admins omitidos (ya existen): ${skipped.length}`);
       }
@@ -603,18 +439,23 @@ export default function AdminAdminPanel() {
       }
 
       setAssessments((prev) =>
-        prev.map((assessment) =>
-          assessment.id === assessmentId
-            ? {
-                ...assessment,
-                descripcion: edit.descripcion,
-                activo: edit.activo,
-                grupoId: edit.grupoId ? Number(edit.grupoId) : null,
-                grupoNombre:
-                  gruposEstudiantiles.find((group) => String(group.id) === edit.grupoId)?.nombre ?? null,
-              }
-            : assessment
-        )
+        prev.map((assessment) => {
+          const nextGroupId = edit.grupoId ? Number(edit.grupoId) : null;
+          if (assessment.id === assessmentId) {
+            return {
+              ...assessment,
+              descripcion: edit.descripcion,
+              activo: edit.activo,
+              grupoId: nextGroupId,
+              grupoNombre:
+                gruposEstudiantiles.find((group) => String(group.id) === edit.grupoId)?.nombre ?? null,
+            };
+          }
+          if (edit.activo && nextGroupId != null && assessment.grupoId === nextGroupId) {
+            return { ...assessment, activo: false };
+          }
+          return assessment;
+        })
       );
       showToast.success("Assessment actualizado");
     } catch (error) {
@@ -636,7 +477,6 @@ export default function AdminAdminPanel() {
             staffId: adminId,
             correo: edit.correo,
             password: edit.password || undefined,
-            assessmentId: edit.assessmentId,
           }),
         },
         () => logout()
@@ -653,13 +493,6 @@ export default function AdminAdminPanel() {
             ? {
                 ...admin,
                 correo: edit.correo,
-                assessmentId: Number(edit.assessmentId),
-                assessmentNombre:
-                  assessments.find((assessment) => String(assessment.id) === edit.assessmentId)?.nombre ??
-                  admin.assessmentNombre,
-                grupoNombre:
-                  assessments.find((assessment) => String(assessment.id) === edit.assessmentId)?.grupoNombre ??
-                  admin.grupoNombre,
               }
             : admin
         )
@@ -678,7 +511,44 @@ export default function AdminAdminPanel() {
     }
   };
 
-  if (authLoading || !isAdmin) {
+  const filteredAssessments = useMemo(() => {
+    return assessments.filter((assessment) => {
+      const matchesStatus =
+        assessmentFilter === "todos" ||
+        (assessmentFilter === "activos" && assessment.activo) ||
+        (assessmentFilter === "inactivos" && !assessment.activo);
+      const matchesSearch =
+        assessmentSearch.trim().length === 0 ||
+        assessment.nombre.toLowerCase().includes(assessmentSearch.toLowerCase());
+      const matchesGroup =
+        assessmentGroupFilter === "todos" ||
+        String(assessment.grupoId ?? "") === assessmentGroupFilter;
+      const matchesYear =
+        assessmentYearFilter === "todos" ||
+        assessment.nombre.toLowerCase().includes(assessmentYearFilter.toLowerCase());
+      return matchesStatus && matchesSearch && matchesGroup && matchesYear;
+    });
+  }, [assessments, assessmentFilter, assessmentSearch, assessmentGroupFilter, assessmentYearFilter]);
+
+  const filteredAdmins = useMemo(() => {
+    return admins.filter((admin) => {
+      const assessment = assessments.find((item) => item.id === admin.assessmentId);
+      const isActiveAssessment = assessment?.activo ?? false;
+      const matchesStatus = adminFilter === "todos" || (adminFilter === "activos" && isActiveAssessment);
+      const matchesSearch =
+        adminSearch.trim().length === 0 ||
+        admin.correo.toLowerCase().includes(adminSearch.toLowerCase()) ||
+        (admin.assessmentNombre ?? "").toLowerCase().includes(adminSearch.toLowerCase());
+      const matchesGroup =
+        adminGroupFilter === "todos" || String(assessment?.grupoId ?? "") === adminGroupFilter;
+      const matchesYear =
+        adminYearFilter === "todos" ||
+        (admin.assessmentNombre ?? "").toLowerCase().includes(adminYearFilter.toLowerCase());
+      return matchesStatus && matchesSearch && matchesGroup && matchesYear;
+    });
+  }, [admins, assessments, adminFilter, adminSearch, adminGroupFilter, adminYearFilter]);
+
+  if (authLoading || !isSuperAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
         <Spinner size="xl" color="custom" customColor="var(--color-accent)" />
@@ -703,9 +573,6 @@ export default function AdminAdminPanel() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
             Panel Admin de Assessment
           </h1>
-          <p className="text-sm text-gray-500">
-            Ruta privada: /k7v9x2q0m5p8n1t6z3r4w9y1
-          </p>
         </div>
         <button
           onClick={logout}
@@ -713,184 +580,6 @@ export default function AdminAdminPanel() {
         >
           Cerrar Sesión
         </button>
-      </div>
-
-      <div className="w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-100 shadow rounded-2xl p-5">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Crear Assessment</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Cada assessment queda ligado a un Grupo Estudiantil.
-          </p>
-
-          <form onSubmit={handleCreateAssessment} className="space-y-3">
-            <select
-              value={assessmentGrupoId}
-              onChange={(e) => setAssessmentGrupoId(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
-            >
-              <option value="">Grupo Estudiantil</option>
-              {gruposEstudiantiles.map((grupo) => (
-                <option key={grupo.id} value={grupo.id}>
-                  {grupo.nombre}
-                </option>
-              ))}
-            </select>
-            <textarea
-              placeholder="Descripción (opcional)"
-              value={assessmentDescripcion}
-              onChange={(e) => setAssessmentDescripcion(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm min-h-[90px]"
-            />
-
-            {selectedGroupLabel && (
-              <p className="text-xs text-gray-500">
-                Grupo seleccionado: <span className="font-semibold">{selectedGroupLabel}</span>
-              </p>
-            )}
-
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={assessmentActivo}
-                onChange={(e) => setAssessmentActivo(e.target.checked)}
-              />
-              Activo al crear
-            </label>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={autoAssessmentName}
-                  onChange={(e) => setAutoAssessmentName(e.target.checked)}
-                />
-                Autogenerar nombre (Assessment + grupo + año/semestre)
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  const nextName = buildAssessmentName();
-                  if (nextName) {
-                    setAssessmentNombre(nextName);
-                    showToast.success("Nombre generado");
-                  } else {
-                    showToast.error("Selecciona un grupo estudiantil primero");
-                  }
-                }}
-                className="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:border-[color:var(--color-accent)]"
-              >
-                Generar ahora
-              </button>
-            </div>
-            <input
-              type="text"
-              placeholder="Nombre del Assessment"
-              value={assessmentNombre}
-              onChange={(e) => setAssessmentNombre(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
-            />
-
-            <button
-              type="submit"
-              disabled={creatingAssessment}
-              className="w-full bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white py-2 rounded-lg text-sm font-medium transition disabled:opacity-60"
-            >
-              {creatingAssessment ? "Creando..." : "Crear Assessment"}
-            </button>
-          </form>
-        </div>
-
-        <div className="bg-white border border-gray-100 shadow rounded-2xl p-5">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Crear Administrador</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            El administrador queda asignado al Assessment (grupo estudiantil asociado).
-          </p>
-
-          <form onSubmit={handleCreateAdmin} className="space-y-3">
-            <select
-              value={adminAssessmentId}
-              onChange={(e) => setAdminAssessmentId(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
-            >
-              <option value="">Assessment</option>
-              {assessments.map((assessment) => (
-                <option key={assessment.id} value={assessment.id}>
-                  {assessment.nombre} {assessment.activo ? "(Activo)" : "(Inactivo)"}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              placeholder="Nombre del admin"
-              value={adminNombre}
-              onChange={(e) => setAdminNombre(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
-            />
-            <input
-              type="email"
-              placeholder="Correo personal (opcional)"
-              value={adminPersonalEmail}
-              onChange={(e) => setAdminPersonalEmail(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
-            />
-            <input
-              type="email"
-              placeholder="Correo del admin"
-              value={adminCorreo}
-              onChange={(e) => setAdminCorreo(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
-            />
-            <div className="flex flex-col gap-2">
-              <input
-                type={showAdminPassword ? "text" : "password"}
-                placeholder="Contraseña"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
-              />
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>Usa autogenerar o ingresa una contraseña manual.</span>
-                <button
-                  type="button"
-                  onClick={() => setShowAdminPassword((prev) => !prev)}
-                  className="px-2 py-1 rounded-md border border-[color:var(--color-accent)] bg-[color:var(--color-accent)] text-white hover:bg-[#5B21B6] transition text-xs font-semibold"
-                >
-                  {showAdminPassword ? "Ocultar" : "Mostrar"}
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={autoAdminCreds}
-                  onChange={(e) => setAutoAdminCreds(e.target.checked)}
-                />
-                Autogenerar credenciales
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!adminAssessmentId) {
-                    showToast.error("Selecciona un assessment primero");
-                    return;
-                  }
-                  generateAdminCreds(adminAssessmentId);
-                  showToast.success("Credenciales generadas");
-                }}
-                className="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:border-[color:var(--color-accent)]"
-              >
-                Generar ahora
-              </button>
-            </div>
-            <button
-              type="submit"
-              disabled={creatingAdmin}
-              className="w-full bg-success hover:bg-success-dark text-white py-2 rounded-lg text-sm font-medium transition disabled:opacity-60"
-            >
-              {creatingAdmin ? "Creando..." : "Crear Admin"}
-            </button>
-          </form>
-        </div>
       </div>
 
       <div className="w-full max-w-5xl mx-auto mt-6">
@@ -904,7 +593,7 @@ export default function AdminAdminPanel() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={handleCreateAssessmentsForAllGroups}
+              onClick={openBulkAssessmentPreview}
               disabled={creatingBulkAssessments}
               className="w-full bg-white border-2 border-[color:var(--color-accent)] text-[color:var(--color-accent)] hover:bg-[color:var(--color-accent)] hover:text-white py-2 rounded-lg text-sm font-semibold transition disabled:opacity-60"
             >
@@ -912,29 +601,13 @@ export default function AdminAdminPanel() {
             </button>
             <button
               type="button"
-              onClick={handleCreateAdminsForAllAssessments}
+              onClick={openBulkAdminPreview}
               disabled={creatingBulkAdmins}
               className="w-full bg-white border-2 border-success text-success hover:bg-success hover:text-white py-2 rounded-lg text-sm font-semibold transition disabled:opacity-60"
             >
-              {creatingBulkAdmins ? "Creando admins..." : "Crear admin para todos los assessments"}
+              {creatingBulkAdmins ? "Creando admins..." : "Crear admin para assessments activos"}
             </button>
           </div>
-
-          {bulkAdminResults.length > 0 && (
-            <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-700">
-              <p className="font-semibold mb-2">Credenciales generadas:</p>
-              <div className="space-y-1">
-                {bulkAdminResults.map((item) => (
-                  <div key={`${item.correo}-${item.assessment}`} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                    <span className="font-medium">{item.assessment}</span>
-                    <span className="text-xs sm:text-sm">
-                      {item.correo} / {item.password}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -946,8 +619,45 @@ export default function AdminAdminPanel() {
               Modifica grupo, descripción y activo. El nombre no se edita aquí.
             </p>
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <input
+              type="text"
+              placeholder="Buscar assessment..."
+              value={assessmentSearch}
+              onChange={(e) => setAssessmentSearch(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
+            />
+            <select
+              value={assessmentFilter}
+              onChange={(e) => setAssessmentFilter(e.target.value as "activos" | "inactivos" | "todos")}
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
+            >
+              <option value="activos">Solo activos</option>
+              <option value="inactivos">Solo inactivos</option>
+              <option value="todos">Todos</option>
+            </select>
+            <select
+              value={assessmentGroupFilter}
+              onChange={(e) => setAssessmentGroupFilter(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
+            >
+              <option value="todos">Todos los grupos</option>
+              {gruposEstudiantiles.map((grupo) => (
+                <option key={grupo.id} value={String(grupo.id)}>
+                  {grupo.nombre}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="Año (ej: 2026)"
+              value={assessmentYearFilter === "todos" ? "" : assessmentYearFilter}
+              onChange={(e) => setAssessmentYearFilter(e.target.value.trim() || "todos")}
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
+            />
+          </div>
           <div className="space-y-4">
-            {assessments.map((assessment) => {
+            {filteredAssessments.map((assessment) => {
               const edit = assessmentEdits[assessment.id];
               if (!edit) return null;
               return (
@@ -1013,7 +723,7 @@ export default function AdminAdminPanel() {
                 </div>
               );
             })}
-            {assessments.length === 0 && (
+            {filteredAssessments.length === 0 && (
               <p className="text-sm text-gray-500">No hay assessments registrados.</p>
             )}
           </div>
@@ -1028,6 +738,42 @@ export default function AdminAdminPanel() {
               Ajusta correo, assessment o contraseña. La contraseña solo se cambia si la escribes.
             </p>
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <input
+              type="text"
+              placeholder="Buscar admin o assessment..."
+              value={adminSearch}
+              onChange={(e) => setAdminSearch(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
+            />
+            <select
+              value={adminFilter}
+              onChange={(e) => setAdminFilter(e.target.value as "activos" | "todos")}
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
+            >
+              <option value="activos">Solo de assessments activos</option>
+              <option value="todos">Todos</option>
+            </select>
+            <select
+              value={adminGroupFilter}
+              onChange={(e) => setAdminGroupFilter(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
+            >
+              <option value="todos">Todos los grupos</option>
+              {gruposEstudiantiles.map((grupo) => (
+                <option key={grupo.id} value={String(grupo.id)}>
+                  {grupo.nombre}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="Año (ej: 2026)"
+              value={adminYearFilter === "todos" ? "" : adminYearFilter}
+              onChange={(e) => setAdminYearFilter(e.target.value.trim() || "todos")}
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
+            />
+          </div>
 
           {loadingAdmins ? (
             <div className="flex items-center gap-2 text-gray-500">
@@ -1036,7 +782,7 @@ export default function AdminAdminPanel() {
             </div>
           ) : (
             <div className="space-y-4">
-              {admins.map((admin) => {
+              {filteredAdmins.map((admin) => {
                 const edit = adminEdits[admin.id];
                 if (!edit) return null;
                 return (
@@ -1062,23 +808,9 @@ export default function AdminAdminPanel() {
                         placeholder="Correo"
                         className="px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
                       />
-                      <select
-                        value={edit.assessmentId}
-                        onChange={(e) =>
-                          setAdminEdits((prev) => ({
-                            ...prev,
-                            [admin.id]: { ...edit, assessmentId: e.target.value },
-                          }))
-                        }
-                        className="px-3 py-2 rounded-lg border border-gray-300 text-gray-900 text-sm"
-                      >
-                        <option value="">Assessment</option>
-                        {assessments.map((assessment) => (
-                          <option key={assessment.id} value={assessment.id}>
-                            {assessment.nombre}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 text-sm">
+                        {admin.assessmentNombre || "Assessment"} · {admin.grupoNombre || "Grupo"}
+                      </div>
                       <input
                         type="password"
                         value={edit.password}
@@ -1104,13 +836,82 @@ export default function AdminAdminPanel() {
                   </div>
                 );
               })}
-              {admins.length === 0 && (
+              {filteredAdmins.length === 0 && (
                 <p className="text-sm text-gray-500">No hay administradores registrados.</p>
               )}
             </div>
           )}
         </div>
       </div>
+
+      {massAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-gray-100 p-5">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">{massAction.title}</h3>
+                <p className="text-sm text-gray-500">{massAction.description}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMassAction(null)}
+                className="text-gray-500 hover:text-gray-900"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="max-h-[50vh] overflow-y-auto border border-gray-100 rounded-xl">
+              {massAction.items.map((item) => (
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between gap-3 px-4 py-2 border-b border-gray-100 text-sm"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">{item.title}</p>
+                    {item.subtitle && <p className="text-xs text-gray-500">{item.subtitle}</p>}
+                  </div>
+                  <span
+                    className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      item.status === "crear"
+                        ? "bg-success/15 text-success"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {item.status === "crear" ? "Crear" : "Omitir"}
+                  </span>
+                </div>
+              ))}
+              {massAction.items.length === 0 && (
+                <div className="p-4 text-sm text-gray-500">No hay elementos para procesar.</div>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+              <div className="text-xs text-gray-500">
+                Crear: {massAction.items.filter((item) => item.status === "crear").length} · Omitir:{" "}
+                {massAction.items.filter((item) => item.status === "omitir").length}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setMassAction(null)}
+                  className="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={massAction.onConfirm}
+                  className="px-4 py-2 rounded-lg bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white text-sm font-semibold"
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
