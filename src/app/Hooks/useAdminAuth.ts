@@ -6,6 +6,7 @@ const TOKEN_KEY = "authToken";
 
 interface AdminAuth {
   isAdmin: boolean;
+  isSuperAdmin?: boolean;
   timestamp: number;
   token?: string;
 }
@@ -15,6 +16,7 @@ const SESSION_DURATION = 8 * 60 * 60 * 1000;
 
 export const useAdminAuth = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null); // null = cargando
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
@@ -31,16 +33,19 @@ export const useAdminAuth = () => {
         // Verificar si la sesión no ha expirado
         if (authData.isAdmin && (now - authData.timestamp) < SESSION_DURATION) {
           setIsAdmin(true);
+          setIsSuperAdmin(Boolean(authData.isSuperAdmin));
           setToken(savedToken);
         } else {
           // Sesión expirada, limpiar
           localStorage.removeItem(ADMIN_KEY);
           localStorage.removeItem(TOKEN_KEY);
           setIsAdmin(false);
+          setIsSuperAdmin(false);
           setToken(null);
         }
       } else {
         setIsAdmin(false);
+        setIsSuperAdmin(false);
       }
       setIsLoading(false);
     };
@@ -49,9 +54,10 @@ export const useAdminAuth = () => {
   }, []);
 
   // Función para establecer admin auth (llamar después de login exitoso)
-  const loginAsAdmin = (authToken?: string) => {
+  const loginAsAdmin = (authToken?: string, superAdmin = false) => {
     const authData: AdminAuth = {
       isAdmin: true,
+      isSuperAdmin: superAdmin,
       timestamp: Date.now(),
     };
     localStorage.setItem(ADMIN_KEY, JSON.stringify(authData));
@@ -60,15 +66,26 @@ export const useAdminAuth = () => {
       setToken(authToken);
     }
     setIsAdmin(true);
+    setIsSuperAdmin(superAdmin);
   };
 
   // Función para cerrar sesión
   const logout = () => {
+    const storedToken = localStorage.getItem(TOKEN_KEY);
+    if (storedToken) {
+      fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${storedToken}` },
+      }).catch(() => {
+        // No-op: logout local continúa aunque falle el request.
+      });
+    }
     localStorage.removeItem(ADMIN_KEY);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem("storedData");
     localStorage.removeItem("authRole");
     setIsAdmin(false);
+    setIsSuperAdmin(false);
     setToken(null);
     router.push("/auth/login");
   };
@@ -76,6 +93,12 @@ export const useAdminAuth = () => {
   // Función para proteger rutas - redirige si no es admin
   const requireAdmin = () => {
     if (!isLoading && !isAdmin) {
+      router.push("/auth/login");
+    }
+  };
+
+  const requireSuperAdmin = () => {
+    if (!isLoading && !isSuperAdmin) {
       router.push("/auth/login");
     }
   };
@@ -92,5 +115,15 @@ export const useAdminAuth = () => {
     return {};
   };
 
-  return { isAdmin, isLoading, token, loginAsAdmin, logout, requireAdmin, getAuthHeaders };
+  return {
+    isAdmin,
+    isSuperAdmin,
+    isLoading,
+    token,
+    loginAsAdmin,
+    logout,
+    requireAdmin,
+    requireSuperAdmin,
+    getAuthHeaders,
+  };
 };

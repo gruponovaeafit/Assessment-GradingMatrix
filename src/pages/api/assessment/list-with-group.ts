@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const grupo =
           Array.isArray(row.GrupoEstudiantil) && row.GrupoEstudiantil.length > 0
             ? row.GrupoEstudiantil[0]
-            : row.GrupoEstudiantil ?? null;
+            : null;
         return {
           id: row.ID_Assessment,
           nombre: row.Nombre_Assessment,

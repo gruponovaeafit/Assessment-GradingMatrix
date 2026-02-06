@@ -47,8 +47,9 @@ export default function Login() {
       }
       
       if (data.role === "admin") {
-        loginAsAdmin(data.token);
-        router.push("/k7v9x2q0m5p8n1t6z3r4w9y1");
+        const isSuper = Boolean(data.superAdmin);
+        loginAsAdmin(data.token, isSuper);
+        router.push(isSuper ? "/k7v9x2q0m5p8n1t6z3r4w9y1" : "/admin");
       } else if (data.role === "registrador") {
         router.push("/register");
       } else if (data.role === "calificador") {

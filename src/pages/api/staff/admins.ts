@@ -25,13 +25,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const payload =
       data?.map((row) => {
         const assessment =
-          Array.isArray(row.Assessment) && row.Assessment.length > 0
-            ? row.Assessment[0]
-            : row.Assessment ?? null;
+          Array.isArray(row.Assessment) && row.Assessment.length > 0 ? row.Assessment[0] : null;
         const grupo =
           assessment && Array.isArray(assessment.GrupoEstudiantil) && assessment.GrupoEstudiantil.length > 0
             ? assessment.GrupoEstudiantil[0]
-            : assessment?.GrupoEstudiantil ?? null;
+            : null;
 
         return {
           id: row.ID_Staff,
