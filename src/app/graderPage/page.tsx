@@ -2,17 +2,21 @@
 
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useStoredId } from "../Hooks/UseStoreId";
-import { useAdminAuth } from "../Hooks/useAdminAuth";
+import { useGraderAuth } from "../Hooks/useGraderAuth";
 import { Spinner, SkeletonBaseInfo, SkeletonUserCard } from '../components/UI/Loading';
 import { showToast } from '../components/UI/Toast';
 import { useConfirmModal } from '../components/UI/ConfirmModal';
 
 const GraderPage: React.FC = () => {
+    //Estado para ver si ya calificó
+    const [alreadyGraded, setAlreadyGraded] = useState(false);
+    const [checkingStatus, setCheckingStatus] = useState(true);
+
     const { storedData } = useStoredId();
-    const { isAdmin, isLoading: authLoading, requireAdmin } = useAdminAuth();
-        React.useEffect(() => {
-            requireAdmin();
-        }, [isAdmin, authLoading]);
+    const { isGrader, isLoading: authLoading, requireGrader } = useGraderAuth();
+    React.useEffect(() => {
+        requireGrader();
+    }, [isGrader, authLoading]);
     const [usuarios, setUsuarios] = useState<{
         ID: number; Nombre: ReactNode; ID_Persona: number; Grupo: string; role: string; Photo?: string;
     }[]>([]);
@@ -117,6 +121,55 @@ const GraderPage: React.FC = () => {
         fetchNombreCalificador();
     }, [storedData]);
 
+    // Verificar si ya calificó a este grupo al cargar la página
+    useEffect(() => {
+        const checkIfAlreadyGraded = async () => {
+            const storedData = localStorage.getItem("storedData");
+            const parsedData = storedData ? JSON.parse(storedData) : null;
+            const id_calificador = parsedData?.id_Calificador;
+            const id_base = parsedData?.id_base;
+
+            if (!id_calificador || !id_base) {
+                setCheckingStatus(false);
+                return;
+            }
+
+            try {
+                const authToken = localStorage.getItem("authToken");
+                const authHeaders: HeadersInit = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+                const jsonHeaders: HeadersInit = {
+                    'Content-Type': 'application/json',
+                    ...authHeaders,
+                };
+
+                const response = await fetch('/api/check-already-graded', {
+                    method: 'POST',
+                    headers: jsonHeaders,
+                    body: JSON.stringify({
+                        idCalificador: id_calificador,
+                        idBase: id_base,
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setAlreadyGraded(data.alreadyGraded);
+                    
+                    if (data.alreadyGraded) {
+                        showToast.error('Ya has calificado a este grupo anteriormente');
+                    }
+                }
+            } catch (error) {
+                console.error('Error verificando estado de calificación:', error);
+            } finally {
+                setCheckingStatus(false);
+            }
+        };
+
+        checkIfAlreadyGraded();
+    }, []);
+
+
     // SOLO PERMITE ENTEROS ENTRE 1 Y 5
     const handleInputChange = (idPersona: number, calificacionNumber: number, value: string) => {
         // Quitar decimales, permite solo enteros
@@ -157,6 +210,12 @@ const GraderPage: React.FC = () => {
             return;
         }
 
+        // Verificación adicional antes de enviar
+        if (alreadyGraded) {
+            showToast.error('Ya has calificado a este grupo anteriormente. No puedes volver a calificar.');
+            return;
+        }
+
         // Mostrar modal de confirmación
         const confirmed = await confirm({
             title: 'Confirmar envío',
@@ -174,8 +233,6 @@ const GraderPage: React.FC = () => {
         const parsedData = storedData ? JSON.parse(storedData) : null;
         const id_calificador = parsedData?.id_Calificador;
         const id_base = parsedData?.id_base;
-
-    // datos extraídos del localStorage
 
         if (!id_calificador || !id_base) {
             showToast.error('Faltan datos esenciales (calificador o base)');
@@ -198,8 +255,6 @@ const GraderPage: React.FC = () => {
                 };
             });
 
-    // payload preparado para envío
-
         try {
             const authToken = localStorage.getItem("authToken");
             const authHeaders: HeadersInit = authToken ? { Authorization: `Bearer ${authToken}` } : {};
@@ -216,14 +271,19 @@ const GraderPage: React.FC = () => {
 
             const data = await response.json();
 
+            // ✅ NUEVO: Manejar error específico de ya calificado
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error("🛑 Error en respuesta:", errorText);
-                throw new Error('Error al enviar las calificaciones');
+                if (data.code === 'ALREADY_GRADED') {
+                    showToast.error('Ya has calificado a este grupo anteriormente. No puedes volver a calificar.');
+                    setAlreadyGraded(true); // Marcar como ya calificado
+                    setSubmitting(false);
+                    setIsLoading(false);
+                    return;
+                }
+                throw new Error(data.error || 'Error al enviar las calificaciones');
             }
 
             if (data.nuevoGrupo) {
-                // grupo rotado exitosamente
                 localStorage.setItem("id_grupo", data.nuevoGrupo);
             }
 
@@ -242,6 +302,7 @@ const GraderPage: React.FC = () => {
             setIsLoading(false);
         }
     };
+
 
     if (loading) {
         return (
@@ -286,6 +347,15 @@ const GraderPage: React.FC = () => {
                     </h2>
                 )}
 
+                {/* Mostrar banner si ya calificó */}
+                {alreadyGraded && (
+                    <div className="w-full max-w-3xl mx-auto mb-6 px-5 py-4 rounded-lg bg-yellow-50 border-2 border-yellow-400">
+                        <p className="text-center text-yellow-800 font-semibold">
+                            ⚠️ Ya has calificado a este grupo anteriormente. No puedes volver a calificar.
+                        </p>
+                    </div>
+                )}
+
                 <div className="w-full max-w-3xl mx-auto mb-6 sm:mb-10 px-5 sm:px-6 py-5 sm:py-6 rounded-2xl shadow-lg bg-white border border-gray-100">
                     {baseData ? (
                         <>
@@ -324,6 +394,16 @@ const GraderPage: React.FC = () => {
                                                 src={photoUrl}
                                                 alt={`Foto de ${usuario.Nombre}`}
                                                 className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    // Si la imagen falla al cargar, ocultar el img y mostrar iniciales
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.style.display = 'none';
+                                                    // Mostrar las iniciales en el contenedor padre
+                                                    const parent = target.parentElement;
+                                                    if (parent) {
+                                                        parent.innerHTML = `<span class="text-lg sm:text-xl font-bold text-[color:var(--color-accent)]">${getInitials(usuario.Nombre)}</span>`;
+                                                    }
+                                                }}
                                             />
                                         ) : (
                                             <span className="text-lg sm:text-xl font-bold text-[color:var(--color-accent)]">
@@ -331,6 +411,7 @@ const GraderPage: React.FC = () => {
                                             </span>
                                         )}
                                     </div>
+
                                     <div className="min-w-0 text-center">
                                         <p className='text-xs text-gray-500'>ID: {usuario.ID}</p>
                                         <p className='text-base sm:text-lg font-bold text-gray-900 truncate'>{usuario.Nombre}</p>
@@ -357,7 +438,7 @@ const GraderPage: React.FC = () => {
                                                     className="w-full rounded-lg px-3 py-2 text-gray-900 text-center font-bold text-lg bg-white border-2 border-[color:var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)]"
                                                     value={calificaciones[usuario.ID]?.[`Calificacion_${num}` as keyof typeof calificaciones[typeof usuario.ID]] ?? ''}
                                                     onChange={e => handleInputChange(usuario.ID, num, e.target.value)}
-                                                    disabled={submitting}
+                                                    disabled={submitting || alreadyGraded} // ✅ NUEVO: deshabilitar si ya calificó
                                                 />
                                             </div>
                                         );
@@ -372,11 +453,12 @@ const GraderPage: React.FC = () => {
             <div className="w-full flex flex-col items-center mt-8 sm:mt-10">
                 <button
                     onClick={handleSubmitGeneral}
-                    disabled={submitting}
+                    disabled={submitting || alreadyGraded} // ✅ NUEVO: deshabilitar si ya calificó
                     className="bg-[color:var(--color-accent)] text-white font-bold px-8 py-3 rounded-lg shadow hover:bg-[#5B21B6] transition disabled:opacity-60"
                 >
-                    {submitting ? 'Enviando...' : 'Enviar calificaciones'}
+                    {submitting ? 'Enviando...' : alreadyGraded ? 'Ya calificado' : 'Enviar calificaciones'}
                 </button>
+
             </div>
 
             <ConfirmModalComponent />

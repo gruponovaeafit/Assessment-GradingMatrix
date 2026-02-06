@@ -3,11 +3,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStoredId } from "../../Hooks/UseStoreId";
 import { useAdminAuth } from "../../Hooks/useAdminAuth";
+import { useGraderAuth } from "../../Hooks/useGraderAuth";
 import { Spinner } from "../../components/UI/Loading";
 
 export default function Login() {
   const { saveData } = useStoredId();
   const { loginAsAdmin } = useAdminAuth();
+  const { loginAsGrader } = useGraderAuth();
 
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -51,7 +53,10 @@ export default function Login() {
       } else if (data.role === "registrador") {
         router.push("/register");
       } else if (data.role === "calificador") {
+        // Save grader-specific data
         saveData(data.ID_Grupo, data.ID_Calificador, data.ID_Base);
+        // Login as grader (this sets the graderAuth in localStorage)
+        loginAsGrader(data.token);
         router.push(`/graderPage`);
       } else {
         router.push("/dashboard");

@@ -44,7 +44,7 @@ export default function Dashboard() {
   const [staffAssessmentId, setStaffAssessmentId] = useState<string>("");
   const [staffCorreo, setStaffCorreo] = useState("");
   const [staffPassword, setStaffPassword] = useState("");
-  const [staffRol, setStaffRol] = useState("calificador");
+  const [staffRol, setStaffRol] = useState("");
   const [staffBaseId, setStaffBaseId] = useState("");
   const [assessmentNombre, setAssessmentNombre] = useState('');
   const [assessmentDescripcion, setAssessmentDescripcion] = useState('');
@@ -310,48 +310,55 @@ export default function Dashboard() {
   };
 
   const handleCreateStaff = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!staffAssessmentId || !staffCorreo || !staffPassword || !staffRol) {
-      showToast.error('Todos los campos obligatorios deben completarse');
-      return;
+  if (!staffAssessmentId || !staffCorreo || !staffPassword || !staffRol) {
+    showToast.error('Todos los campos obligatorios deben completarse');
+    return;
+  }
+
+  // Validar que calificadores tengan base asignada
+  if (staffRol === 'calificador' && !staffBaseId) {
+    showToast.error('Los calificadores deben tener una base asignada');
+    return;
+  }
+
+  try {
+    setCreatingStaff(true);
+    const response = await authFetch(
+      '/api/staff/create',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          assessmentId: Number(staffAssessmentId),
+          correo: staffCorreo.trim(),
+          password: staffPassword,
+          rol: staffRol,
+          idBase: staffRol === 'calificador' && staffBaseId ? Number(staffBaseId) : null,
+        }),
+      },
+      () => logout()
+    );
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Error al crear staff');
     }
 
-    try {
-      setCreatingStaff(true);
-      const response = await authFetch(
-        '/api/staff/create',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
-            assessmentId: Number(staffAssessmentId),
-            correo: staffCorreo.trim(),
-            password: staffPassword,
-            rol: staffRol,
-            idBase: staffBaseId ? Number(staffBaseId) : null,
-          }),
-        },
-        () => logout()
-      );
+    showToast.success(`${staffRol === 'calificador' ? 'Calificador' : 'Registrador'} creado (ID: ${result.ID_Staff})`);
+    setStaffCorreo('');
+    setStaffPassword('');
+    setStaffRol('');
+    setStaffBaseId('');
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Error al crear staff';
+    showToast.error(message);
+  } finally {
+    setCreatingStaff(false);
+  }
+};
 
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Error al crear calificador');
-      }
-
-      showToast.success(`Calificador creado (ID: ${result.ID_Staff})`);
-      setStaffCorreo('');
-      setStaffPassword('');
-      setStaffRol('calificador');
-      setStaffBaseId('');
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al crear calificador';
-      showToast.error(message);
-    } finally {
-      setCreatingStaff(false);
-    }
-  };
 
   const handleAssignGroup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -560,6 +567,12 @@ export default function Dashboard() {
         </h1>
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
           <button
+            onClick={() => router.push('/dashboard/bases')}
+            className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+          >
+            Gestionar Bases
+          </button>
+          <button
             onClick={() => (window.location.href = "/admin")}
             className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
@@ -572,6 +585,7 @@ export default function Dashboard() {
             Cerrar Sesión
           </button>
         </div>
+
       </div>
 
       <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
@@ -660,23 +674,27 @@ export default function Dashboard() {
 
       <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
         <div className="bg-white rounded-xl p-4 shadow border border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900 mb-3">Registrar Calificador</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-3">Registrar Staff</h2>
           <form onSubmit={handleCreateStaff} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <select
               value={staffAssessmentId}
               onChange={(e) => setStaffAssessmentId(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
+              className={`px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm ${
+                staffAssessmentId === '' ? 'text-gray-400' : 'text-gray-900'
+              }`}
             >
-              <option value="">Assessment</option>
+              <option value="" style={{ color: '#9CA3AF' }}>Assessment</option>
               {visibleAssessments.map((assessment) => (
-                <option key={assessment.id} value={assessment.id}>
+                <option key={assessment.id} value={assessment.id} style={{ color: '#111827' }}>
                   {assessment.nombre}
                 </option>
               ))}
             </select>
+
+
             <input
               type="email"
-              placeholder="Correo del calificador"
+              placeholder="Correo del staff"
               value={staffCorreo}
               onChange={(e) => setStaffCorreo(e.target.value)}
               className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
@@ -688,32 +706,48 @@ export default function Dashboard() {
               onChange={(e) => setStaffPassword(e.target.value)}
               className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
             />
-            <input
-              type="text"
-              placeholder="Rol (ej: calificador)"
+
+           <select
               value={staffRol}
-              onChange={(e) => setStaffRol(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
-            />
-            <input
-              type="number"
-              placeholder="ID Base (opcional)"
-              value={staffBaseId}
-              onChange={(e) => setStaffBaseId(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
-            />
-            <div className="sm:col-span-3 flex justify-end">
+              onChange={(e) => {
+                setStaffRol(e.target.value);
+                if (e.target.value === 'registrador') {
+                  setStaffBaseId('');
+                }
+              }}
+              className={`px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm ${
+                staffRol === '' ? 'text-gray-400' : 'text-gray-900'
+              }`}
+            >
+              <option value="" style={{ color: '#9CA3AF' }}>Seleccionar rol</option>
+              <option value="calificador" style={{ color: '#111827' }}>Calificador</option>
+              <option value="registrador" style={{ color: '#111827' }}>Registrador</option>
+            </select>
+
+            {/* Mostrar campo Base solo si es calificador */}
+            {staffRol === 'calificador' && (
+              <input
+                type="number"
+                placeholder="ID Base (requerido para calificador)"
+                value={staffBaseId}
+                onChange={(e) => setStaffBaseId(e.target.value)}
+                className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
+              />
+            )}
+            
+            <div className={`${staffRol === 'calificador' ? 'sm:col-span-3' : 'sm:col-span-2'} flex justify-end`}>
               <button
                 type="submit"
                 disabled={creatingStaff}
                 className="px-4 py-2 rounded-lg bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white text-sm font-medium transition disabled:opacity-60"
               >
-                {creatingStaff ? "Registrando..." : "Registrar Calificador"}
+                {creatingStaff ? 'Registrando...' : `Registrar ${staffRol === 'calificador' ? 'Calificador' : 'Registrador'}`}
               </button>
             </div>
           </form>
         </div>
       </div>
+
 
       <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
         <div className="bg-white rounded-xl p-4 shadow border border-gray-100">
