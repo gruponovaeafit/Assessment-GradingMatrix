@@ -15,20 +15,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!assessmentId || !correo || !password || !rol) {
     return res.status(400).json({ error: 'assessmentId, correo, password y rol son obligatorios' });
   }
-
+  
   try {
+    // Validar que el Base pertenezca al Assessment si se proporciona
+    
+    if (idBase) {
+      const { data: baseData, error: baseError } = await supabase
+        .from('Bases')
+        .select('ID_Assessment')
+        .eq('ID_Base', Number(idBase))
+        .single();
+
+      if (baseError || !baseData || baseData.ID_Assessment !== Number(assessmentId)) {
+        return res.status(400).json({ error: 'El Base no pertenece a este Assessment' });
+        
+      }
+    }
+      
+
     const hashedPassword = await hashPassword(password);
+
+    const staffData = {
+      ID_Assessment: Number(assessmentId),
+      Correo_Staff: correo,
+      Contrasena_Staff: hashedPassword,
+      Rol_Staff: rol,
+      Active: false,
+      ID_Base: idBase ? Number(idBase) : null,
+    };
+
+    console.log('📝 Intentando insertar en Staff:', staffData);
 
     const { data, error } = await supabase
       .from('Staff')
-      .insert({
-        ID_Assessment: Number(assessmentId),
-        Correo_Staff: correo,
-        Contrasena_Staff: hashedPassword,
-        Rol_Staff: rol,
-        Active: false,
-        ID_Base: idBase ? Number(idBase) : null,
-      })
+      .insert(staffData)
       .select('ID_Staff')
       .single();
 

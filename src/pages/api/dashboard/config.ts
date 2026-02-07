@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from '@/lib/supabaseServer';
 import { getDefaultAssessmentId } from "@/lib/assessment";
 import { requireRoles } from "@/lib/apiAuth";
+import { resolveParticipantPhotoUrls } from "@/lib/participantPhotoUrl";
 
 // API para obtener datos del dashboard admin
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -61,7 +62,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         proms.length > 0 ? proms.reduce((a, b) => a + b, 0) / proms.length : null;
     }
 
-    const data = (participantes || []).map((p) => {
+    const photoUrls = await resolveParticipantPhotoUrls(
+      supabase,
+      (participantes || []).map((p) => p.FotoUrl_Participante)
+    );
+
+    const data = (participantes || []).map((p, i) => {
       const promedio = generalPromByPersona[p.ID_Participante] ?? null;
 
       return {
@@ -70,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Participante: p.Nombre_Participante,
         Correo: p.Correo_Participante,
         role: p.Rol_Participante ?? '0',
-        Photo: p.FotoUrl_Participante ?? null,
+        Photo: photoUrls[i] ?? null,
         Calificacion_Promedio: promedio,
         Estado: promedio != null && promedio >= 4.0 ? 'Aprobado' : 'Reprobado',
       };

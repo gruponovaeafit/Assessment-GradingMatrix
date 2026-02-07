@@ -51,9 +51,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
 
-    if (staff.Active) {
-      return res.status(409).json({ error: 'Sesión ya activa para este usuario' });
-    }
+    // Comentado: permitir siempre nuevo login (como si Active fuera siempre false).
+    // if (staff.Active) {
+    //   return res.status(409).json({ error: 'Sesión ya activa para este usuario' });
+    // }
 
     // Verificar contraseña
     // Si la contraseña en BD no está hasheada (legado), comparar directamente

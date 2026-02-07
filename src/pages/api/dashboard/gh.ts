@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from '@/lib/supabaseServer';
 import { getDefaultAssessmentId } from "@/lib/assessment";
 import { requireRoles } from "@/lib/apiAuth";
+import { resolveParticipantPhotoUrls } from "@/lib/participantPhotoUrl";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -65,10 +66,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const baseNames = ["Base 1", "Base 2", "Base 3", "Base 4", "Base 5"];
 
-    const data = (participantes || []).map((p) => {
+    const fotoUrls = await resolveParticipantPhotoUrls(
+      supabase,
+      (participantes || []).map((p) => p.FotoUrl_Participante)
+    );
+
+    const data = (participantes || []).map((p, i) => {
       const bases = basePromByPersona[p.ID_Participante] || {};
-      const calificacionesBases = baseNames.reduce((acc, nombreBase, i) => {
-        acc[`Calificacion_Base_${i + 1}`] = nombreBase in bases ? (bases[nombreBase] as number | null) : null;
+      const calificacionesBases = baseNames.reduce((acc, nombreBase, idx) => {
+        acc[`Calificacion_Base_${idx + 1}`] = nombreBase in bases ? (bases[nombreBase] as number | null) : null;
         return acc;
       }, {} as Record<string, number | null>);
 
@@ -79,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Participante: p.Nombre_Participante,
         Correo: p.Correo_Participante,
         role: p.Rol_Participante ?? '0',
-        Foto: p.FotoUrl_Participante ?? null,
+        Foto: fotoUrls[i] ?? null,
         Grupo: p.Grupo?.[0]?.Nombre_GrupoAssessment ?? 'Sin grupo',
         Estado: promedio != null ? "Completado" : "Pendiente",
         Calificacion_Promedio: promedio,
