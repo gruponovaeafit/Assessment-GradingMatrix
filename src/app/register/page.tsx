@@ -12,16 +12,13 @@ export default function RegisterPerson() {
   const [correo, setCorreo] = useState("");
   const [imagen, setImagen] = useState<File | null>(null);
   const [Photo, setPhoto] = useState("");
-  const [cameraActive, setCameraActive] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [isError, setIsError] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [fileName, setFileName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [successModalId, setSuccessModalId] = useState<number | null>(null);
 
 
   const handleImageChange = async (file: File) => {
@@ -51,87 +48,6 @@ export default function RegisterPerson() {
       setIsError(true);
     }
   };
-
-  const startCamera = async () => {
-    const noCameraAPI = !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia;
-    const insecureContext = typeof window !== 'undefined' && !window.isSecureContext; // HTTP (ej. 192.168.x.x) sin HTTPS
-
-    if (noCameraAPI || insecureContext) {
-      setMensaje(
-        noCameraAPI
-          ? 'Tu navegador no soporta la cámara aquí. Usa el botón "Elegir archivo" para subir una foto.'
-          : 'La cámara solo está disponible con HTTPS. Usa el botón "Elegir archivo" más abajo para subir una foto.'
-      );
-      setIsError(true);
-      return;
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      setCameraActive(true);
-      setIsError(false);
-      setMensaje('');
-    } catch (err) {
-      console.error('No se pudo acceder a la cámara', err);
-      setMensaje('No se pudo acceder a la cámara. Usa el botón "Elegir archivo" para subir una foto.');
-      setIsError(true);
-    }
-  };
-
-  const stopCamera = () => {
-    try {
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-    } catch (e) {
-      // ignore
-    }
-    streamRef.current = null;
-    setCameraActive(false);
-  };
-
-  const capturePhoto = async () => {
-    try {
-      const video = videoRef.current;
-      if (!video) return;
-
-      const canvas = canvasRef.current || document.createElement('canvas');
-      const width = 512; // tamaño mayor, luego se comprimirá
-      const height = Math.round((video.videoHeight / video.videoWidth) * width) || 512;
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.drawImage(video, 0, 0, width, height);
-
-      await new Promise<void>((res) => {
-        canvas.toBlob(async (blob) => {
-          if (!blob) return res();
-          const file = new File([blob], `photo-${Date.now()}.webp`, { type: 'image/webp' });
-          // Mostrar preview inmediato
-          setPhoto(URL.createObjectURL(blob));
-          // Pasar por la compresión/validación existente
-          await handleImageChange(file);
-          res();
-        }, 'image/webp', 0.85);
-      });
-
-      stopCamera();
-    } catch (err) {
-      console.error('Error capturando foto', err);
-      setMensaje('Error capturando la foto');
-      setIsError(true);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,12 +80,8 @@ export default function RegisterPerson() {
       const data = await response.json();
 
       if (response.ok) {
-        setMensaje("✅ Persona inscrita exitosamente");
         setIsError(false);
-        setPhoto(data.url || "");
-        setNombre("");
-        setCorreo("");
-        setImagen(null);
+        setSuccessModalId(data.id ?? null);
       } else {
         setMensaje(`❌ Error: ${data.error}`);
         setIsError(true);
@@ -253,33 +165,13 @@ export default function RegisterPerson() {
               Foto del Aspirante
             </label>
 
-            {!cameraActive ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={startCamera}
-                  className="px-4 py-2 rounded-md bg-purple-600 text-white"
-                >
-                  Tomar foto con cámara
-                </button>
-                <span className="text-sm text-gray-700 font-medium">o usa el selector de archivos</span>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <video ref={videoRef} className="w-full rounded-md bg-black" playsInline />
-                <div className="flex gap-2">
-                  <button type="button" onClick={capturePhoto} className="px-4 py-2 rounded-md bg-green-600 text-white">Capturar</button>
-                  <button type="button" onClick={stopCamera} className="px-4 py-2 rounded-md bg-gray-300">Cancelar</button>
-                </div>
-              </div>
-            )}
-
-            {/* Selector de archivos con texto visible */}
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            {/* Abre la cámara en móvil (capture="environment"); en escritorio puede ofrecer cámara o archivos según el navegador */}
+            <div className="flex flex-wrap items-center gap-2">
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                capture="environment"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -288,20 +180,20 @@ export default function RegisterPerson() {
                     handleImageChange(file);
                     setPhoto(URL.createObjectURL(file));
                   }
+                  e.target.value = '';
                 }}
               />
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-4 py-2 rounded-md border-2 border-gray-400 bg-white text-gray-800 font-medium hover:bg-gray-50"
+                className="px-4 py-2 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700"
               >
-                Seleccionar archivo
+                Tomar foto
               </button>
               <span className="text-sm font-medium text-gray-800 min-w-0">
-                {fileName || "Ningún archivo seleccionado"}
+                {fileName || "Sin foto seleccionada"}
               </span>
             </div>
-            <canvas ref={canvasRef} style={{ display: 'none' }} />
           </div>
 
           {/* Zona de vista previa: siempre visible */}
@@ -339,6 +231,52 @@ export default function RegisterPerson() {
           )}
         </form>
       </div>
+
+      {/* Modal: registro exitoso con ID */}
+      {successModalId !== null && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => {
+            setSuccessModalId(null);
+            setNombre("");
+            setCorreo("");
+            setImagen(null);
+            setPhoto("");
+            setFileName("");
+            setMensaje("");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 border-2 border-green-500"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <p className="text-2xl font-bold text-gray-900 mb-2">¡Registro exitoso!</p>
+              <p className="text-gray-600 mb-1">La persona fue registrada correctamente.</p>
+              <p className="text-lg font-semibold text-purple-600 mt-3">
+                ID asignado: <span className="font-bold">{successModalId}</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSuccessModalId(null);
+                  setNombre("");
+                  setCorreo("");
+                  setImagen(null);
+                  setPhoto("");
+                  setFileName("");
+                  setMensaje("");
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }}
+                className="mt-6 w-full rounded-lg bg-purple-600 text-white py-3 font-semibold hover:bg-purple-700 transition"
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
