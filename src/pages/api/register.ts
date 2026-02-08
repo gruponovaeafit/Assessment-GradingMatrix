@@ -107,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 🧠 Insertar en DB
     const assessmentId = await getDefaultAssessmentId();
 
-    const { error: dbError } = await supabase
+    const { data: inserted, error: dbError } = await supabase
       .from('Participante')
       .insert({
         ID_Assessment: assessmentId,
@@ -115,7 +115,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Correo_Participante: correo,
         Rol_Participante: '0',
         FotoUrl_Participante: photoStoragePath,
-      });
+      })
+      .select('ID_Participante')
+      .single();
 
     if (dbError) {
       if (dbError.code === '23505') {
@@ -126,6 +128,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({
       message: 'Persona registrada correctamente',
+      id: inserted?.ID_Participante ?? null,
       sizeKB: Math.round(optimizedBuffer.length / 1024),
     });
 

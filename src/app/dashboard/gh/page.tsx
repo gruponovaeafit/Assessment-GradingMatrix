@@ -107,9 +107,13 @@ export default function GhDashboard() {
     requireAdmin();
   }, [requireAdmin]);
 
+  // Cargar lista de assessments solo una vez cuando el auth está listo (getAuthHeaders no en deps para evitar refetch en cada render)
+  const hasFetchedAssessmentsRef = React.useRef(false);
   useEffect(() => {
     if (authLoading || !isAdmin) return;
-    const fetchAssessments = async () => {
+    if (hasFetchedAssessmentsRef.current) return;
+    hasFetchedAssessmentsRef.current = true;
+    (async () => {
       try {
         const response = await authFetch(
           "/api/assessment/list",
@@ -122,14 +126,16 @@ export default function GhDashboard() {
       } catch (err) {
         console.error(err);
       }
-    };
+    })();
+  }, [authLoading, isAdmin]);
 
-    fetchAssessments();
-  }, [authLoading, isAdmin, getAuthHeaders]);
+  const fetchDataRef = React.useRef<() => Promise<void>>(async () => {});
 
-  useEffect(() => {
-    if (authLoading || !isAdmin) return;
-    const fetchData = async () => {
+  React.useEffect(() => {
+    fetchDataRef.current = async () => {
+      if (!isAdmin) return;
+      setLoading(true);
+      setError(null);
       try {
         const query = selectedAssessment ? `?assessmentId=${selectedAssessment}` : "";
         const response = await authFetch(
@@ -142,19 +148,25 @@ export default function GhDashboard() {
           throw new Error(result?.error || "Error al cargar los datos");
         }
         setData(result);
-        setLoading(false);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Error al cargar los datos";
-        if (message.toLowerCase().includes("no autorizado")) {
-          setLoading(false);
-          return;
+        if (!message.toLowerCase().includes("no autorizado")) {
+          setError(message);
         }
-        setError(message);
+      } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [authLoading, isAdmin, selectedAssessment, getAuthHeaders]);
+  });
+
+  // Solo cargar datos al quedar listo el auth o al cambiar el assessment; no refetch por re-renders
+  const lastFetchedAssessmentRef = React.useRef<string | null>(null);
+  useEffect(() => {
+    if (authLoading || !isAdmin) return;
+    if (lastFetchedAssessmentRef.current === selectedAssessment) return;
+    lastFetchedAssessmentRef.current = selectedAssessment;
+    fetchDataRef.current();
+  }, [authLoading, isAdmin, selectedAssessment]);
 
   const grupos = useMemo(() => {
     const uniqueGrupos = [...new Set(data.map((item) => item.Grupo))];
@@ -358,6 +370,21 @@ export default function GhDashboard() {
             className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Admin
+          </button>
+          <button
+            onClick={() => fetchDataRef.current()}
+            disabled={loading}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50"
+            title="Actualizar datos"
+          >
+            {loading ? (
+              <Spinner size="sm" color="white" />
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            )}
+            <span className="hidden sm:inline">Actualizar</span>
           </button>
           <button
             onClick={handleExportCSV}
@@ -635,6 +662,7 @@ export default function GhDashboard() {
                 }}
               />
               <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-500">ID {item.ID}</p>
                 <p className="font-bold text-base truncate">{item.Participante}</p>
                 <p className="text-sm text-gray-500 truncate">{item.Correo}</p>
               </div>
@@ -701,6 +729,7 @@ export default function GhDashboard() {
         <table className="min-w-full border-collapse rounded-xl overflow-hidden">
           <thead>
             <tr className="bg-[color:var(--color-accent)] text-white">
+              <th className="p-2 sm:p-3 text-left text-sm">ID</th>
               <th className="p-2 sm:p-3 text-left text-sm">Foto</th>
               <th className="p-2 sm:p-3 text-left text-sm">Nombre</th>
               <th className="p-2 sm:p-3 text-left text-sm">Correo</th>
@@ -724,6 +753,7 @@ export default function GhDashboard() {
                 onClick={() => setDetailModal({ ...item })}
                 className="border-b border-gray-100 hover:bg-gray-50 transition text-gray-900 bg-white animate-fadeIn cursor-pointer"
               >
+                <td className="p-2 font-semibold text-gray-700">{item.ID}</td>
                 <td className="p-2">
                   <img
                     src={item.Foto && item.Foto.trim() !== "" ? item.Foto : FOTO_PLACEHOLDER}
@@ -880,6 +910,10 @@ export default function GhDashboard() {
                   <h3 className="text-xl font-bold text-gray-900">{detailModal.Participante}</h3>
                   <p className="text-gray-600 text-sm">{detailModal.Correo}</p>
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-gray-900">
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase">ID participante</dt>
+                  <dd className="font-medium">{detailModal.ID}</dd>
+                </div>
                 <div>
                   <dt className="text-xs font-semibold text-gray-500 uppercase">Rol</dt>
                   <dd className="font-medium">
