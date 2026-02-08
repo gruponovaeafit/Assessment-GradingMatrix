@@ -175,7 +175,6 @@ const GraderPage: React.FC = () => {
                 if (checkRes.ok) {
                     const checkData = await checkRes.json();
                     setAlreadyGraded(!!checkData.alreadyGraded);
-                    if (checkData.alreadyGraded) showToast.error('Ya has calificado a este grupo anteriormente');
                 }
             } catch (e) {
                 console.error(e);
@@ -308,10 +307,7 @@ const GraderPage: React.FC = () => {
         }
 
         // Verificación adicional antes de enviar
-        if (alreadyGraded) {
-            showToast.error('Ya has calificado a este grupo anteriormente. No puedes volver a calificar.');
-            return;
-        }
+        if (alreadyGraded) return;
 
         // Mostrar modal de confirmación: no podrá modificar ni volver a calificar
         const confirmed = await confirm({
@@ -374,8 +370,7 @@ const GraderPage: React.FC = () => {
             // ✅ NUEVO: Manejar error específico de ya calificado
             if (!response.ok) {
                 if (data.code === 'ALREADY_GRADED') {
-                    showToast.error('Ya has calificado a este grupo anteriormente. No puedes volver a calificar.');
-                    setAlreadyGraded(true); // Marcar como ya calificado
+                    setAlreadyGraded(true);
                     setSubmitting(false);
                     setIsLoading(false);
                     return;
@@ -538,14 +533,6 @@ const GraderPage: React.FC = () => {
 
                 {!loadingParticipants && hasParticipants && (
                     <>
-                        {alreadyGraded && (
-                            <div className="w-full mb-4 px-4 py-3 rounded-lg bg-yellow-50 border-2 border-yellow-400">
-                                <p className="text-center text-yellow-800 font-semibold text-sm">
-                                    Ya has calificado a este grupo. No puedes volver a calificar.
-                                </p>
-                            </div>
-                        )}
-
                         {/* Carrusel: en móvil solo deslizar; en escritorio flechas */}
                         <div className="flex items-center gap-2 w-full">
                             <button
