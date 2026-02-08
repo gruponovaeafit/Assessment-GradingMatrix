@@ -84,7 +84,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         role: p.Rol_Participante ?? '0',
         Photo: photoUrls[i] ?? null,
         Calificacion_Promedio: promedio,
-        Estado: promedio != null && promedio >= 4.0 ? 'Aprobado' : 'Reprobado',
+        Estado: promedio != null ? "Completado" : "Pendiente"
       };
     });
 
