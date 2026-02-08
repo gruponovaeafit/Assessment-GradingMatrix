@@ -46,6 +46,7 @@ export default function Dashboard() {
   const [staffPassword, setStaffPassword] = useState("");
   const [staffRol, setStaffRol] = useState("");
   const [staffBaseId, setStaffBaseId] = useState("");
+  const [basesList, setBasesList] = useState<{ ID_Base: number; Numero_Base: number; Nombre_Base: string }[]>([]);
   const [assessmentNombre, setAssessmentNombre] = useState('');
   const [assessmentDescripcion, setAssessmentDescripcion] = useState('');
   const [grupoEstudiantilId, setGrupoEstudiantilId] = useState('');
@@ -175,10 +176,39 @@ export default function Dashboard() {
     }
   };
 
+  const loadBases = async (assessmentId: string) => {
+    if (!assessmentId) {
+      setBasesList([]);
+      return;
+    }
+
+    try {
+      const res = await authFetch(
+        `/api/base/list?assessmentId=${assessmentId}`,
+        { headers: { ...getAuthHeaders() } },
+        () => logout()
+      );
+
+      if (res.status === 401) {
+        router.push('/auth/login');
+        return;
+      }
+
+      if (!res.ok) throw new Error('Error al cargar bases');
+      const result = await res.json();
+      setBasesList(result || []);
+    } catch (err) {
+      console.error('❌ Error cargando bases:', err);
+      setBasesList([]);
+    }
+  };
+
   useEffect(() => {
     if (authLoading || !isAdmin) return;
     loadParticipantsAndGroups(configAssessmentId);
-  }, [authLoading, isAdmin, configAssessmentId, router]);
+    // Cargar bases para el staff cuando cambie el assessment seleccionado
+    loadBases(staffAssessmentId);
+  }, [authLoading, isAdmin, configAssessmentId, router, staffAssessmentId]);
 
   // Obtener lista única de grupos
   const grupos = useMemo(() => {
@@ -726,13 +756,24 @@ export default function Dashboard() {
 
             {/* Mostrar campo Base solo si es calificador */}
             {staffRol === 'calificador' && (
-              <input
-                type="number"
-                placeholder="ID Base (requerido para calificador)"
+              <select
                 value={staffBaseId}
                 onChange={(e) => setStaffBaseId(e.target.value)}
-                className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
-              />
+                className={`px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm ${
+                  staffBaseId === '' ? 'text-gray-400' : 'text-gray-900'
+                }`}
+              >
+                <option value="" style={{ color: '#9CA3AF' }}>Seleccionar Base</option>
+                {basesList.length === 0 ? (
+                  <option value="" disabled style={{ color: '#9CA3AF' }}>No hay bases para este assessment</option>
+                ) : (
+                  basesList.map((b) => (
+                    <option key={b.ID_Base} value={String(b.ID_Base)} style={{ color: '#111827' }}>
+                      {`Base ${b.Numero_Base} - ${b.Nombre_Base}`}
+                    </option>
+                  ))
+                )}
+              </select>
             )}
             
             <div className={`${staffRol === 'calificador' ? 'sm:col-span-3' : 'sm:col-span-2'} flex justify-end`}>

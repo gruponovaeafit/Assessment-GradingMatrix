@@ -80,10 +80,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     tmpPath = file.filepath;
 
-    // 🔥 OPTIMIZACIÓN EXTREMA (≈ 0.01 MB)
+    // Guardar en buena calidad para que no se vean pixeladas al mostrarlas (512px, quality 82)
     const optimizedBuffer = await sharp(tmpPath)
-      .resize(256, 256, { fit: 'cover' })
-      .webp({ quality: 55 })
+      .resize(512, 512, { fit: 'cover' })
+      .webp({ quality: 82 })
       .toBuffer();
 
     // 🗂️ Subir a Supabase Storage
@@ -100,11 +100,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw uploadError;
     }
 
-    const { data: publicData } = supabase.storage
-      .from('images')
-      .getPublicUrl(fileName);
-
-    const photoUrl = publicData.publicUrl;
+    // Guardar la ruta en Storage (path), no la URL pública. El dashboard generará URLs firmadas
+    // para que las fotos carguen aunque el bucket sea privado.
+    const photoStoragePath = fileName;
 
     // 🧠 Insertar en DB
     const assessmentId = await getDefaultAssessmentId();
@@ -116,7 +114,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Nombre_Participante: nombre,
         Correo_Participante: correo,
         Rol_Participante: '0',
-        FotoUrl_Participante: photoUrl,
+        FotoUrl_Participante: photoStoragePath,
       });
 
     if (dbError) {
@@ -128,7 +126,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json({
       message: 'Persona registrada correctamente',
-      url: photoUrl,
       sizeKB: Math.round(optimizedBuffer.length / 1024),
     });
 

@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabaseServer';
 import { requireRoles } from '@/lib/apiAuth';
+import { resolveParticipantPhotoUrls } from '@/lib/participantPhotoUrl';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -47,13 +48,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ message: 'No se encontraron personas en este assessment' });
     }
 
-    const payload = participantes.map((p) => ({
+    const photoUrls = await resolveParticipantPhotoUrls(
+      supabase,
+      participantes.map((p) => p.FotoUrl_Participante)
+    );
+
+    const payload = participantes.map((p, i) => ({
       ID_Persona: p.ID_Participante,
       ID: p.ID_Participante,
       Nombre: p.Nombre_Participante,
       role: p.Rol_Participante ?? '0',
       Grupo: p.Grupo?.[0]?.Nombre_GrupoAssessment ?? null,
-      Photo: p.FotoUrl_Participante ?? null,
+      Photo: photoUrls[i] ?? null,
     }));
 
     res.status(200).json(payload);

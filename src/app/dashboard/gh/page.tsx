@@ -26,6 +26,10 @@ interface Calificacion {
   Calificacion_Base_5?: number | null;
 }
 
+// Placeholder cuando no hay foto o falla la carga (SVG inline para no depender de archivo)
+const FOTO_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle fill='%23e5e7eb' cx='32' cy='32' r='32'/%3E%3Ccircle fill='%239ca3af' cx='32' cy='26' r='10'/%3E%3Cellipse fill='%239ca3af' cx='32' cy='56' rx='18' ry='14'/%3E%3C/svg%3E";
+
 export default function GhDashboard() {
   const { isAdmin, isLoading: authLoading, requireAdmin, logout, getAuthHeaders } = useAdminAuth();
   const router = useRouter();
@@ -38,6 +42,7 @@ export default function GhDashboard() {
 
   const [editModal, setEditModal] = useState<Calificacion | null>(null);
   const [originalData, setOriginalData] = useState<Calificacion | null>(null);
+  const [detailModal, setDetailModal] = useState<Calificacion | null>(null);
 
   // Estados para búsqueda, filtros, orden y paginación
   const [searchTerm, setSearchTerm] = useState("");
@@ -619,13 +624,13 @@ export default function GhDashboard() {
           >
             <div className="flex items-center gap-3 mb-3">
               <img
-                src={item.Foto && item.Foto.trim() !== "" ? item.Foto : "/userdefault.png"}
+                src={item.Foto && item.Foto.trim() !== "" ? item.Foto : FOTO_PLACEHOLDER}
                 alt={item.Participante}
                 className="w-16 h-16 rounded-full object-cover border-2 border-[color:var(--color-accent)] shadow"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  if (target.src !== window.location.origin + "/userdefault.png") {
-                    target.src = "/userdefault.png";
+                  if (target.src !== FOTO_PLACEHOLDER) {
+                    target.src = FOTO_PLACEHOLDER;
                   }
                 }}
               />
@@ -716,17 +721,18 @@ export default function GhDashboard() {
             {paginatedData.map((item) => (
               <tr
                 key={item.ID}
-                className="border-b border-gray-100 hover:bg-gray-50 transition text-gray-900 bg-white animate-fadeIn"
+                onClick={() => setDetailModal({ ...item })}
+                className="border-b border-gray-100 hover:bg-gray-50 transition text-gray-900 bg-white animate-fadeIn cursor-pointer"
               >
                 <td className="p-2">
                   <img
-                    src={item.Foto && item.Foto.trim() !== "" ? item.Foto : "/userdefault.png"}
+                    src={item.Foto && item.Foto.trim() !== "" ? item.Foto : FOTO_PLACEHOLDER}
                     alt={item.Participante}
                     className="w-16 h-16 rounded-full object-cover border-2 border-[color:var(--color-accent)] shadow"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      if (target.src !== window.location.origin + "/userdefault.png") {
-                        target.src = "/userdefault.png";
+                      if (target.src !== FOTO_PLACEHOLDER) {
+                        target.src = FOTO_PLACEHOLDER;
                       }
                     }}
                   />
@@ -764,7 +770,7 @@ export default function GhDashboard() {
                   </span>
                 </td>
 
-                <td className="p-2 text-center">
+                <td className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
                   <button
                     className="bg-[color:var(--color-accent)] text-white px-4 py-2 rounded text-base hover:bg-[#5B21B6] transition shadow"
                     onClick={() => {
@@ -834,6 +840,102 @@ export default function GhDashboard() {
             >
               »»
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal detalle del participante */}
+      {detailModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4"
+          onClick={() => setDetailModal(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto border-2 border-[color:var(--color-accent)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-[color:var(--color-accent)] text-white px-4 py-3 flex justify-between items-center rounded-t-2xl">
+              <h2 className="text-lg font-bold">Detalle del participante</h2>
+              <button
+                type="button"
+                onClick={() => setDetailModal(null)}
+                className="text-white hover:bg-white/20 rounded-full p-1 text-2xl leading-none"
+                aria-label="Cerrar"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex flex-row gap-6 items-start">
+                <img
+                  src={detailModal.Foto && detailModal.Foto.trim() !== "" ? detailModal.Foto : FOTO_PLACEHOLDER}
+                  alt={detailModal.Participante}
+                  className="w-44 h-44 sm:w-52 sm:h-52 rounded-full object-cover border-4 border-[color:var(--color-accent)] shadow-lg shrink-0"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (target.src !== FOTO_PLACEHOLDER) target.src = FOTO_PLACEHOLDER;
+                  }}
+                />
+                <div className="min-w-0 flex-1 space-y-3">
+                  <h3 className="text-xl font-bold text-gray-900">{detailModal.Participante}</h3>
+                  <p className="text-gray-600 text-sm">{detailModal.Correo}</p>
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-gray-900">
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase">Rol</dt>
+                  <dd className="font-medium">
+                    {detailModal.role === "1" ? "Infiltrado" : detailModal.role === "0" ? "Aspirante" : detailModal.role}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase">Grupo</dt>
+                  <dd className="font-medium">{detailModal.Grupo}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase">Promedio</dt>
+                  <dd className="font-medium">
+                    {detailModal.Calificacion_Promedio != null
+                      ? detailModal.Calificacion_Promedio.toFixed(2)
+                      : "N/A"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-gray-500 uppercase">Estado</dt>
+                  <dd>
+                    <span className={getEstadoInfo(detailModal.Calificacion_Promedio).color}>
+                      {getEstadoInfo(detailModal.Calificacion_Promedio).texto}
+                    </span>
+                  </dd>
+                </div>
+                  </dl>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Calificaciones por base</p>
+                <div className="grid grid-cols-5 gap-2">
+                  {([1, 2, 3, 4, 5] as const).map((i) => {
+                    const key = `Calificacion_Base_${i}` as keyof Calificacion;
+                    const val = detailModal[key];
+                    return (
+                      <div key={i} className="bg-gray-50 rounded-lg p-2 text-center">
+                        <span className="text-xs text-gray-500 block">B{i}</span>
+                        <span className="font-semibold text-gray-900">
+                          {val != null ? Number(val).toFixed(2) : "-"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="pt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setDetailModal(null)}
+                  className="px-4 py-2 rounded-lg bg-[color:var(--color-accent)] text-white font-medium hover:bg-[#5B21B6] transition"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
