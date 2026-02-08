@@ -18,10 +18,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Obtener el assessment del calificador
+    // Obtener el assessment y grupo actual del calificador
     const { data: staff, error: staffError } = await supabase
       .from('Staff')
-      .select('ID_Assessment')
+      .select('ID_Assessment, ID_GrupoAssessment')
       .eq('ID_Staff', Number(idCalificador))
       .single();
 
@@ -30,14 +30,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const assessmentId = staff.ID_Assessment;
+    const grupoActual = staff.ID_GrupoAssessment;
 
-    // Verificar si ya existen calificaciones para este calificador en esta base
+    // Si no tiene grupo asignado, no puede calificar
+    if (!grupoActual) {
+      return res.status(400).json({ 
+        error: 'El calificador no tiene un grupo asignado',
+        alreadyGraded: false,
+      });
+    }
+
+    // ✅ Obtener los participantes del grupo actual del calificador
+    const { data: participantesGrupo, error: participantesError } = await supabase
+      .from('Participante')
+      .select('ID_Participante')
+      .eq('ID_Assessment', assessmentId)
+      .eq('ID_GrupoAssessment', grupoActual);
+
+    if (participantesError) {
+      throw new Error(`Error al obtener participantes: ${participantesError.message}`);
+    }
+
+    if (!participantesGrupo || participantesGrupo.length === 0) {
+      return res.status(200).json({
+        alreadyGraded: false,
+        message: 'No hay participantes en este grupo',
+      });
+    }
+
+    const idsParticipantes = participantesGrupo.map(p => p.ID_Participante);
+
+    // ✅ Verificar si ya calificó a ALGUNO de los participantes de este grupo en esta base
     const { data: existingGrades, error: gradesError } = await supabase
       .from('CalificacionesPorPersona')
       .select('ID_Calificacion')
       .eq('ID_Assessment', assessmentId)
       .eq('ID_Base', Number(idBase))
       .eq('ID_Staff', Number(idCalificador))
+      .in('ID_Participante', idsParticipantes)
       .limit(1);
 
     if (gradesError) {

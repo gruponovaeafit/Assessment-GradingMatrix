@@ -129,10 +129,14 @@ const GraderPage: React.FC = () => {
             const id_calificador = parsedData?.id_Calificador;
             const id_base = parsedData?.id_base;
 
+            // ✅ IMPORTANTE: Verificar que tengamos los datos necesarios
             if (!id_calificador || !id_base) {
+                console.log("⚠️ Faltan datos para verificar:", { id_calificador, id_base });
                 setCheckingStatus(false);
                 return;
             }
+
+            console.log("🔍 Verificando si ya calificó:", { id_calificador, id_base });
 
             try {
                 const authToken = localStorage.getItem("authToken");
@@ -153,21 +157,101 @@ const GraderPage: React.FC = () => {
 
                 if (response.ok) {
                     const data = await response.json();
+                    console.log("✅ Resultado verificación:", data);
                     setAlreadyGraded(data.alreadyGraded);
                     
                     if (data.alreadyGraded) {
                         showToast.error('Ya has calificado a este grupo anteriormente');
                     }
+                } else {
+                    const errorData = await response.json();
+                    console.error("❌ Error en verificación:", errorData);
                 }
             } catch (error) {
-                console.error('Error verificando estado de calificación:', error);
+                console.error('❌ Error verificando estado de calificación:', error);
             } finally {
                 setCheckingStatus(false);
             }
         };
 
         checkIfAlreadyGraded();
-    }, []);
+    }, [storedData]); // ✅ CAMBIO: Agregar storedData como dependencia
+
+
+    // Cargar calificaciones existentes si ya calificó
+    useEffect(() => {
+        const loadExistingGrades = async () => {
+            if (!alreadyGraded || usuarios.length === 0) return;
+
+            const storedData = localStorage.getItem("storedData");
+            const parsedData = storedData ? JSON.parse(storedData) : null;
+            const id_calificador = parsedData?.id_Calificador;
+            const id_base = parsedData?.id_base;
+
+            if (!id_calificador || !id_base) return;
+
+            try {
+                const authToken = localStorage.getItem("authToken");
+                const authHeaders: HeadersInit = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+                const jsonHeaders: HeadersInit = {
+                    'Content-Type': 'application/json',
+                    ...authHeaders,
+                };
+
+                console.log('🔍 Cargando calificaciones existentes...'); // Debug
+
+                const response = await fetch('/api/get-calificaciones-by-calificador', {
+                    method: 'POST',
+                    headers: jsonHeaders,
+                    body: JSON.stringify({
+                        idCalificador: id_calificador,
+                        idBase: id_base,
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('📥 Datos recibidos:', data); // Debug
+                    
+                    // Mapear las calificaciones al formato del estado
+                    const calificacionesMap: CalificacionesType = {};
+                    
+                    data.calificaciones.forEach((cal: any) => {
+                        console.log('🔄 Procesando calificación:', cal); // Debug
+                        
+                        // ⚠️ CLAVE: Buscar el usuario por ID_Persona, NO por ID
+                        const usuario = usuarios.find(u => u.ID_Persona === cal.ID_Participante);
+                        
+                        console.log('👤 Usuario encontrado:', usuario); // Debug
+                        
+                        if (usuario) {
+                            // Usar usuario.ID como clave (que es lo que usa el componente)
+                            calificacionesMap[usuario.ID] = {
+                                Calificacion_1: cal.Calificacion_1,
+                                Calificacion_2: cal.Calificacion_2,
+                                Calificacion_3: cal.Calificacion_3,
+                            };
+                        } else {
+                            console.warn('⚠️ No se encontró usuario para ID_Participante:', cal.ID_Participante);
+                        }
+                    });
+                    
+                    console.log('✅ Calificaciones mapeadas:', calificacionesMap); // Debug
+                    setCalificaciones(calificacionesMap);
+                } else {
+                    console.error('❌ Error en respuesta:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ Error cargando calificaciones existentes:', error);
+            }
+        };
+
+        if (alreadyGraded && usuarios.length > 0) {
+            loadExistingGrades();
+        }
+    }, [alreadyGraded, usuarios]);
+
+
 
 
     // SOLO PERMITE ENTEROS ENTRE 1 Y 5
