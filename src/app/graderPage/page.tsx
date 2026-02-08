@@ -289,8 +289,9 @@ const GraderPage: React.FC = () => {
     };
 
     const validarTodasLasCalificaciones = () => {
+        const participantes = usuarios.filter((u) => u.role !== 'Impostor');
         const erroresLocales: number[] = [];
-        for (const usuario of usuarios) {
+        for (const usuario of participantes) {
             const cal = calificaciones[usuario.ID];
             if (!cal || cal.Calificacion_1 === '' || cal.Calificacion_2 === '' || cal.Calificacion_3 === '') {
                 erroresLocales.push(usuario.ID);
@@ -312,10 +313,10 @@ const GraderPage: React.FC = () => {
             return;
         }
 
-        // Mostrar modal de confirmación
+        // Mostrar modal de confirmación: no podrá modificar ni volver a calificar
         const confirmed = await confirm({
             title: 'Confirmar envío',
-            message: `¿Estás seguro de enviar las calificaciones para ${usuarios.filter(u => u.role !== 'Impostor').length} participantes? Esta acción no se puede deshacer.`,
+            message: `Una vez enviado no podrás modificar ni volver a calificar este grupo. ¿Deseas continuar con el envío de las calificaciones de ${usuarios.filter(u => u.role !== 'Impostor').length} participantes?`,
             confirmText: 'Sí, enviar',
             cancelText: 'Cancelar',
             variant: 'warning',
@@ -386,12 +387,17 @@ const GraderPage: React.FC = () => {
                 localStorage.setItem("id_grupo", data.nuevoGrupo);
             }
 
-            showToast.success('¡Calificaciones enviadas correctamente!');
+            const gradedGroupName = groups.find((g) => String(g.id) === selectedGroupId)?.nombre ?? `#${selectedGroupId}`;
+            showToast.success(`Grupo "${gradedGroupName}" calificado con éxito`);
+
             setCalificaciones({});
             setErrores([]);
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
+            setAlreadyGraded(false);
+
+            const remainingGroups = groups.filter((g) => String(g.id) !== selectedGroupId);
+            setGroups(remainingGroups);
+            setSelectedGroupId(remainingGroups.length > 0 ? String(remainingGroups[0].id) : '');
+            setUsuarios([]);
 
         } catch (error) {
             console.error('❌ Error al enviar calificaciones múltiples:', error);
