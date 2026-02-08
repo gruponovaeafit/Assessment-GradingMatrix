@@ -11,14 +11,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!requireRoles(req, res, ['admin', 'calificador'])) return;
 
-  const { idCalificador, idBase } = req.body;
+  const { idCalificador, idBase, idGrupo } = req.body;
 
   if (!idCalificador || !idBase) {
     return res.status(400).json({ error: 'idCalificador e idBase son obligatorios' });
   }
 
   try {
-    // Obtener el assessment y grupo actual del calificador
     const { data: staff, error: staffError } = await supabase
       .from('Staff')
       .select('ID_Assessment, ID_GrupoAssessment')
@@ -30,17 +29,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const assessmentId = staff.ID_Assessment;
-    const grupoActual = staff.ID_GrupoAssessment;
+    const grupoActual = idGrupo != null && idGrupo !== '' && !isNaN(Number(idGrupo))
+      ? Number(idGrupo)
+      : staff.ID_GrupoAssessment;
 
-    // Si no tiene grupo asignado, no puede calificar
     if (!grupoActual) {
-      return res.status(400).json({ 
-        error: 'El calificador no tiene un grupo asignado',
+      return res.status(400).json({
+        error: 'Debe indicar un grupo a calificar',
         alreadyGraded: false,
       });
     }
 
-    // ✅ Obtener los participantes del grupo actual del calificador
     const { data: participantesGrupo, error: participantesError } = await supabase
       .from('Participante')
       .select('ID_Participante')

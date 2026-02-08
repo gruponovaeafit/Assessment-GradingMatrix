@@ -11,7 +11,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!requireRoles(req, res, ["admin", "calificador"])) return;
 
-  const calificaciones = req.body;
+  const { calificaciones: calificacionesArray, idGrupo: idGrupoBody } = typeof req.body?.calificaciones === 'undefined'
+    ? { calificaciones: req.body, idGrupo: undefined }
+    : { calificaciones: req.body.calificaciones, idGrupo: req.body.idGrupo };
+
+  const calificaciones = calificacionesArray;
 
   if (!Array.isArray(calificaciones) || calificaciones.length === 0) {
     return res.status(400).json({ message: "Se requiere un arreglo de calificaciones" });
@@ -25,33 +29,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const { data: staff, error: staffError } = await supabase
-  .from('Staff')
-  .select('ID_Assessment, ID_GrupoAssessment')  // ← Agregar ID_GrupoAssessment
-  .eq('ID_Staff', calificadorId)
-  .single();
+      .from('Staff')
+      .select('ID_Assessment, ID_GrupoAssessment')
+      .eq('ID_Staff', calificadorId)
+      .single();
 
-if (staffError || !staff) {
-  return res.status(404).json({ message: 'No se encontró el calificador' });
-}
+    if (staffError || !staff) {
+      return res.status(404).json({ message: 'No se encontró el calificador' });
+    }
 
-const assessmentId = staff.ID_Assessment;
-const grupoActual = staff.ID_GrupoAssessment;
-const idBase = Number(calificaciones[0].ID_Base);
+    const assessmentId = staff.ID_Assessment;
+    const idBase = Number(calificaciones[0].ID_Base);
+    const grupoActual = idGrupoBody != null && idGrupoBody !== '' && !Number.isNaN(Number(idGrupoBody))
+      ? Number(idGrupoBody)
+      : staff.ID_GrupoAssessment;
 
-// ✅ Verificar que tenga grupo asignado
-if (!grupoActual) {
-  return res.status(400).json({ 
-    error: 'El calificador no tiene un grupo asignado',
-    code: 'NO_GROUP_ASSIGNED',
-  });
-}
+    if (!grupoActual) {
+      return res.status(400).json({
+        error: 'Debe indicar un grupo a calificar',
+        code: 'NO_GROUP_ASSIGNED',
+      });
+    }
 
-// ✅ Obtener los participantes del grupo actual
-const { data: participantesGrupo, error: participantesError } = await supabase
-  .from('Participante')
-  .select('ID_Participante')
-  .eq('ID_Assessment', assessmentId)
-  .eq('ID_GrupoAssessment', grupoActual);
+    const { data: participantesGrupo, error: participantesError } = await supabase
+      .from('Participante')
+      .select('ID_Participante')
+      .eq('ID_Assessment', assessmentId)
+      .eq('ID_GrupoAssessment', grupoActual);
 
 if (participantesError) {
   throw new Error(`Error al obtener participantes: ${participantesError.message}`);
