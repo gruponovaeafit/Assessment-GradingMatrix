@@ -75,11 +75,12 @@ const GraderPage: React.FC = () => {
         }
 
         async function fetchGroups() {
+            const idBase = parsedData?.id_base;
             try {
                 const response = await fetch('/api/grader/groups', {
                     method: 'POST',
                     headers: jsonHeaders,
-                    body: JSON.stringify({ idCalificador: id_Calificador }),
+                    body: JSON.stringify({ idCalificador: id_Calificador, idBase: idBase ?? undefined }),
                 });
                 if (!response.ok) throw new Error("Error al cargar grupos");
                 const data = await response.json();
