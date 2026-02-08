@@ -662,7 +662,6 @@ export default function GhDashboard() {
                 }}
               />
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-gray-500">ID {item.ID}</p>
                 <p className="font-bold text-base truncate">{item.Participante}</p>
                 <p className="text-sm text-gray-500 truncate">{item.Correo}</p>
               </div>
@@ -729,7 +728,6 @@ export default function GhDashboard() {
         <table className="min-w-full border-collapse rounded-xl overflow-hidden">
           <thead>
             <tr className="bg-[color:var(--color-accent)] text-white">
-              <th className="p-2 sm:p-3 text-left text-sm">ID</th>
               <th className="p-2 sm:p-3 text-left text-sm">Foto</th>
               <th className="p-2 sm:p-3 text-left text-sm">Nombre</th>
               <th className="p-2 sm:p-3 text-left text-sm">Correo</th>
@@ -753,7 +751,6 @@ export default function GhDashboard() {
                 onClick={() => setDetailModal({ ...item })}
                 className="border-b border-gray-100 hover:bg-gray-50 transition text-gray-900 bg-white animate-fadeIn cursor-pointer"
               >
-                <td className="p-2 font-semibold text-gray-700">{item.ID}</td>
                 <td className="p-2">
                   <img
                     src={item.Foto && item.Foto.trim() !== "" ? item.Foto : FOTO_PLACEHOLDER}
@@ -910,10 +907,6 @@ export default function GhDashboard() {
                   <h3 className="text-xl font-bold text-gray-900">{detailModal.Participante}</h3>
                   <p className="text-gray-600 text-sm">{detailModal.Correo}</p>
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-gray-900">
-                <div>
-                  <dt className="text-xs font-semibold text-gray-500 uppercase">ID participante</dt>
-                  <dd className="font-medium">{detailModal.ID}</dd>
-                </div>
                 <div>
                   <dt className="text-xs font-semibold text-gray-500 uppercase">Rol</dt>
                   <dd className="font-medium">
