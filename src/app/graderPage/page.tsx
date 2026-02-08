@@ -591,7 +591,6 @@ const GraderPage: React.FC = () => {
                                                         <span className="text-xl font-bold text-[color:var(--color-accent)]">{getInitials(usuario.Nombre)}</span>
                                                     )}
                                                 </div>
-                                                <p className="text-sm font-semibold text-gray-500">ID: {usuario.ID}</p>
                                                 <p className="text-base font-bold text-gray-900 truncate max-w-full text-center">{usuario.Nombre}</p>
                                             </div>
                                             <div className="space-y-3">
