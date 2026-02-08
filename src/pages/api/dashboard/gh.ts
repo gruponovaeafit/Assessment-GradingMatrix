@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data: participantes, error: participantesError } = await supabase
       .from('Participante')
       .select(
-        'ID_Participante, Nombre_Participante, Correo_Participante, Rol_Participante, FotoUrl_Participante, Grupo:GrupoAssessment(Nombre_GrupoAssessment)'
+        'ID_Participante, Nombre_Participante, Correo_Participante, Rol_Participante, FotoUrl_Participante, ID_GrupoAssessment, GrupoAssessment(Nombre_GrupoAssessment)'
       )
       .eq('ID_Assessment', assessmentId);
     if (participantesError) throw participantesError;
@@ -80,13 +80,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const promedio = generalPromByPersona[p.ID_Participante] ?? null;
 
+      const grupoNombre = p.GrupoAssessment 
+        ? (Array.isArray(p.GrupoAssessment) 
+            ? p.GrupoAssessment[0]?.Nombre_GrupoAssessment 
+            : (p.GrupoAssessment as any).Nombre_GrupoAssessment)
+        : null;
+
       return {
         ID: p.ID_Participante,
         Participante: p.Nombre_Participante,
         Correo: p.Correo_Participante,
         role: p.Rol_Participante ?? '0',
         Foto: fotoUrls[i] ?? null,
-        Grupo: p.Grupo?.[0]?.Nombre_GrupoAssessment ?? 'Sin grupo',
+        Grupo: grupoNombre ?? 'Sin grupo',
         Estado: promedio != null ? "Completado" : "Pendiente",
         Calificacion_Promedio: promedio,
         ...calificacionesBases,
