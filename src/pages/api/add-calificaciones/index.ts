@@ -25,39 +25,72 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const { data: staff, error: staffError } = await supabase
-      .from('Staff')
-      .select('ID_Assessment')
-      .eq('ID_Staff', calificadorId)
-      .single();
+  .from('Staff')
+  .select('ID_Assessment, ID_GrupoAssessment')  // ← Agregar ID_GrupoAssessment
+  .eq('ID_Staff', calificadorId)
+  .single();
 
-    if (staffError || !staff) {
-      return res.status(404).json({ message: 'No se encontró el calificador' });
-    }
+if (staffError || !staff) {
+  return res.status(404).json({ message: 'No se encontró el calificador' });
+}
 
-    const assessmentId = staff.ID_Assessment;
-    const idBase = Number(calificaciones[0].ID_Base);
+const assessmentId = staff.ID_Assessment;
+const grupoActual = staff.ID_GrupoAssessment;
+const idBase = Number(calificaciones[0].ID_Base);
 
-    // ✅ NUEVA VALIDACIÓN: Verificar si ya existen calificaciones previas
-    const { data: existingGrades, error: checkError } = await supabase
-      .from('CalificacionesPorPersona')
-      .select('ID_Calificacion')
-      .eq('ID_Assessment', assessmentId)
-      .eq('ID_Base', idBase)
-      .eq('ID_Staff', calificadorId)
-      .limit(1);
+// ✅ Verificar que tenga grupo asignado
+if (!grupoActual) {
+  return res.status(400).json({ 
+    error: 'El calificador no tiene un grupo asignado',
+    code: 'NO_GROUP_ASSIGNED',
+  });
+}
 
-    if (checkError) {
-      throw new Error(`Error al verificar calificaciones previas: ${checkError.message}`);
-    }
+// ✅ Obtener los participantes del grupo actual
+const { data: participantesGrupo, error: participantesError } = await supabase
+  .from('Participante')
+  .select('ID_Participante')
+  .eq('ID_Assessment', assessmentId)
+  .eq('ID_GrupoAssessment', grupoActual);
 
-    // ✅ Si ya calificó antes, bloquear el intento
-    if (existingGrades && existingGrades.length > 0) {
-      return res.status(400).json({
-        error: 'Ya has calificado a este grupo anteriormente. No puedes volver a calificar.',
-        code: 'ALREADY_GRADED',
-        message: 'No es posible recalificar al mismo grupo ni a las mismas personas.',
-      });
-    }
+if (participantesError) {
+  throw new Error(`Error al obtener participantes: ${participantesError.message}`);
+}
+
+if (!participantesGrupo || participantesGrupo.length === 0) {
+  return res.status(400).json({
+    error: 'No hay participantes en este grupo',
+    code: 'NO_PARTICIPANTS',
+  });
+}
+
+const idsParticipantes = participantesGrupo.map(p => p.ID_Participante);
+
+// ✅ VALIDACIÓN CORREGIDA: Verificar si ya calificó a estos participantes específicos
+const { data: existingGrades, error: checkError } = await supabase
+  .from('CalificacionesPorPersona')
+  .select('ID_Calificacion')
+  .eq('ID_Assessment', assessmentId)
+  .eq('ID_Base', idBase)
+  .eq('ID_Staff', calificadorId)
+  .in('ID_Participante', idsParticipantes)  // ← CLAVE: Solo los del grupo actual
+  .limit(1);
+
+if (checkError) {
+  throw new Error(`Error al verificar calificaciones previas: ${checkError.message}`);
+}
+
+// ✅ Si ya calificó a alguno de estos participantes, bloquear
+if (existingGrades && existingGrades.length > 0) {
+  return res.status(400).json({
+    error: 'Ya has calificado a este grupo anteriormente. No puedes volver a calificar.',
+    code: 'ALREADY_GRADED',
+    message: 'No es posible recalificar al mismo grupo ni a las mismas personas.',
+  });
+}
+
+// ... resto del código igual (upsertPayload, insert, etc.)
+
 
     const upsertPayload = calificaciones.map((cal) => {
       const ID_Participante = Number(cal.ID_Persona ?? cal.ID_Participante);

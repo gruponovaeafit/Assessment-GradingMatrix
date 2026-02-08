@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!requireRoles(req, res, ["admin"])) return;
 
-  const { staffId, grupoAssessmentId, rotaciones } = req.body ?? {};
+  const { staffId, grupoAssessmentId } = req.body ?? {};
 
   if (!staffId || Number.isNaN(Number(staffId))) {
     return res.status(400).json({ error: "staffId inválido" });
@@ -27,16 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  if (rotaciones !== undefined) {
-    if (rotaciones === null || rotaciones === "") {
-      updatePayload.Rotaciones_Staff = 0;
-    } else if (!Number.isNaN(Number(rotaciones))) {
-      updatePayload.Rotaciones_Staff = Math.max(0, Number(rotaciones));
-    } else {
-      return res.status(400).json({ error: "rotaciones inválidas" });
-    }
-  }
-
   if (Object.keys(updatePayload).length === 0) {
     return res.status(400).json({ error: "Nada para actualizar" });
   }
@@ -47,12 +37,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .update(updatePayload)
       .eq("ID_Staff", Number(staffId))
       .select(
-        "ID_Staff, Correo_Staff, Rol_Staff, ID_Assessment, ID_GrupoAssessment, Rotaciones_Staff"
+        "ID_Staff, Correo_Staff, Rol_Staff, ID_Assessment, ID_GrupoAssessment"
       )
       .single();
 
     if (error) {
       throw error;
+    }
+
+    // Obtener el nombre del grupo si existe
+    let grupoNombre: string | null = null;
+    if (data.ID_GrupoAssessment) {
+      const { data: grupoData, error: grupoError } = await supabase
+        .from("GrupoAssessment")
+        .select("Nombre_GrupoAssessment")
+        .eq("ID_GrupoAssessment", data.ID_GrupoAssessment)
+        .single();
+
+      if (!grupoError && grupoData) {
+        grupoNombre = grupoData.Nombre_GrupoAssessment;
+      }
     }
 
     res.status(200).json({
@@ -61,10 +65,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       rol: data.Rol_Staff,
       assessmentId: data.ID_Assessment,
       grupoId: data.ID_GrupoAssessment ?? null,
-      rotaciones: data.Rotaciones_Staff ?? 0,
+      grupoNombre: grupoNombre,
     });
   } catch (error) {
-    console.error("❌ Error actualizando rotación:", error);
-    res.status(500).json({ error: "Error al actualizar rotación" });
+    console.error("❌ Error actualizando grupo de staff:", error);
+    res.status(500).json({ error: "Error al actualizar grupo de staff" });
   }
 }

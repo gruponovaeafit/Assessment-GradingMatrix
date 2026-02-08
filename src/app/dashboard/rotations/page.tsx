@@ -11,10 +11,14 @@ type StaffRow = {
   correo: string;
   rol: string;
   assessmentId: number;
+  baseId: number | null;
+  baseNombre: string | null;
+  baseNumero: number | null;
   grupoId: number | null;
   grupoNombre: string | null;
   rotaciones: number;
 };
+
 
 type GrupoItem = { id: number; nombre: string };
 
@@ -130,7 +134,6 @@ export default function RotationsDashboard() {
           body: JSON.stringify({
             staffId: editModal.id,
             grupoAssessmentId: editModal.grupoId,
-            rotaciones: editModal.rotaciones,
           }),
         },
         () => logout()
@@ -269,8 +272,8 @@ export default function RotationsDashboard() {
               <th className="p-3 text-left text-sm">ID</th>
               <th className="p-3 text-left text-sm">Correo</th>
               <th className="p-3 text-left text-sm">Assessment</th>
+              <th className="p-3 text-left text-sm">Base</th>
               <th className="p-3 text-left text-sm">Grupo</th>
-              <th className="p-3 text-left text-sm">Rotaciones</th>
               <th className="p-3 text-left text-sm">Acciones</th>
             </tr>
           </thead>
@@ -284,9 +287,13 @@ export default function RotationsDashboard() {
                 <td className="p-3">{item.correo}</td>
                 <td className="p-3">{item.assessmentId}</td>
                 <td className="p-3">
+                  {item.baseNombre 
+                    ? `${item.baseNumero ? `Base ${item.baseNumero}: ` : ''}${item.baseNombre}` 
+                    : "Sin base"}
+                </td>
+                <td className="p-3">
                   {item.grupoNombre ?? (item.grupoId ? `Grupo ${item.grupoId}` : "Sin grupo")}
                 </td>
-                <td className="p-3">{item.rotaciones ?? 0}</td>
                 <td className="p-3">
                   <button
                     className="bg-[color:var(--color-accent)] text-white px-4 py-2 rounded text-sm hover:bg-[#5B21B6] transition shadow"
@@ -323,11 +330,15 @@ export default function RotationsDashboard() {
                 <span className="font-semibold">Assessment:</span> {item.assessmentId}
               </p>
               <p>
+                <span className="font-semibold">Base:</span>{" "}
+                {item.baseNombre 
+                  ? `${item.baseNumero ? `Base ${item.baseNumero}: ` : ''}${item.baseNombre}` 
+                  : "Sin base"}
+              </p>
+              
+              <p>
                 <span className="font-semibold">Grupo:</span>{" "}
                 {item.grupoNombre ?? (item.grupoId ? `Grupo ${item.grupoId}` : "Sin grupo")}
-              </p>
-              <p>
-                <span className="font-semibold">Rotaciones:</span> {item.rotaciones ?? 0}
               </p>
             </div>
             <button
@@ -370,19 +381,6 @@ export default function RotationsDashboard() {
                   </option>
                 ))}
               </select>
-
-              <label className="block mb-2 font-semibold text-white text-sm sm:text-base">
-                Rotaciones
-              </label>
-              <input
-                type="number"
-                min={0}
-                value={editModal.rotaciones ?? 0}
-                onChange={(e) =>
-                  setEditModal({ ...editModal, rotaciones: Number(e.target.value) })
-                }
-                className="w-full border-2 border-primary px-3 py-2 rounded mb-4 text-black bg-white text-sm sm:text-base"
-              />
 
               <div className="flex justify-end gap-2">
                 <button
