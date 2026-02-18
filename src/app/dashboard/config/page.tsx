@@ -992,7 +992,7 @@ export default function Dashboard() {
               </p>
               <p>
                 <span className="font-bold">Estado:</span>{' '}
-                <span className={item.Calificacion_Promedio < 4 ? 'text-error' : 'text-success'}>
+                <span className={item.Estado == "Completado" ? 'text-green-500' : 'text-yellow-500'}>
                   {item.Estado}
                 </span>
               </p>
