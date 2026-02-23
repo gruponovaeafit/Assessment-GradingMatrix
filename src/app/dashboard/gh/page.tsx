@@ -10,7 +10,12 @@ import { saveAs } from "file-saver";
 import { useRouter } from "next/navigation";
 import { authFetch } from "@/lib/authFetch";
 
-interface Calificacion {
+type BaseResumen = {
+  numero: number;
+  promedio: number | null;
+};
+
+interface ParticipantDashboardRow {
   ID: number;
   Grupo: string;
   Participante: string;
@@ -19,11 +24,7 @@ interface Calificacion {
   Foto?: string | null;
   Calificacion_Promedio: number | null;
   Estado: string;
-  Calificacion_Base_1?: number | null;
-  Calificacion_Base_2?: number | null;
-  Calificacion_Base_3?: number | null;
-  Calificacion_Base_4?: number | null;
-  Calificacion_Base_5?: number | null;
+  Bases: BaseResumen[];
 }
 
 // Placeholder cuando no hay foto o falla la carga (SVG inline para no depender de archivo)
@@ -34,15 +35,15 @@ export default function GhDashboard() {
   const { isAdmin, isLoading: authLoading, requireAdmin, logout, getAuthHeaders } = useAdminAuth();
   const router = useRouter();
 
-  const [data, setData] = useState<Calificacion[]>([]);
+  const [data, setData] = useState<ParticipantDashboardRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [assessments, setAssessments] = useState<{ id: number; nombre: string; activo: boolean }[]>([]);
   const [selectedAssessment, setSelectedAssessment] = useState<string>("");
 
-  const [editModal, setEditModal] = useState<Calificacion | null>(null);
-  const [originalData, setOriginalData] = useState<Calificacion | null>(null);
-  const [detailModal, setDetailModal] = useState<Calificacion | null>(null);
+  const [editModal, setEditModal] = useState<ParticipantDashboardRow | null>(null);
+  const [originalData, setOriginalData] = useState<ParticipantDashboardRow | null>(null);
+  const [detailModal, setDetailModal] = useState<ParticipantDashboardRow | null>(null);
 
   // Estados para búsqueda, filtros, orden y paginación
   const [searchTerm, setSearchTerm] = useState("");
@@ -225,22 +226,44 @@ export default function GhDashboard() {
     setCurrentPage(1);
   }, [searchTerm, filterGrupo, filterEstado, filterRol, selectedAssessment, itemsPerPage]);
 
+  // filteredAndSortedData: ParticipantDashboardRow[]
+  const baseNumbers = Array.from(
+    new Set(
+      filteredAndSortedData.flatMap((item) =>
+        item.Bases.map((b) => b.numero)
+      )
+    )
+  ).sort((a, b) => a - b);
+
+
   const handleExportCSV = async () => {
     setExporting(true);
     try {
-      const exportRows = filteredAndSortedData.map((item) => ({
-        Nombre: item.Participante,
-        Correo: item.Correo,
-        Rol: item.role === "1" ? "Infiltrado" : "Aspirante",
-        Grupo: item.Grupo,
-        "Base 1": item.Calificacion_Base_1 != null ? item.Calificacion_Base_1.toFixed(2) : "N/A",
-        "Base 2": item.Calificacion_Base_2 != null ? item.Calificacion_Base_2.toFixed(2) : "N/A",
-        "Base 3": item.Calificacion_Base_3 != null ? item.Calificacion_Base_3.toFixed(2) : "N/A",
-        "Base 4": item.Calificacion_Base_4 != null ? item.Calificacion_Base_4.toFixed(2) : "N/A",
-        "Base 5": item.Calificacion_Base_5 != null ? item.Calificacion_Base_5.toFixed(2) : "N/A",
-        Promedio: item.Calificacion_Promedio != null ? item.Calificacion_Promedio.toFixed(2) : "N/A",
-        Estado: getEstadoInfo(item.Calificacion_Promedio).texto,
-      }));
+      const exportRows = filteredAndSortedData.map((item) => {
+        const row: Record<string, string> = {
+          Nombre: item.Participante,
+          Correo: item.Correo,
+          Rol: item.role === "1" ? "Infiltrado" : "Aspirante",
+          Grupo: item.Grupo,
+        };
+
+        for (const n of baseNumbers) {
+          const base = item.Bases.find((b) => b.numero === n);
+          row[`Base ${n}`] =
+            base && base.promedio != null
+              ? base.promedio.toFixed(2)
+              : "N/A";
+        }
+
+        row.Promedio =
+          item.Calificacion_Promedio != null
+            ? item.Calificacion_Promedio.toFixed(2)
+            : "N/A";
+
+        row.Estado = getEstadoInfo(item.Calificacion_Promedio).texto;
+
+        return row;
+      });
 
       const csv = stringify(exportRows, {
         header: true,
@@ -677,28 +700,17 @@ export default function GhDashboard() {
               </p>
             </div>
 
-            <div className="grid grid-cols-5 gap-1 text-sm text-center mb-3">
-              <div>
-                <span className="block text-gray-400">B1</span>
-                {item.Calificacion_Base_1?.toFixed(1) ?? "-"}
-              </div>
-              <div>
-                <span className="block text-gray-400">B2</span>
-                {item.Calificacion_Base_2?.toFixed(1) ?? "-"}
-              </div>
-              <div>
-                <span className="block text-gray-400">B3</span>
-                {item.Calificacion_Base_3?.toFixed(1) ?? "-"}
-              </div>
-              <div>
-                <span className="block text-gray-400">B4</span>
-                {item.Calificacion_Base_4?.toFixed(1) ?? "-"}
-              </div>
-              <div>
-                <span className="block text-gray-400">B5</span>
-                {item.Calificacion_Base_5?.toFixed(1) ?? "-"}
-              </div>
+            <div
+              className={`grid grid-cols-${item.Bases.length || 1} gap-1 text-sm text-center mb-3`}
+            >
+              {item.Bases.map((base) => (
+                <div key={base.numero}>
+                  <span className="block text-gray-400">{`B${base.numero}`}</span>
+                  {base.promedio != null ? base.promedio.toFixed(1) : "-"}
+                </div>
+              ))}
             </div>
+
 
             <div className="flex justify-between items-center">
               <div>
@@ -733,11 +745,16 @@ export default function GhDashboard() {
               <th className="p-2 sm:p-3 text-left text-sm">Correo</th>
               <th className="p-2 sm:p-3 text-left text-sm">Rol</th>
               <th className="p-2 sm:p-3 text-left text-sm">Grupo</th>
-              <th className="p-2 sm:p-3 text-left text-sm">B1</th>
-              <th className="p-2 sm:p-3 text-left text-sm">B2</th>
-              <th className="p-2 sm:p-3 text-left text-sm">B3</th>
-              <th className="p-2 sm:p-3 text-left text-sm">B4</th>
-              <th className="p-2 sm:p-3 text-left text-sm">B5</th>
+
+              {baseNumbers.map((n) => (
+                <th
+                  key={n}
+                  className="p-2 sm:p-3 text-left text-sm"
+                >
+                  {`B${n}`}
+                </th>
+              ))}
+
               <th className="p-2 sm:p-3 text-left text-sm">Promedio</th>
               <th className="p-2 sm:p-3 text-left text-sm">Estado</th>
               <th className="p-2 sm:p-3 text-left text-sm">Acciones</th>
@@ -771,21 +788,15 @@ export default function GhDashboard() {
                 </td>
                 <td className="p-2 text-base">{item.Grupo}</td>
 
-                <td className="p-2 text-center text-base">
-                  {item.Calificacion_Base_1 != null ? item.Calificacion_Base_1.toFixed(2) : "-"}
-                </td>
-                <td className="p-2 text-center text-base">
-                  {item.Calificacion_Base_2 != null ? item.Calificacion_Base_2.toFixed(2) : "-"}
-                </td>
-                <td className="p-2 text-center text-base">
-                  {item.Calificacion_Base_3 != null ? item.Calificacion_Base_3.toFixed(2) : "-"}
-                </td>
-                <td className="p-2 text-center text-base">
-                  {item.Calificacion_Base_4 != null ? item.Calificacion_Base_4.toFixed(2) : "-"}
-                </td>
-                <td className="p-2 text-center text-base">
-                  {item.Calificacion_Base_5 != null ? item.Calificacion_Base_5.toFixed(2) : "-"}
-                </td>
+                {baseNumbers.map((n) => {
+                  const base = item.Bases.find((b) => b.numero === n);
+                  const value = base?.promedio;
+                  return (
+                    <td key={n} className="p-2 text-center text-base">
+                      {value != null ? value.toFixed(2) : "-"}
+                    </td>
+                  );
+                })}
 
                 <td className="p-2 font-bold text-center text-base">
                   {item.Calificacion_Promedio != null ? item.Calificacion_Promedio.toFixed(2) : "N/A"}
@@ -940,7 +951,7 @@ export default function GhDashboard() {
                 <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Calificaciones por base</p>
                 <div className="grid grid-cols-5 gap-2">
                   {([1, 2, 3, 4, 5] as const).map((i) => {
-                    const key = `Calificacion_Base_${i}` as keyof Calificacion;
+                    const key = `Calificacion_Base_${i}` as keyof ParticipantDashboardRow;
                     const val = detailModal[key];
                     return (
                       <div key={i} className="bg-gray-50 rounded-lg p-2 text-center">

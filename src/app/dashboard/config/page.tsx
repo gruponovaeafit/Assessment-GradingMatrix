@@ -56,6 +56,7 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterGrupo, setFilterGrupo] = useState<string>("todos");
   const [filterRol, setFilterRol] = useState<string>("todos");
+  const [filterAssessment, setFilterAssessment] = useState<string>("todos");
   const [sortBy, setSortBy] = useState<"nombre" | "promedio" | "grupo">("nombre");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -66,34 +67,41 @@ export default function Dashboard() {
     requireAdmin();
   }, [isAdmin, authLoading]);
 
+  const fetchData = async (assessmentId?: string) => {
+    try {
+      const url = assessmentId
+        ? `/api/dashboard/config?assessmentId=${assessmentId}`
+        : '/api/dashboard/config';
+
+      const response = await authFetch(
+        url,
+        { headers: { ...getAuthHeaders() } },
+        () => logout()
+      );
+
+      if (response.status === 401) {
+        router.push('/auth/login');
+        return;
+      }
+      if (!response.ok) throw new Error('Error al cargar los datos');
+
+      const result = await response.json();
+      setData(result);
+      setLoading(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al cargar los datos';
+      if (message.toLowerCase().includes('no autorizado')) {
+        router.push('/auth/login');
+        return;
+      }
+      setError('Error al cargar los datos');
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (authLoading || !isAdmin) return;
-    const fetchData = async () => {
-      try {
-        const response = await authFetch(
-          '/api/dashboard/config',
-          { headers: { ...getAuthHeaders() } },
-          () => logout()
-        );
-        if (response.status === 401) {
-          router.push('/auth/login');
-          return;
-        }
-        if (!response.ok) throw new Error('Error al cargar los datos');
-        const result = await response.json();
-        setData(result);
-        setLoading(false);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Error al cargar los datos';
-        if (message.toLowerCase().includes('no autorizado')) {
-          router.push('/auth/login');
-          return;
-        }
-        setError('Error al cargar los datos');
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchData(); // sin assessmentId => usa el default en el backend (por ahora)
   }, [authLoading, isAdmin, router]);
 
   useEffect(() => {
@@ -903,6 +911,28 @@ export default function Dashboard() {
           {/* Filtros y ordenamiento */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
             <select
+              value={filterAssessment}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFilterAssessment(value);
+                if (value === "todos") {
+                  // Si quieres, aquí podrías recargar sin filtro:
+                  fetchData(undefined);
+                } else {
+                  fetchData(value);
+                }
+              }}
+              className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-base"
+            >
+              <option value="todos" className="text-black">Todos los assessments</option>
+              {visibleAssessments.map((assessment) => (
+                <option key={assessment.id} value={assessment.id} className="text-black">
+                  {assessment.nombre}
+                </option>
+              ))}
+            </select>
+
+            <select
               value={filterGrupo}
               onChange={(e) => setFilterGrupo(e.target.value)}
               className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-base"
@@ -992,7 +1022,7 @@ export default function Dashboard() {
               </p>
               <p>
                 <span className="font-bold">Estado:</span>{' '}
-                <span className={item.Calificacion_Promedio < 4 ? 'text-error' : 'text-success'}>
+                <span className={item.Estado == "Completado" ? 'text-green-500' : 'text-yellow-500'}>
                   {item.Estado}
                 </span>
               </p>

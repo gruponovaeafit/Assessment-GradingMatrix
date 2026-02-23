@@ -9,7 +9,15 @@ import { resolveParticipantPhotoUrls } from "@/lib/participantPhotoUrl";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!requireRoles(req, res, ["admin"])) return;
-    const assessmentId = await getDefaultAssessmentId();
+    const assessmentId = req.query.assessmentId 
+    ? Number(req.query.assessmentId) 
+    : await getDefaultAssessmentId();
+
+    const { data: assessment, error: assessmentError } = await supabase
+    .from('Assessment')
+    .select('ID_Assessment, Nombre_Assessment')
+    .eq('ID_Assessment', assessmentId)
+    .single();
 
     const { data: participantes, error: participantesError } = await supabase
       .from('Participante')
@@ -84,7 +92,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         role: p.Rol_Participante ?? '0',
         Photo: photoUrls[i] ?? null,
         Calificacion_Promedio: promedio,
-        Estado: promedio != null ? "Completado" : "Pendiente"
+        Estado: promedio != null ? "Completado" : "Pendiente",
+        AssessmentId: assessmentId,
+        AssessmentNombre: assessment?.Nombre_Assessment ?? 'Sin assessment'
       };
     });
 

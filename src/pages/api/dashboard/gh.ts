@@ -64,38 +64,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       generalPromByPersona[Number(id)] = proms.length > 0 ? proms.reduce((a, b) => a + b, 0) / proms.length : null;
     }
 
-    const baseNames = ["Base 1", "Base 2", "Base 3", "Base 4", "Base 5"];
-
     const fotoUrls = await resolveParticipantPhotoUrls(
-      supabase,
-      (participantes || []).map((p) => p.FotoUrl_Participante)
-    );
+          supabase,
+          (participantes || []).map((p) => p.FotoUrl_Participante)
+        );
 
     const data = (participantes || []).map((p, i) => {
-      const bases = basePromByPersona[p.ID_Participante] || {};
-      const calificacionesBases = baseNames.reduce((acc, nombreBase, idx) => {
-        acc[`Calificacion_Base_${idx + 1}`] = nombreBase in bases ? (bases[nombreBase] as number | null) : null;
-        return acc;
-      }, {} as Record<string, number | null>);
+      const basesRecord = basePromByPersona[p.ID_Participante] || {};
+
+      const basesArray = Object.entries(basesRecord)
+        .map(([nombreBase, prom]) => {
+          // nombreBase is like "Base 1"
+          const num = Number(nombreBase.replace("Base ", ""));
+          return {
+            numero: num,
+            promedio: prom as number | null,
+          };
+        })
+        .sort((a, b) => a.numero - b.numero);
 
       const promedio = generalPromByPersona[p.ID_Participante] ?? null;
 
-      const grupoNombre = p.GrupoAssessment 
-        ? (Array.isArray(p.GrupoAssessment) 
-            ? p.GrupoAssessment[0]?.Nombre_GrupoAssessment 
-            : (p.GrupoAssessment as any).Nombre_GrupoAssessment)
+      const grupoNombre = p.GrupoAssessment
+        ? Array.isArray(p.GrupoAssessment)
+          ? p.GrupoAssessment[0]?.Nombre_GrupoAssessment
+          : (p.GrupoAssessment as any).Nombre_GrupoAssessment
         : null;
 
       return {
         ID: p.ID_Participante,
         Participante: p.Nombre_Participante,
         Correo: p.Correo_Participante,
-        role: p.Rol_Participante ?? '0',
+        role: p.Rol_Participante ?? "0",
         Foto: fotoUrls[i] ?? null,
-        Grupo: grupoNombre ?? 'Sin grupo',
+        Grupo: grupoNombre ?? "Sin grupo",
         Estado: promedio != null ? "Completado" : "Pendiente",
         Calificacion_Promedio: promedio,
-        ...calificacionesBases,
+        Bases: basesArray,
       };
     });
 
