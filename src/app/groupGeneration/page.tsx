@@ -143,7 +143,13 @@ const GroupGeneration: React.FC = () => {
                   <span className='text-white text-sm'>
                     {member.Participante} <span className='text-white/60 text-xs'>({member.Correo})</span>
                   </span>
-                  <span className='text-white/80 text-xs'>Rol: {member.role} | Grupo: {member.Grupo}</span>
+                  <span className='text-white/80 text-xs'>
+                    Rol:{' '}
+                    <span className={member.role === '1' ? 'text-red-400 font-semibold' : 'text-white/80'}>
+                      {member.role === '1' ? 'Infiltrado' : 'Aspirante'}
+                    </span>
+                    {' | '}Grupo: {member.Grupo}
+                  </span>
                 </li>
               ))}
             </ul>

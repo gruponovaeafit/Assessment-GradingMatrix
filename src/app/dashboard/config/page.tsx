@@ -983,7 +983,12 @@ export default function Dashboard() {
               <p><span className="font-bold">ID:</span> {item.ID}</p>
               <p><span className="font-bold">Grupo:</span> {item.Grupo}</p>
               <p className="truncate"><span className="font-bold">Correo:</span> {item.Correo}</p>
-              <p><span className="font-bold">Rol:</span> {item.role}</p>
+              <p>
+                <span className="font-bold">Rol:</span>{' '}
+                <span className={String(item.role) === '1' ? 'text-error font-semibold' : ''}>
+                  {String(item.role) === '1' ? 'Infiltrado' : 'Aspirante'}
+                </span>
+              </p>
               <p>
                 <span className="font-bold">Promedio:</span>{" "}
                 {item.Calificacion_Promedio != null
@@ -1088,12 +1093,14 @@ export default function Dashboard() {
               />
 
               <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Rol</label>
-              <input
-                type="text"
+              <select
                 value={editModal.role}
                 onChange={(e) => setEditModal({ ...editModal, role: e.target.value })}
-                className="w-full border-2 border-primary px-3 py-2 rounded mb-4 text-black bg-white placeholder-gray-500 text-sm sm:text-base"
-              />
+                className="w-full border-2 border-primary px-3 py-2 rounded mb-4 text-black bg-white text-sm sm:text-base"
+              >
+                <option value="0">Aspirante</option>
+                <option value="1">Infiltrado</option>
+              </select>
 
               <div className="flex justify-end gap-2">
                 <button
