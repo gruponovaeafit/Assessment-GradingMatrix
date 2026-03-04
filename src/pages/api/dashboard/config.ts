@@ -9,15 +9,30 @@ import { resolveParticipantPhotoUrls } from "@/lib/participantPhotoUrl";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!requireRoles(req, res, ["admin"])) return;
-    const assessmentId = req.query.assessmentId 
-    ? Number(req.query.assessmentId) 
-    : await getDefaultAssessmentId();
+    const rawAssessmentId = Array.isArray(req.query.assessmentId)
+      ? req.query.assessmentId[0]
+      : req.query.assessmentId;
+    const parsedAssessmentId = rawAssessmentId ? Number(rawAssessmentId) : null;
+    if (parsedAssessmentId !== null && !Number.isFinite(parsedAssessmentId)) {
+      return res.status(400).json({ error: "assessmentId inválido" });
+    }
+    const assessmentId = parsedAssessmentId ?? await getDefaultAssessmentId();
 
     const { data: assessment, error: assessmentError } = await supabase
     .from('Assessment')
     .select('ID_Assessment, Nombre_Assessment')
     .eq('ID_Assessment', assessmentId)
     .single();
+
+    if (assessmentError) {
+      console.error("❌ Error al obtener el assessment:", assessmentError);
+      return res.status(500).json({ error: "Error al obtener el assessment" });
+    }
+
+    if (!assessment) {
+      console.warn(`⚠️ Assessment no encontrado para ID ${assessmentId}`);
+      return res.status(404).json({ error: "Assessment no encontrado" });
+    }
 
     const { data: participantes, error: participantesError } = await supabase
       .from('Participante')

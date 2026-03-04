@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useAdminAuth } from '../../Hooks/useAdminAuth';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '../../components/UI/Loading';
@@ -56,11 +56,14 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterGrupo, setFilterGrupo] = useState<string>("todos");
   const [filterRol, setFilterRol] = useState<string>("todos");
-  const [filterAssessment, setFilterAssessment] = useState<string>("todos");
+  const [filterAssessment, setFilterAssessment] = useState<string>("default");
   const [sortBy, setSortBy] = useState<"nombre" | "promedio" | "grupo">("nombre");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+
+  // AbortController ref to cancel in-flight fetchData requests
+  const fetchAbortRef = useRef<AbortController | null>(null);
 
   // Proteger la ruta - redirige si no es admin
   useEffect(() => {
@@ -68,6 +71,16 @@ export default function Dashboard() {
   }, [isAdmin, authLoading]);
 
   const fetchData = async (assessmentId?: string) => {
+    // Cancel any in-flight request
+    if (fetchAbortRef.current) {
+      fetchAbortRef.current.abort();
+      fetchAbortRef.current = null;
+    }
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+
+    setLoading(true);
+    setError(null);
     try {
       const url = assessmentId
         ? `/api/dashboard/config?assessmentId=${assessmentId}`
@@ -75,9 +88,11 @@ export default function Dashboard() {
 
       const response = await authFetch(
         url,
-        { headers: { ...getAuthHeaders() } },
+        { headers: { ...getAuthHeaders() }, signal: controller.signal },
         () => logout()
       );
+
+      if (controller.signal.aborted) return;
 
       if (response.status === 401) {
         router.push('/auth/login');
@@ -89,6 +104,10 @@ export default function Dashboard() {
       setData(result);
       setLoading(false);
     } catch (err: unknown) {
+      if ((err as Error)?.name === 'AbortError') {
+        setLoading(false);
+        return;
+      }
       const message = err instanceof Error ? err.message : 'Error al cargar los datos';
       if (message.toLowerCase().includes('no autorizado')) {
         router.push('/auth/login');
@@ -96,6 +115,10 @@ export default function Dashboard() {
       }
       setError('Error al cargar los datos');
       setLoading(false);
+    } finally {
+      if (fetchAbortRef.current === controller) {
+        fetchAbortRef.current = null;
+      }
     }
   };
 
@@ -915,8 +938,8 @@ export default function Dashboard() {
               onChange={(e) => {
                 const value = e.target.value;
                 setFilterAssessment(value);
-                if (value === "todos") {
-                  // Si quieres, aquí podrías recargar sin filtro:
+                setCurrentPage(1);
+                if (value === "default") {
                   fetchData(undefined);
                 } else {
                   fetchData(value);
@@ -924,7 +947,7 @@ export default function Dashboard() {
               }}
               className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-base"
             >
-              <option value="todos" className="text-black">Todos los assessments</option>
+              <option value="default" className="text-black">Assessment por defecto</option>
               {visibleAssessments.map((assessment) => (
                 <option key={assessment.id} value={assessment.id} className="text-black">
                   {assessment.nombre}

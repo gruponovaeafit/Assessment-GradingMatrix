@@ -81,6 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             promedio: prom as number | null,
           };
         })
+        .filter((b) => Number.isFinite(b.numero))
         .sort((a, b) => a.numero - b.numero);
 
       const promedio = generalPromByPersona[p.ID_Participante] ?? null;
