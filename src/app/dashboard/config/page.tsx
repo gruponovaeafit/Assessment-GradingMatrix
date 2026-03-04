@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useAdminAuth } from '../../Hooks/useAdminAuth';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '../../components/UI/Loading';
@@ -56,44 +56,75 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterGrupo, setFilterGrupo] = useState<string>("todos");
   const [filterRol, setFilterRol] = useState<string>("todos");
+  const [filterAssessment, setFilterAssessment] = useState<string>("default");
   const [sortBy, setSortBy] = useState<"nombre" | "promedio" | "grupo">("nombre");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+
+  // AbortController ref to cancel in-flight fetchData requests
+  const fetchAbortRef = useRef<AbortController | null>(null);
 
   // Proteger la ruta - redirige si no es admin
   useEffect(() => {
     requireAdmin();
   }, [isAdmin, authLoading]);
 
+  const fetchData = async (assessmentId?: string) => {
+    // Cancel any in-flight request
+    if (fetchAbortRef.current) {
+      fetchAbortRef.current.abort();
+      fetchAbortRef.current = null;
+    }
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const url = assessmentId
+        ? `/api/dashboard/config?assessmentId=${assessmentId}`
+        : '/api/dashboard/config';
+
+      const response = await authFetch(
+        url,
+        { headers: { ...getAuthHeaders() }, signal: controller.signal },
+        () => logout()
+      );
+
+      if (controller.signal.aborted) return;
+
+      if (response.status === 401) {
+        router.push('/auth/login');
+        return;
+      }
+      if (!response.ok) throw new Error('Error al cargar los datos');
+
+      const result = await response.json();
+      setData(result);
+      setLoading(false);
+    } catch (err: unknown) {
+      if ((err as Error)?.name === 'AbortError') {
+        setLoading(false);
+        return;
+      }
+      const message = err instanceof Error ? err.message : 'Error al cargar los datos';
+      if (message.toLowerCase().includes('no autorizado')) {
+        router.push('/auth/login');
+        return;
+      }
+      setError('Error al cargar los datos');
+      setLoading(false);
+    } finally {
+      if (fetchAbortRef.current === controller) {
+        fetchAbortRef.current = null;
+      }
+    }
+  };
+
   useEffect(() => {
     if (authLoading || !isAdmin) return;
-    const fetchData = async () => {
-      try {
-        const response = await authFetch(
-          '/api/dashboard/config',
-          { headers: { ...getAuthHeaders() } },
-          () => logout()
-        );
-        if (response.status === 401) {
-          router.push('/auth/login');
-          return;
-        }
-        if (!response.ok) throw new Error('Error al cargar los datos');
-        const result = await response.json();
-        setData(result);
-        setLoading(false);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Error al cargar los datos';
-        if (message.toLowerCase().includes('no autorizado')) {
-          router.push('/auth/login');
-          return;
-        }
-        setError('Error al cargar los datos');
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchData(); // sin assessmentId => usa el default en el backend (por ahora)
   }, [authLoading, isAdmin, router]);
 
   useEffect(() => {
@@ -903,6 +934,28 @@ export default function Dashboard() {
           {/* Filtros y ordenamiento */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
             <select
+              value={filterAssessment}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFilterAssessment(value);
+                setCurrentPage(1);
+                if (value === "default") {
+                  fetchData(undefined);
+                } else {
+                  fetchData(value);
+                }
+              }}
+              className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-base"
+            >
+              <option value="default" className="text-black">Assessment por defecto</option>
+              {visibleAssessments.map((assessment) => (
+                <option key={assessment.id} value={assessment.id} className="text-black">
+                  {assessment.nombre}
+                </option>
+              ))}
+            </select>
+
+            <select
               value={filterGrupo}
               onChange={(e) => setFilterGrupo(e.target.value)}
               className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-base"
@@ -992,7 +1045,7 @@ export default function Dashboard() {
               </p>
               <p>
                 <span className="font-bold">Estado:</span>{' '}
-                <span className={item.Calificacion_Promedio < 4 ? 'text-error' : 'text-success'}>
+                <span className={item.Estado == "Completado" ? 'text-green-500' : 'text-yellow-500'}>
                   {item.Estado}
                 </span>
               </p>
