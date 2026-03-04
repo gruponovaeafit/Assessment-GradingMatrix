@@ -701,7 +701,8 @@ export default function GhDashboard() {
             </div>
 
             <div
-              className={`grid grid-cols-${item.Bases.length || 1} gap-1 text-sm text-center mb-3`}
+              style={{ gridTemplateColumns: `repeat(${item.Bases.length || 1}, minmax(0, 1fr))` }}
+              className="grid gap-1 text-sm text-center mb-3"
             >
               {item.Bases.map((base) => (
                 <div key={base.numero}>
