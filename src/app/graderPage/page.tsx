@@ -1,8 +1,8 @@
 'use client';
 
 import React, { ReactNode, useEffect, useState } from 'react';
-import { useStoredId } from "../Hooks/UseStoreId";
-import { useGraderAuth } from "../Hooks/useGraderAuth";
+import { useStoredId } from "@/hooks/useStoredId";
+import { useGraderAuth } from "@/hooks/useGraderAuth";
 import { Spinner, SkeletonBaseInfo, SkeletonUserCard } from '../components/UI/Loading';
 import { showToast } from '../components/UI/Toast';
 import { useConfirmModal } from '../components/UI/ConfirmModal';

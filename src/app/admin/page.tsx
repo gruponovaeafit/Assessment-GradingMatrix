@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAdminAuth } from "../Hooks/useAdminAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Spinner } from "../components/UI/Loading";
 
 export default function AdminHub() {

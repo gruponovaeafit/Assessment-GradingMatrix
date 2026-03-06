@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useStoredId } from "../../Hooks/UseStoreId";
-import { useAdminAuth } from "../../Hooks/useAdminAuth";
-import { useGraderAuth } from "../../Hooks/useGraderAuth";
+import { useStoredId } from "@/hooks/useStoredId";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useGraderAuth } from "@/hooks/useGraderAuth";
 import { Spinner } from "../../components/UI/Loading";
 
 export default function Login() {

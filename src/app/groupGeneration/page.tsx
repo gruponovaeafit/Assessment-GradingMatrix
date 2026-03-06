@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAdminAuth } from '../Hooks/useAdminAuth';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { authFetch } from '@/lib/authFetch';
 
 interface Persona {

@@ -25,13 +25,13 @@ export const useAdminAuth = () => {
     const checkAuth = () => {
       const savedAuth = localStorage.getItem(ADMIN_KEY);
       const savedToken = localStorage.getItem(TOKEN_KEY);
-      
+
       if (savedAuth) {
         const authData: AdminAuth = JSON.parse(savedAuth);
         const now = Date.now();
-        
+
         // Verificar si la sesión no ha expirado
-        if (authData.isAdmin && (now - authData.timestamp) < SESSION_DURATION) {
+        if (authData.isAdmin && now - authData.timestamp < SESSION_DURATION) {
           setIsAdmin(true);
           setIsSuperAdmin(Boolean(authData.isSuperAdmin));
           setToken(savedToken);

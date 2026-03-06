@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useAdminAuth } from "../../Hooks/useAdminAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Spinner, Skeleton, SkeletonTableRow } from "../../components/UI/Loading";
 import { showToast } from "../../components/UI/Toast";
 import { useConfirmModal } from "../../components/UI/ConfirmModal";

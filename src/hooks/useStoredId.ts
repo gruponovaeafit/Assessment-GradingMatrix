@@ -9,12 +9,11 @@ interface StoredData {
   id_base: string | null;
 }
 
-
 export const useStoredId = () => {
   const [storedData, setStoredData] = useState<StoredData>({
     idGrupo: null,
     id_Calificador: null,
-    id_base:  null,
+    id_base: null,
   });
 
   // Cargar datos desde localStorage al iniciar
@@ -26,8 +25,7 @@ export const useStoredId = () => {
   }, []);
 
   // Guardar datos en localStorage cuando cambian
-  const saveData = (idGrupo: number | null, id_Calificador: string | null, id_base: string | null) => { 
-    
+  const saveData = (idGrupo: number | null, id_Calificador: string | null, id_base: string | null) => {
     const newData = { idGrupo, id_Calificador, id_base };
     setStoredData(newData);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newData)); // Convertimos a JSON
