@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useState, useCallback } from 'react';
 import { Button, ButtonProps } from './Button';
 
 interface ConfirmModalProps {
@@ -52,27 +53,22 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   const styles = variantStyles[variant];
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn"
       onClick={onClose}
       aria-modal="true"
       role="dialog"
     >
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      {/* Modal */}
-      <div 
+      <div
         className={`relative bg-[color:var(--color-surface)] rounded-xl p-6 w-full max-w-md border ${styles.border} shadow-2xl animate-scaleIn`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <span className="text-3xl">{styles.icon}</span>
           <h3 className="text-xl font-bold text-[color:var(--color-text)]">{title}</h3>
         </div>
-        {/* Message */}
         <p className="text-[color:var(--color-muted)] mb-6">{message}</p>
-        {/* Actions */}
         <div className="flex gap-3 justify-end">
           <Button
             type="button"
@@ -97,9 +93,6 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   );
 };
 
-// Hook para manejar el modal de confirmación
-import { useState, useCallback } from 'react';
-
 interface UseConfirmModalOptions {
   title: string;
   message: string;
@@ -120,7 +113,7 @@ export function useConfirmModal() {
   const confirm = useCallback((opts: UseConfirmModalOptions): Promise<boolean> => {
     setOptions(opts);
     setIsOpen(true);
-    
+
     return new Promise((resolve) => {
       setResolveRef(() => resolve);
     });

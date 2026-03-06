@@ -3,9 +3,9 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { useStoredId } from "@/hooks/useStoredId";
 import { useGraderAuth } from "@/hooks/useGraderAuth";
-import { Spinner, SkeletonBaseInfo, SkeletonUserCard } from '../components/UI/Loading';
-import { showToast } from '../components/UI/Toast';
-import { useConfirmModal } from '../components/UI/ConfirmModal';
+import { Spinner, SkeletonBaseInfo, SkeletonUserCard } from '@/components/UI/Loading';
+import { showToast } from '@/components/UI/Toast';
+import { useConfirmModal } from '@/components/UI/ConfirmModal';
 
 const GraderPage: React.FC = () => {
     //Estado para ver si ya calificó

@@ -31,7 +31,6 @@ export default function Navbar() {
         ))}
       </ul>
       <div className="flex items-center gap-2">
-        {/* Placeholder for user avatar or actions */}
         <div className="w-9 h-9 rounded-full bg-[color:var(--color-muted)] flex items-center justify-center text-[color:var(--color-accent)] font-bold">
           <span>U</span>
         </div>

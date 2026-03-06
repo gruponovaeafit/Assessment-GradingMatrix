@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useStoredId } from "@/hooks/useStoredId";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useGraderAuth } from "@/hooks/useGraderAuth";
-import { Spinner } from "../../components/UI/Loading";
+import { Spinner } from "@/components/UI/Loading";
 
 export default function Login() {
   const { saveData } = useStoredId();

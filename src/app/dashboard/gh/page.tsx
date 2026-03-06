@@ -2,9 +2,9 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Spinner, Skeleton, SkeletonTableRow } from "../../components/UI/Loading";
-import { showToast } from "../../components/UI/Toast";
-import { useConfirmModal } from "../../components/UI/ConfirmModal";
+import { Spinner, Skeleton, SkeletonTableRow } from "@/components/UI/Loading";
+import { showToast } from "@/components/UI/Toast";
+import { useConfirmModal } from "@/components/UI/ConfirmModal";
 import { stringify } from "csv-stringify/sync";
 import { saveAs } from "file-saver";
 import { useRouter } from "next/navigation";

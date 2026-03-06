@@ -2,10 +2,8 @@
 
 import { Toaster, toast } from 'react-hot-toast';
 
-// Re-exportar toast para uso en componentes
 export { toast };
 
-// Componente Toaster configurado
 export function ToastProvider() {
   return (
     <Toaster
@@ -63,18 +61,13 @@ export function ToastProvider() {
   );
 }
 
-// Helpers para toasts comunes
 export const showToast = {
   success: (message: string) => toast.success(message),
   error: (message: string) => toast.error(message),
   loading: (message: string) => toast.loading(message),
-  
-  // Toast con promesa (para async operations)
   promise: <T,>(
     promise: Promise<T>,
     messages: { loading: string; success: string; error: string }
   ) => toast.promise(promise, messages),
-  
-  // Dismiss específico
   dismiss: (id?: string) => toast.dismiss(id),
 };

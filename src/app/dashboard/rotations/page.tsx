@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Spinner, SkeletonTableRow, Skeleton } from "../../components/UI/Loading";
-import { showToast } from "../../components/UI/Toast";
+import { Spinner, SkeletonTableRow, Skeleton } from "@/components/UI/Loading";
+import { showToast } from "@/components/UI/Toast";
 import { authFetch } from "@/lib/authFetch";
 
 type StaffRow = {

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Spinner } from "../components/UI/Loading";
+import { Spinner } from "@/components/UI/Loading";
 
 export default function AdminHub() {
   const { isAdmin, isLoading: authLoading, requireAdmin, logout } = useAdminAuth();

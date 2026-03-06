@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import imageCompression from "browser-image-compression";
-import { Spinner } from "../components/UI/Loading";
+import { Spinner } from "@/components/UI/Loading";
 
 export default function RegisterPerson() {
   const router = useRouter();

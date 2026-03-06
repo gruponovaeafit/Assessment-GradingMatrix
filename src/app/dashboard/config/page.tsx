@@ -2,8 +2,8 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useRouter } from 'next/navigation';
-import { Spinner } from '../../components/UI/Loading';
-import { showToast } from '../../components/UI/Toast';
+import { Spinner } from '@/components/UI/Loading';
+import { showToast } from '@/components/UI/Toast';
 import { authFetch } from '@/lib/authFetch';
 
 interface Calificacion {
