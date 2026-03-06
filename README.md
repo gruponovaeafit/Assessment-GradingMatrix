@@ -7,28 +7,25 @@ Plataforma web con matriz de calificaciones para evaluar participantes en activi
 - **Framework**: Next.js 14 (App Router + Pages Router mixto)
 - **Lenguaje**: TypeScript / React
 - **Estilos**: Tailwind CSS
-- **Base de datos**: Microsoft SQL Server (Azure SQL)
-- **Almacenamiento de imágenes**: Azure Blob Storage
+- **Base de datos**: Supabase (PostgreSQL)
 
 ## Requisitos
 
 - Node.js 18+
 - npm / yarn / pnpm
-- Acceso a una instancia de SQL Server (Azure o local)
-- Cuenta de Azure Storage (opcional, para subir fotos)
+- Proyecto activo en [Supabase](https://supabase.com)
 
 ## Variables de entorno
 
-Copia `.env.example` a `.env.local` y completa los valores:
+Copia `.env.example` a `.env.local` y completa los valores con los de tu proyecto Supabase:
 
 ```env
-DB_USER=tu_usuario_sql
-DB_PASS=tu_contraseña_sql
-DB_NAME=nombre_base_datos
-DB_SERVER=servidor.database.windows.net
-DB_PORT=1433
-AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=...
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=tu_anon_key
+SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
 ```
+
+> ⚠️ La `SUPABASE_SERVICE_ROLE_KEY` tiene acceso total a la base de datos sin restricciones de RLS. **Nunca** la uses en el frontend ni hagas commit de su valor real.
 
 ## Instalación
 
@@ -39,6 +36,10 @@ cd Assessment-GradingMatrix
 
 # Instalar dependencias
 npm install
+
+# Configurar variables de entorno
+cp .env.example .env.local
+# Edita .env.local con los valores de tu proyecto Supabase
 ```
 
 ## Desarrollo
@@ -80,3 +81,10 @@ src/
 ## Licencia
 
 MIT © Grupo Nova EAFIT
+
+## Seguridad
+
+- **Nunca** hagas commit del archivo `.env.local`.
+- El `.gitignore` ya lo excluye, pero verifica antes de cada commit con `git status`.
+- Si accidentalmente expones una clave, **renuévala inmediatamente** desde el dashboard de Supabase (Settings → API).
+- La `SUPABASE_SERVICE_ROLE_KEY` solo debe usarse en API routes server-side o scripts locales.
