@@ -64,9 +64,9 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 ```
 src/
 ├── app/             # App Router (páginas, componentes, hooks)
-│   ├── components/  # Componentes reutilizables (Navbar, Button, etc.)
+│   ├── components/  # Componentes reutilizables (Button, Loading, Toast, etc.)
 │   ├── Hooks/       # Hooks personalizados
-│   └── ...          # Rutas: register, graderPage, dashboardadmin, final, etc.
+│   └── ...          # Rutas: register, grader, dashboardadmin, final, etc.
 └── pages/
     └── api/         # API Routes (Next.js Pages Router)
 ```

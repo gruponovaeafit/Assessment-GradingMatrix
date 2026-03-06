@@ -9,7 +9,7 @@ export async function authFetch(
     if (onUnauthorized) {
       onUnauthorized();
     }
-    throw new Error('No autorizado');
+    return res;
   }
 
   return res;

@@ -57,7 +57,7 @@ export default function Login() {
         saveData(data.ID_Grupo, data.ID_Calificador, data.ID_Base);
         // Login as grader (this sets the graderAuth in localStorage)
         loginAsGrader(data.token);
-        router.push(`/graderPage`);
+        router.push(`/grader`);
       } else {
         router.push("/dashboard");
       }
