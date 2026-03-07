@@ -63,13 +63,28 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ```
 src/
-├── app/             # App Router (páginas, componentes, hooks)
-│   ├── components/  # Componentes reutilizables (Button, Loading, Toast, etc.)
-│   ├── Hooks/       # Hooks personalizados
-│   └── ...          # Rutas: register, grader, dashboardadmin, final, etc.
-├── db/              # Artefactos de base de datos (schema.sql, rls-policies.sql)
-└── pages/
-    └── api/         # API Routes (Next.js Pages Router)
+├── app/                      # App Router pages/layouts
+│   ├── admin/                # Hub + subrutas: gestion, configuracion, rotaciones, bases
+│   ├── auth/login/           # Login
+│   ├── grader/               # Vista de calificador
+│   ├── info/                 # Página informativa
+│   ├── register/             # Registro
+│   ├── k7v9x2q0m5p8n1t6z3r4w9y1/  # Ruta de super admin
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   ├── ServiceWorkerRegistration.tsx
+│   └── UI/                   # Button, Loading, Toast, ConfirmModal
+├── hooks/                    # useAdminAuth, useGraderAuth, useStoredId
+├── lib/
+│   ├── auth/                 # auth helpers + authFetch + apiAuth
+│   ├── supabase/             # clients server/client
+│   ├── utils/                # sanitize, audit, imageUrl
+│   └── assessment.ts
+├── db/                       # schema.sql, rls-policies.sql
+└── pages/api/                # API Routes (Pages Router)
+
+scripts/                      # Utilidades de verificación/seed/migración
 ```
 
 ## Route Migration (v2)
