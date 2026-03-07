@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { useAdminAuth } from '../../Hooks/useAdminAuth';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useRouter } from 'next/navigation';
-import { Spinner } from '../../components/UI/Loading';
-import { showToast } from '../../components/UI/Toast';
-import { authFetch } from '@/lib/authFetch';
+import { Spinner } from '@/components/UI/Loading';
+import { showToast } from '@/components/UI/Toast';
+import { authFetch } from '@/lib/auth/authFetch';
 
 interface Calificacion {
   Grupo: string;
@@ -21,7 +21,6 @@ export default function Dashboard() {
     isAdmin,
     isSuperAdmin,
     isLoading: authLoading,
-    requireAdmin,
     logout,
     getAuthHeaders,
   } = useAdminAuth();
@@ -64,11 +63,6 @@ export default function Dashboard() {
 
   // AbortController ref to cancel in-flight fetchData requests
   const fetchAbortRef = useRef<AbortController | null>(null);
-
-  // Proteger la ruta - redirige si no es admin
-  useEffect(() => {
-    requireAdmin();
-  }, [isAdmin, authLoading]);
 
   const fetchData = async (assessmentId?: string) => {
     // Cancel any in-flight request
@@ -628,7 +622,7 @@ export default function Dashboard() {
         </h1>
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
           <button
-            onClick={() => router.push('/dashboard/bases')}
+            onClick={() => router.push('/admin/bases')}
             className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Gestionar Bases

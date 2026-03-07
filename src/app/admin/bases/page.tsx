@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAdminAuth } from '../../Hooks/useAdminAuth';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useRouter } from 'next/navigation';
-import { Spinner } from '../../components/UI/Loading';
-import { showToast } from '../../components/UI/Toast';
-import { authFetch } from '@/lib/authFetch';
+import { Spinner } from '@/components/UI/Loading';
+import { showToast } from '@/components/UI/Toast';
+import { authFetch } from '@/lib/auth/authFetch';
 
 interface Base {
   ID_Base: number;
@@ -26,7 +26,7 @@ interface Assessment {
 }
 
 export default function BasesPage() {
-  const { isAdmin, isLoading: authLoading, requireAdmin, logout, getAuthHeaders } = useAdminAuth();
+  const { isAdmin, isLoading: authLoading, logout, getAuthHeaders } = useAdminAuth();
   const router = useRouter();
 
   const [bases, setBases] = useState<Base[]>([]);
@@ -46,11 +46,6 @@ export default function BasesPage() {
     comportamiento2: '',
     comportamiento3: '',
   });
-
-  // Proteger la ruta
-  useEffect(() => {
-    requireAdmin();
-  }, [isAdmin, authLoading]);
 
   // Cargar assessments
   useEffect(() => {
@@ -289,7 +284,7 @@ export default function BasesPage() {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Gestión de Bases</h1>
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
           <button
-            onClick={() => router.push('/dashboard/config')}
+            onClick={() => router.push('/admin/configuracion')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Volver a Config

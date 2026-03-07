@@ -1,9 +1,9 @@
 // pages/api/admin/hash-passwords.ts
 // Utilidad para migrar contraseñas en texto plano a hash (solo admin)
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabaseServer';
+import { supabase } from '@/lib/supabase/server';
 import { hashPassword, withAdminAuth } from '../../../lib/auth';
-import { requireRoles } from '@/lib/apiAuth';
+import { requireRoles } from '@/lib/auth/apiAuth';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

@@ -1,27 +1,19 @@
-import fs from 'node:fs';
+import dotenv from 'dotenv';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 
-function loadEnv(filePath) {
-  if (!fs.existsSync(filePath)) {
-    return;
-  }
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const envPath = path.resolve(__dirname, '..', '.env.local'); // sube un nivel desde scripts/
 
-  const content = fs.readFileSync(filePath, 'utf8');
-  for (const line of content.split(/\r?\n/)) {
-    if (!line || line.startsWith('#')) continue;
-    const index = line.indexOf('=');
-    if (index === -1) continue;
-    const key = line.slice(0, index).trim();
-    const value = line.slice(index + 1).trim();
-    if (!process.env[key]) {
-      process.env[key] = value;
-    }
-  }
-}
+dotenv.config({ path: envPath });
 
-const envPath = path.join(process.cwd(), '.env.local');
-loadEnv(envPath);
+// DEBUG TEMPORAL
+console.log('📂 Buscando .env.local en:', envPath);
+const result = dotenv.config({ path: envPath });
+console.log('📦 dotenv result:', result.error ?? 'OK');
+console.log('🔑 URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+console.log('🔑 KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY);
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
@@ -38,9 +30,7 @@ try {
     .from('Assessment')
     .select('*', { count: 'exact', head: true });
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  if (error) throw new Error(error.message);
 
   console.log('✅ Conexión OK. Assessments:', count ?? 0);
 } catch (err) {

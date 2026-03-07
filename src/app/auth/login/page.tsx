@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useStoredId } from "../../Hooks/UseStoreId";
-import { useAdminAuth } from "../../Hooks/useAdminAuth";
-import { useGraderAuth } from "../../Hooks/useGraderAuth";
-import { Spinner } from "../../components/UI/Loading";
+import { useStoredId } from "@/hooks/useStoredId";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useGraderAuth } from "@/hooks/useGraderAuth";
+import { Spinner } from "@/components/UI/Loading";
 
 export default function Login() {
   const { saveData } = useStoredId();
@@ -57,7 +57,7 @@ export default function Login() {
         saveData(data.ID_Grupo, data.ID_Calificador, data.ID_Base);
         // Login as grader (this sets the graderAuth in localStorage)
         loginAsGrader(data.token);
-        router.push(`/graderPage`);
+        router.push(`/grader`);
       } else {
         router.push("/dashboard");
       }

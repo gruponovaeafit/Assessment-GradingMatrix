@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useAdminAuth } from "../Hooks/useAdminAuth";
-import { Spinner } from "../components/UI/Loading";
-import { showToast } from "../components/UI/Toast";
-import { authFetch } from "@/lib/authFetch";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { Spinner } from "@/components/UI/Loading";
+import { showToast } from "@/components/UI/Toast";
+import { authFetch } from "@/lib/auth/authFetch";
 import { stringify } from "csv-stringify/sync";
 import { saveAs } from "file-saver";
 

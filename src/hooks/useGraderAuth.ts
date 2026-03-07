@@ -23,13 +23,13 @@ export const useGraderAuth = () => {
     const checkAuth = () => {
       const savedAuth = localStorage.getItem(GRADER_KEY);
       const savedToken = localStorage.getItem(TOKEN_KEY);
-      
+
       if (savedAuth) {
         const authData: GraderAuth = JSON.parse(savedAuth);
         const now = Date.now();
-        
+
         // Check if session hasn't expired
-        if (authData.isGrader && (now - authData.timestamp) < SESSION_DURATION) {
+        if (authData.isGrader && now - authData.timestamp < SESSION_DURATION) {
           setIsGrader(true);
           setToken(savedToken);
         } else {

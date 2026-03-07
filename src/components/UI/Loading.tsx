@@ -2,17 +2,12 @@
 
 import React from 'react';
 
-// ============ SPINNER COMPONENT ============
 type SpinnerPresetColor = 'white' | 'primary' | 'primary-light';
 
 interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
-  /**
-   * - 'white' | 'primary' | 'primary-light': presets (como ya lo tenías)
-   * - 'custom': permite pasar cualquier color/variable CSS en customColor
-   */
   color?: SpinnerPresetColor | 'custom';
-  customColor?: string; // <- NUEVO (ej: "var(--color-accent)")
+  customColor?: string;
   className?: string;
 }
 
@@ -36,7 +31,6 @@ export const Spinner: React.FC<SpinnerProps> = ({
       'border-[color:var(--color-accent-light)]/30 border-t-[color:var(--color-accent-light)]',
   };
 
-  // Si usan color="custom", se aplica customColor; si no existe, cae a primary
   const customClasses =
     customColor
       ? `border-[color:${customColor}]/30 border-t-[color:${customColor}]`
@@ -53,7 +47,6 @@ export const Spinner: React.FC<SpinnerProps> = ({
   );
 };
 
-// ============ LOADING OVERLAY ============
 interface LoadingOverlayProps {
   message?: string;
 }
@@ -69,7 +62,6 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   </div>
 );
 
-// ============ SKELETON COMPONENTS ============
 interface SkeletonProps {
   className?: string;
 }
@@ -81,7 +73,6 @@ export const Skeleton: React.FC<SkeletonProps> = ({ className = '' }) => (
   />
 );
 
-// Skeleton para texto
 export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({
   lines = 1,
   className = '',
@@ -96,7 +87,6 @@ export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({
   </div>
 );
 
-// Skeleton para avatar/foto circular
 export const SkeletonAvatar: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({
   size = 'md',
 }) => {
@@ -108,7 +98,6 @@ export const SkeletonAvatar: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({
   return <Skeleton className={`${sizes[size]} rounded-full`} />;
 };
 
-// Skeleton para card de usuario
 export const SkeletonUserCard: React.FC = () => (
   <div
     className="bg-[color:var(--color-surface)]/60 backdrop-blur-sm rounded-xl p-4 flex flex-col items-center space-y-3 border border-[color:var(--color-muted)]/30"
@@ -128,7 +117,6 @@ export const SkeletonUserCard: React.FC = () => (
   </div>
 );
 
-// Skeleton para tabla/row
 export const SkeletonTableRow: React.FC = () => (
   <div className="flex items-center space-x-4 p-4 border-b border-white/10">
     <SkeletonAvatar size="sm" />
@@ -140,7 +128,6 @@ export const SkeletonTableRow: React.FC = () => (
   </div>
 );
 
-// Skeleton para dashboard card
 export const SkeletonDashboardCard: React.FC = () => (
   <div
     className="bg-white rounded-lg p-4 flex flex-col items-center border border-gray-100 shadow"
@@ -158,7 +145,6 @@ export const SkeletonDashboardCard: React.FC = () => (
   </div>
 );
 
-// Skeleton para el panel de información base
 export const SkeletonBaseInfo: React.FC = () => (
   <div className="w-full max-w-xl mb-6 sm:mb-10 px-4 sm:px-6 py-4 sm:py-6 rounded-2xl bg-[color:var(--color-surface)]/60 backdrop-blur-sm border border-[color:var(--color-muted)]/30">
     <Skeleton className="h-7 w-1/2 mx-auto mb-4" />
@@ -172,7 +158,6 @@ export const SkeletonBaseInfo: React.FC = () => (
   </div>
 );
 
-// ============ PAGE LOADING COMPONENT ============
 interface PageLoadingProps {
   message?: string;
 }
@@ -188,7 +173,6 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
   </div>
 );
 
-// ============ BUTTON WITH LOADING STATE ============
 interface LoadingButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;

@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useAdminAuth } from "../../Hooks/useAdminAuth";
-import { Spinner, SkeletonTableRow, Skeleton } from "../../components/UI/Loading";
-import { showToast } from "../../components/UI/Toast";
-import { authFetch } from "@/lib/authFetch";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { Spinner, SkeletonTableRow, Skeleton } from "@/components/UI/Loading";
+import { showToast } from "@/components/UI/Toast";
+import { authFetch } from "@/lib/auth/authFetch";
 
 type StaffRow = {
   id: number;
@@ -23,7 +23,7 @@ type StaffRow = {
 type GrupoItem = { id: number; nombre: string };
 
 export default function RotationsDashboard() {
-  const { isAdmin, isLoading: authLoading, requireAdmin, logout, getAuthHeaders } = useAdminAuth();
+  const { isAdmin, isLoading: authLoading, logout, getAuthHeaders } = useAdminAuth();
 
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,10 +35,6 @@ export default function RotationsDashboard() {
   const [saving, setSaving] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    requireAdmin();
-  }, [isAdmin, authLoading]);
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;

@@ -1,24 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
-import { useAdminAuth } from "../Hooks/useAdminAuth";
-import { Spinner } from "../components/UI/Loading";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 export default function AdminHub() {
-  const { isAdmin, isLoading: authLoading, requireAdmin, logout } = useAdminAuth();
-
-  useEffect(() => {
-    requireAdmin();
-  }, [requireAdmin]);
-
-  if (authLoading || !isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-        <Spinner size="xl" color="custom" customColor="var(--color-accent)" />
-        <p className="text-[color:var(--color-text)] text-xl mt-4">Verificando acceso...</p>
-      </div>
-    );
-  }
+  const { logout } = useAdminAuth();
 
   return (
     <div className="flex flex-col items-center min-h-screen py-6 px-4 bg-white">
@@ -39,7 +24,7 @@ export default function AdminHub() {
             Administra personas del assessment, revisa calificaciones y exporta resultados.
           </p>
           <button
-            onClick={() => (window.location.href = "/dashboard/gh")}
+            onClick={() => (window.location.href = "/admin/gestion")}
             className="mt-2 w-full bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Ir a Gestión
@@ -52,7 +37,7 @@ export default function AdminHub() {
             Crea assessments, activa/inactiva, registra calificadores y asigna grupos.
           </p>
           <button
-            onClick={() => (window.location.href = "/dashboard/config")}
+            onClick={() => (window.location.href = "/admin/configuracion")}
             className="mt-2 w-full bg-success hover:bg-success-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Ir a Configuración
@@ -65,7 +50,7 @@ export default function AdminHub() {
             Administra el grupo asignado a cada calificador y el contador de rotaciones.
           </p>
           <button
-            onClick={() => (window.location.href = "/dashboard/rotations")}
+            onClick={() => (window.location.href = "/admin/rotaciones")}
             className="mt-2 w-full bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Ir a Rotaciones
