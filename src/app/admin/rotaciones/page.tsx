@@ -23,7 +23,7 @@ type StaffRow = {
 type GrupoItem = { id: number; nombre: string };
 
 export default function RotationsDashboard() {
-  const { isAdmin, isLoading: authLoading, requireAdmin, logout, getAuthHeaders } = useAdminAuth();
+  const { isAdmin, isLoading: authLoading, logout, getAuthHeaders } = useAdminAuth();
 
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,10 +35,6 @@ export default function RotationsDashboard() {
   const [saving, setSaving] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    requireAdmin();
-  }, [isAdmin, authLoading]);
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;

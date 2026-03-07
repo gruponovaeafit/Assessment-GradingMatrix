@@ -26,7 +26,7 @@ interface Assessment {
 }
 
 export default function BasesPage() {
-  const { isAdmin, isLoading: authLoading, requireAdmin, logout, getAuthHeaders } = useAdminAuth();
+  const { isAdmin, isLoading: authLoading, logout, getAuthHeaders } = useAdminAuth();
   const router = useRouter();
 
   const [bases, setBases] = useState<Base[]>([]);
@@ -46,11 +46,6 @@ export default function BasesPage() {
     comportamiento2: '',
     comportamiento3: '',
   });
-
-  // Proteger la ruta
-  useEffect(() => {
-    requireAdmin();
-  }, [isAdmin, authLoading]);
 
   // Cargar assessments
   useEffect(() => {

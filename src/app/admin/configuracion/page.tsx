@@ -21,7 +21,6 @@ export default function Dashboard() {
     isAdmin,
     isSuperAdmin,
     isLoading: authLoading,
-    requireAdmin,
     logout,
     getAuthHeaders,
   } = useAdminAuth();
@@ -64,11 +63,6 @@ export default function Dashboard() {
 
   // AbortController ref to cancel in-flight fetchData requests
   const fetchAbortRef = useRef<AbortController | null>(null);
-
-  // Proteger la ruta - redirige si no es admin
-  useEffect(() => {
-    requireAdmin();
-  }, [isAdmin, authLoading]);
 
   const fetchData = async (assessmentId?: string) => {
     // Cancel any in-flight request

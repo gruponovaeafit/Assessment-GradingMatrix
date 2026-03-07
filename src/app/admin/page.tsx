@@ -1,24 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Spinner } from "@/components/UI/Loading";
 
 export default function AdminHub() {
-  const { isAdmin, isLoading: authLoading, requireAdmin, logout } = useAdminAuth();
-
-  useEffect(() => {
-    requireAdmin();
-  }, [requireAdmin]);
-
-  if (authLoading || !isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-        <Spinner size="xl" color="custom" customColor="var(--color-accent)" />
-        <p className="text-[color:var(--color-text)] text-xl mt-4">Verificando acceso...</p>
-      </div>
-    );
-  }
+  const { logout } = useAdminAuth();
 
   return (
     <div className="flex flex-col items-center min-h-screen py-6 px-4 bg-white">

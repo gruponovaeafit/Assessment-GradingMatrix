@@ -32,7 +32,7 @@ const FOTO_PLACEHOLDER =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle fill='%23e5e7eb' cx='32' cy='32' r='32'/%3E%3Ccircle fill='%239ca3af' cx='32' cy='26' r='10'/%3E%3Cellipse fill='%239ca3af' cx='32' cy='56' rx='18' ry='14'/%3E%3C/svg%3E";
 
 export default function GhDashboard() {
-  const { isAdmin, isLoading: authLoading, requireAdmin, logout, getAuthHeaders } = useAdminAuth();
+  const { isAdmin, isLoading: authLoading, logout, getAuthHeaders } = useAdminAuth();
   const router = useRouter();
 
   const [data, setData] = useState<ParticipantDashboardRow[]>([]);
@@ -102,11 +102,6 @@ export default function GhDashboard() {
       return { texto: "⚠️ Pasa a discusión", color: "text-yellow-400" };
     return { texto: "❌ No pasa", color: "text-error" };
   };
-
-  // Proteger la ruta
-  useEffect(() => {
-    requireAdmin();
-  }, [requireAdmin]);
 
   // Cargar lista de assessments solo una vez cuando el auth está listo (getAuthHeaders no en deps para evitar refetch en cada render)
   const hasFetchedAssessmentsRef = React.useRef(false);
