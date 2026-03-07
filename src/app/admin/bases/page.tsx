@@ -284,7 +284,7 @@ export default function BasesPage() {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Gestión de Bases</h1>
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
           <button
-            onClick={() => router.push('/dashboard/config')}
+            onClick={() => router.push('/admin/configuracion')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Volver a Config

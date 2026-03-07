@@ -72,6 +72,20 @@ src/
     └── api/         # API Routes (Next.js Pages Router)
 ```
 
+## Route Migration (v2)
+
+Los submódulos de administración se consolidaron bajo `/admin/*`.
+
+| Old route | New route |
+| --- | --- |
+| `/dashboard/gh` | `/admin/gestion` |
+| `/dashboard/config` | `/admin/configuracion` |
+| `/dashboard/rotations` | `/admin/rotaciones` |
+| `/dashboard/bases` | `/admin/bases` |
+
+- Redirects permanentes (HTTP 308) están configurados en `next.config.ts` para compatibilidad hacia atrás.
+- `src/app/admin/layout.tsx` es ahora el punto único del auth guard para todas las rutas `src/app/admin/*`.
+
 ## Contribuir
 
 1. Haz un fork del repositorio.

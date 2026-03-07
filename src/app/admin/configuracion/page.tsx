@@ -622,7 +622,7 @@ export default function Dashboard() {
         </h1>
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
           <button
-            onClick={() => router.push('/dashboard/bases')}
+            onClick={() => router.push('/admin/bases')}
             className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Gestionar Bases
