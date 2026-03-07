@@ -67,6 +67,7 @@ src/
 │   ├── components/  # Componentes reutilizables (Button, Loading, Toast, etc.)
 │   ├── Hooks/       # Hooks personalizados
 │   └── ...          # Rutas: register, grader, dashboardadmin, final, etc.
+├── db/              # Artefactos de base de datos (schema.sql, rls-policies.sql)
 └── pages/
     └── api/         # API Routes (Next.js Pages Router)
 ```
