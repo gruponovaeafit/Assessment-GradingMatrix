@@ -8,7 +8,7 @@ import { useConfirmModal } from "@/components/UI/ConfirmModal";
 import { stringify } from "csv-stringify/sync";
 import { saveAs } from "file-saver";
 import { useRouter } from "next/navigation";
-import { authFetch } from "@/lib/authFetch";
+import { authFetch } from "@/lib/auth/authFetch";
 
 type BaseResumen = {
   numero: number;

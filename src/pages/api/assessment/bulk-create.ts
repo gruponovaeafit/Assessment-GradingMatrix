@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabaseServer';
-import { requireRoles } from '@/lib/apiAuth';
+import { supabase } from '@/lib/supabase/server';
+import { requireRoles } from '@/lib/auth/apiAuth';
 
 const buildName = (groupName: string) => {
   const now = new Date();

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabaseServer';
+import { supabase } from '@/lib/supabase/server';
 
 const DEFAULT_ASSESSMENT_ENV = process.env.DEFAULT_ASSESSMENT_ID;
 

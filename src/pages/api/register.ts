@@ -3,9 +3,9 @@ import { promises as fs } from 'fs';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabaseServer';
+import { supabase } from '@/lib/supabase/server';
 import { getDefaultAssessmentId } from '@/lib/assessment';
-import { requireRoles } from '@/lib/apiAuth';
+import { requireRoles } from '@/lib/auth/apiAuth';
 
 export const config = {
   api: {

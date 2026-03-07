@@ -5,7 +5,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '@/components/UI/Loading';
 import { showToast } from '@/components/UI/Toast';
-import { authFetch } from '@/lib/authFetch';
+import { authFetch } from '@/lib/auth/authFetch';
 
 interface Base {
   ID_Base: number;

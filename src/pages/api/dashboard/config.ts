@@ -1,9 +1,9 @@
 // pages/api/dashboard/config.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from '@/lib/supabaseServer';
+import { supabase } from '@/lib/supabase/server';
 import { getDefaultAssessmentId } from "@/lib/assessment";
-import { requireRoles } from "@/lib/apiAuth";
-import { resolveParticipantPhotoUrls } from "@/lib/participantPhotoUrl";
+import { requireRoles } from "@/lib/auth/apiAuth";
+import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 
 // API para obtener datos del dashboard admin
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabaseServer';
+import { supabase } from '@/lib/supabase/server';
 import { hashPassword } from '@/lib/auth';
-import { requireRoles } from '@/lib/apiAuth';
+import { requireRoles } from '@/lib/auth/apiAuth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

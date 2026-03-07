@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from '@/lib/supabaseServer';
+import { supabase } from '@/lib/supabase/server';
 import { getDefaultAssessmentId } from "@/lib/assessment";
-import { requireRoles } from "@/lib/apiAuth";
+import { requireRoles } from "@/lib/auth/apiAuth";
 
 // Endpoint de verificación de conexión para Supabase
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

@@ -1,5 +1,5 @@
 // Sistema de logs de auditoría
-import { supabase } from '@/lib/supabaseServer';
+import { supabase } from '@/lib/supabase/server';
 
 export interface AuditLog {
   accion: string;

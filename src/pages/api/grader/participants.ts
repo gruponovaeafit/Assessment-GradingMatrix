@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabaseServer';
-import { requireRoles } from '@/lib/apiAuth';
-import { resolveParticipantPhotoUrls } from '@/lib/participantPhotoUrl';
+import { supabase } from '@/lib/supabase/server';
+import { requireRoles } from '@/lib/auth/apiAuth';
+import { resolveParticipantPhotoUrls } from '@/lib/utils/imageUrl';
 
 /**
  * Devuelve los participantes de un grupo para que el calificador los califique.

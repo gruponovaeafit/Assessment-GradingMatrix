@@ -1,6 +1,6 @@
 // pages/api/auth/login.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabaseServer';
+import { supabase } from '@/lib/supabase/server';
 import { comparePassword, generateToken, hashPassword } from '../../../../lib/auth';
 
 // API de login
