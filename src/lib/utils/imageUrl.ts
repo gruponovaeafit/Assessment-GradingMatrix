@@ -1,4 +1,6 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import { supabase } from '@/lib/supabase/server';
 
 const DEFAULT_BUCKET = 'imagenes_participantes';
 const PARTICIPANT_SIGNED_URL_EXPIRY_SEC = 60 * 60;
@@ -9,22 +11,6 @@ function pathFromPublicUrl(url: string): string | null {
   return match ? match[1].replace(/^\/+/, '') : null;
 }
 
-function getServerSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceKey) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-  }
-
-  return createClient(supabaseUrl, serviceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
-}
-
 export async function getSignedImageUrl(
   bucket: string,
   path: string,
@@ -33,9 +19,9 @@ export async function getSignedImageUrl(
 ): Promise<string | null> {
   if (!path) return null;
 
-  const supabase = client ?? getServerSupabaseClient();
+  const storageClient = client ?? supabase;
 
-  const { data, error } = await supabase.storage
+  const { data, error } = await storageClient.storage
     .from(bucket)
     .createSignedUrl(path, expiresInSeconds);
 
