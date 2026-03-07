@@ -1,0 +1,61 @@
+name: Requirement
+description: Crear un requerimiento funcional/técnico con estructura estándar
+title: "[REQ] "
+labels:
+  - requirement
+body:
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: "📋 Descripción"
+      description: "Qué problema resuelve este issue y por qué es necesario. 1-3 párrafos."
+      placeholder: "Describe el problema, contexto y objetivo..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: usuarios-afectados
+    attributes:
+      label: "👥 Usuarios afectados"
+      description: "Quién se beneficia o se ve impactado por este cambio."
+      placeholder: "- Usuario A\n- Usuario B"
+    validations:
+      required: true
+
+  - type: textarea
+    id: criterios-aceptacion
+    attributes:
+      label: "✅ Criterios de aceptación"
+      description: "Lista verificable. Cada ítem debe poder marcarse como ✅/❌ sin ambigüedad."
+      value: |
+        - [ ] Criterio 1
+        - [ ] Criterio 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: alcance-tecnico
+    attributes:
+      label: "🗂️ Alcance técnico"
+      description: "Archivos, carpetas o módulos directamente involucrados."
+      placeholder: "- src/app/...\n- src/pages/api/..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: riesgos
+    attributes:
+      label: "⚠️ Consideraciones / Riesgos"
+      description: "Dependencias con otros issues, riesgos técnicos, decisiones pendientes."
+      placeholder: "- Riesgo X...\n- Decisión pendiente Y..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: dependencias
+    attributes:
+      label: "🔗 Dependencias"
+      description: "Issues que deben completarse antes, o que dependen de este."
+      placeholder: "- Bloqueado por #123\n- Desbloquea #124"
+    validations:
+      required: false
