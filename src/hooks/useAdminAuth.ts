@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 const ADMIN_KEY = "adminAuth";
@@ -54,7 +54,7 @@ export const useAdminAuth = () => {
   }, []);
 
   // Función para establecer admin auth (llamar después de login exitoso)
-  const loginAsAdmin = (authToken?: string, superAdmin = false) => {
+  const loginAsAdmin = useCallback((authToken?: string, superAdmin = false) => {
     const authData: AdminAuth = {
       isAdmin: true,
       isSuperAdmin: superAdmin,
@@ -67,10 +67,10 @@ export const useAdminAuth = () => {
     }
     setIsAdmin(true);
     setIsSuperAdmin(superAdmin);
-  };
+  }, []);
 
   // Función para cerrar sesión
-  const logout = () => {
+  const logout = useCallback(() => {
     const storedToken = localStorage.getItem(TOKEN_KEY);
     if (storedToken) {
       fetch("/api/auth/logout", {
@@ -88,23 +88,23 @@ export const useAdminAuth = () => {
     setIsSuperAdmin(false);
     setToken(null);
     router.push("/auth/login");
-  };
+  }, [router]);
 
   // Función para proteger rutas - redirige si no es admin
-  const requireAdmin = () => {
+  const requireAdmin = useCallback(() => {
     if (!isLoading && !isAdmin) {
       router.push("/auth/login");
     }
-  };
+  }, [isAdmin, isLoading, router]);
 
-  const requireSuperAdmin = () => {
+  const requireSuperAdmin = useCallback(() => {
     if (!isLoading && !isSuperAdmin) {
       router.push("/auth/login");
     }
-  };
+  }, [isLoading, isSuperAdmin, router]);
 
   // Función para obtener headers con token de autenticación
-  const getAuthHeaders = (): HeadersInit => {
+  const getAuthHeaders = useCallback((): HeadersInit => {
     if (token) {
       return { Authorization: `Bearer ${token}` };
     }
@@ -113,7 +113,7 @@ export const useAdminAuth = () => {
       return storedToken ? { Authorization: `Bearer ${storedToken}` } : {};
     }
     return {};
-  };
+  }, [token]);
 
   return {
     isAdmin,
