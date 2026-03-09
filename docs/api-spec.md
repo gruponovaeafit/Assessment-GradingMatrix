@@ -9,11 +9,11 @@ Este documento define los contratos de comunicación entre el frontend y el back
 1. **Métodos HTTP:** 
     - `GET`: Obtención de datos (sin efectos secundarios).
     - `POST`: Creación de recursos o acciones complejas (ej. login, sorteo).
-    - `PUT`: Actualización completa o parcial de un recurso.
+    - `PUT`: Actualización de un recurso existente.
     - `DELETE`: Eliminación de un recurso.
 2. **Formato de Respuesta:** Todas las respuestas exitosas y de error deben ser objetos JSON.
     - **Error (4xx, 5xx):** `{ "error": "Mensaje descriptivo del error" }`
-    - **Éxito (2xx):** El formato varía según el endpoint, pero debe priorizar `camelCase` para las propiedades.
+    - **Éxito (2xx):** El formato varía según el endpoint, pero debe priorizar `camelCase` para las propiedades de los objetos de respuesta.
 3. **Autenticación:** 
     - Se requiere el header `Authorization: Bearer <JWT_TOKEN>` para endpoints protegidos.
     - El token debe ser validado mediante el middleware o la utilidad `requireRoles`.
@@ -26,10 +26,7 @@ Este documento define los contratos de comunicación entre el frontend y el back
 ### `POST /api/auth/login`
 Autentica a un usuario (Admin, Registrador o Calificador).
 
-- **Payload:**
-    ```json
-    { "email": "user@example.com", "password": "secure_password" }
-    ```
+- **Payload:** `{ "email": "string", "password": "string" }`
 - **Respuesta (200 OK):**
     ```json
     {
@@ -45,14 +42,12 @@ Autentica a un usuario (Admin, Registrador o Calificador).
 ### `POST /api/auth/logout`
 Cierra la sesión del usuario actual.
 
-- **Respuesta (200 OK):**
-    ```json
-    { "message": "string" }
-    ```
-
 ---
 
 ## 🏛️ Gestión Administrativa (Admin/Superadmin)
+
+### `GET /api/assessment/list`
+Lista todos los assessments disponibles.
 
 ### `POST /api/assessment/create`
 Crea un nuevo proceso evaluativo (Assessment) bajo un Grupo Estudiantil.
@@ -63,32 +58,27 @@ Crea un nuevo proceso evaluativo (Assessment) bajo un Grupo Estudiantil.
       "grupoEstudiantilId": number,
       "nombre": "string",
       "descripcion": "string (opcional)",
-      "activo": boolean (opcional, default true)
+      "activo": boolean (opcional)
     }
     ```
-- **Respuesta (200 OK):**
-    ```json
-    { "message": "Assessment creado", "ID_Assessment": number }
-    ```
+
+### `PUT /api/assessment/update`
+Actualiza un assessment existente.
+
+- **Payload:** `{ "assessmentId": number, "descripcion": "string", "activo": boolean, "grupoEstudiantilId": number }` (Todos opcionales excepto `assessmentId`).
 
 ### `POST /api/assessment/toggle-active`
-Activa o desactiva un assessment existente.
-
-- **Payload:**
-    ```json
-    { "assessmentId": number, "activo": boolean }
-    ```
-- **Respuesta (200 OK):**
-    ```json
-    { "message": "Estado del assessment actualizado correctamente" }
-    ```
+Activa o desactiva un assessment. Si se activa, desactiva automáticamente los otros assessments del mismo grupo estudiantil.
 
 ---
 
-## 📋 Configuración de Assessment (Bases y Staff)
+## 📋 Configuración de Bases
+
+### `GET /api/base/list?assessmentId=6`
+Obtiene todas las bases configuradas para un assessment específico.
 
 ### `POST /api/base/create`
-Registra una nueva base de evaluación dentro de un assessment.
+Registra una nueva base de evaluación.
 
 - **Payload:**
     ```json
@@ -103,133 +93,84 @@ Registra una nueva base de evaluación dentro de un assessment.
       "comportamiento3": "string"
     }
     ```
-- **Respuesta (201 Created):**
-    ```json
-    { "message": "Base creada exitosamente", "ID_Base": number }
-    ```
+
+### `PUT /api/base/update`
+Actualiza una base de evaluación existente.
+
+- **Payload:** `{ "idBase": number, ...campos_opcionales }`
+
+### `DELETE /api/base/delete`
+Elimina una base si no tiene calificaciones ni staff asociado.
+
+- **Payload:** `{ "idBase": number }`
+
+---
+
+## 👥 Gestión de Staff y Usuarios
+
+### `GET /api/staff/admins`
+Lista todos los administradores registrados.
 
 ### `POST /api/staff/create`
-Registra un nuevo miembro del staff (Registrador o Calificador) en un assessment.
+Registra un nuevo miembro del staff.
 
-- **Payload:**
-    ```json
-    {
-      "assessmentId": number,
-      "correo": "string",
-      "password": "string",
-      "rol": "admin" | "registrador" | "calificador",
-      "idBase": number | null (requerido si rol=calificador)
-    }
-    ```
-- **Respuesta (200 OK):**
-    ```json
-    { "ID_Staff": number }
-    ```
+- **Payload:** `{ "assessmentId": number, "correo": "string", "password": "string", "rol": "admin" | "registrador" | "calificador", "idBase": number | null }`
+
+### `PUT /api/staff/update`
+Actualiza los datos de un miembro del staff.
+
+- **Payload:** `{ "staffId": number, ...campos_opcionales }`
+
+### `GET /api/users`
+Lista todos los participantes del assessment seleccionado.
 
 ---
 
-## 👥 Participantes e Inscripción (Register/Participante)
+## 👤 Participantes
+
+### `GET /api/participante/list?assessmentId=6`
+Lista participantes registrados en un assessment.
 
 ### `POST /api/register`
-Inscribe a un nuevo participante en el sistema.
+Inscribe a un nuevo participante.
 
-- **Payload:**
-    ```json
-    {
-      "assessmentId": number,
-      "nombre": "string",
-      "correo": "string",
-      "fotoUrl": "string (opcional)"
-    }
-    ```
-- **Respuesta (201 Created):**
-    ```json
-    { "ID_Participante": number, "message": "string" }
-    ```
+- **Payload:** `{ "assessmentId": number, "nombre": "string", "correo": "string", "fotoUrl": "string" }`
 
 ### `PUT /api/update-person`
-Actualiza los datos de un participante, incluyendo su estado de "Impostor".
+Actualiza datos de un participante (nombre, correo o estado `isImpostor`).
 
-- **Payload:**
-    ```json
-    {
-      "id": number,
-      "nombre": "string (opcional)",
-      "correo": "string (opcional)",
-      "isImpostor": boolean (opcional)
-    }
-    ```
-- **Respuesta (200 OK):**
-    ```json
-    { "message": "Participante actualizado correctamente" }
-    ```
+- **Payload:** `{ "id": number, "nombre": "string", "correo": "string", "isImpostor": boolean }`
 
 ### `POST /api/participante/assign-group`
-Asigna manualmente un participante a un grupo de evaluación.
-
-- **Payload:**
-    ```json
-    {
-      "assessmentId": number,
-      "participanteId": number,
-      "grupoAssessmentId": number
-    }
-    ```
-- **Respuesta (200 OK):**
-    ```json
-    { "message": "Participante asignado al grupo" }
-    ```
+Asigna un participante a un `GrupoAssessment`.
 
 ---
 
-## 🎲 Sorteo y Calificación (Auto-Groups/Grader)
+## 🎲 Grupos y Calificaciones
+
+### `GET /api/assessment/groups?assessmentId=6`
+Lista los grupos de evaluación creados para un assessment.
 
 ### `POST /api/assessment/auto-groups`
-Genera y distribuye participantes en grupos de forma automática.
+Distribuye participantes en grupos de forma automática, repartiendo equitativamente a los impostores.
 
-- **Payload:**
-    ```json
-    { "assessmentId": number, "numGroups": number }
-    ```
-- **Respuesta (200 OK):**
-    ```json
-    { "message": "Grupos creados y sorteados correctamente" }
-    ```
+- **Payload:** `{ "assessmentId": number, "numGroups": number }`
 
 ### `POST /api/add-calificaciones`
-Registra un bloque de calificaciones enviado por un calificador.
+Registra calificaciones. Bloquea el envío si el calificador ya calificó al mismo grupo en esa base.
 
-- **Payload:**
-    ```json
-    {
-      "idGrupo": number (opcional),
-      "calificaciones": [
-        {
-          "ID_Calificador": number,
-          "ID_Base": number,
-          "ID_Participante": number,
-          "Calificacion_1": number (1..5),
-          "Calificacion_2": number (1..5),
-          "Calificacion_3": number (1..5)
-        }
-      ]
-    }
-    ```
-- **Respuesta (200 OK):**
-    ```json
-    { "message": "✅ Calificaciones procesadas correctamente" }
-    ```
+- **Payload:** `{ "idGrupo": number, "calificaciones": [{ ... }] }`
 
 ---
 
-## 📊 Dashboards y Reportes
+## 📊 Dashboards
 
 ### `GET /api/dashboard/config?assessmentId=6`
-Obtiene el resumen de configuración de un assessment para la vista de Admin.
+Resumen de configuración (visto por Admin).
 
 ### `GET /api/dashboard/gh?assessmentId=6`
-Obtiene la sábana completa de resultados de un assessment para la vista de Gestión.
+Sábana de resultados y promedios por base (visto por Gestión).
 
 ---
 
-_Este documento debe actualizarse ante cualquier cambio en los archivos de `src/pages/api/`._
+_Este documento es la referencia técnica para el desarrollo del frontend y el mantenimiento de los contratos de API._
