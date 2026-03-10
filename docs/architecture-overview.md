@@ -31,14 +31,34 @@ Cualquier operación que requiera seguridad sigue este camino:
 
 | Directorio | Responsabilidad |
 | --- | --- |
-| src/app/ | Rutas de la UI, layouts y componentes de página. |
+| src/app/ | Rutas de la UI, layouts y componentes de página (Thin Pages). |
+| src/features/ | Módulos de dominio que agrupan hooks, componentes, esquemas y utilidades por funcionalidad. |
 | src/pages/api/ | Handlers de la API. Se agrupan por dominio (auth, assessment, staff). |
 | src/components/UI/ | Componentes visuales atómicos y puros (Button, Toast, Modal). |
-| src/hooks/ | Hooks de dominio que encapsulan estados complejos (ej. useAdminAuth). |
+| src/hooks/ | Hooks globales/compartidos (ej. useAdminAuth, useGraderAuth). |
 | src/lib/auth/ | Utilidades de JWT, hashing de contraseñas y lógica de sesión. |
 | src/lib/supabase/ | Clientes para interactuar con la DB (browser y server-side). |
 | src/db/ | Fuente de verdad del esquema (schema.sql) y políticas de seguridad (rls-policies.sql). |
 | scripts/ | Herramientas fuera del runtime para inspección o dump de datos. |
+
+---
+
+## Patrones de Arquitectura Avanzados
+
+### 1. Composición por Features (ADR 0003)
+Para evitar componentes monolíticos, las vistas complejas se descomponen en:
+- **Container**: Orquestador en `src/features/[feature]/ConfigContainer.tsx`.
+- **Domain Hooks**: Lógica de estado y fetching en `hooks/`.
+- **Feature Components**: UI específica en `components/`.
+- **Schemas**: Definiciones de tipos y validación en `schemas/`.
+
+### 2. Validación en Runtime (Zod)
+No confiamos ciegamente en las respuestas de la API. Usamos `zod` en la frontera de los hooks de datos para validar que el payload coincide con lo esperado. Esto previene errores en cascada en la UI y facilita el debugging.
+
+### 3. Testing (Vitest)
+El proyecto utiliza **Vitest** y **React Testing Library** para pruebas unitarias.
+- Las pruebas de hooks deben mockear `authFetch` para verificar el flujo de datos y validaciones.
+- Los archivos de prueba viven junto al código que prueban (ej. `useAssessments.test.ts`).
 
 ---
 
