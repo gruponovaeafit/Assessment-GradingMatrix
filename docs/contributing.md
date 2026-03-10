@@ -1,52 +1,52 @@
-# 🤝 Guía de Contribución
+# Guía de Contribución
 
-¡Gracias por ayudar a mejorar **Assessment Grading Matrix**! Para mantener la calidad y consistencia del proyecto, seguimos estas guías.
-
----
-
-## 🌿 Flujo de Trabajo (Git)
-
-1.  **Branches:** Crea una rama desde `main` con un nombre descriptivo:
-    - `feat/nombre-de-la-mejora`
-    - `fix/descripcion-del-bug`
-    - `refactor/area-afectada`
-    - `docs/que-se-documenta`
-2.  **Commits:** Usamos **Conventional Commits**:
-    - `feat: ...` para nuevas funcionalidades.
-    - `fix: ...` para correcciones de errores.
-    - `docs: ...` para cambios en documentación.
-    - `refactor: ...` para cambios de código que no corrigen bugs ni añaden funciones.
+Gracias por ayudar a mejorar Assessment Grading Matrix! Para mantener la calidad y consistencia del proyecto, seguimos estas guías.
 
 ---
 
-## ✅ Definition of Done (DoD)
+## Flujo de Trabajo (Git)
+
+1. Branches: Crea una rama desde main con un nombre descriptivo:
+    - feat/nombre-de-la-mejora
+    - fix/descripcion-del-bug
+    - refactor/area-afectada
+    - docs/que-se-documenta
+2. Commits: Usamos Conventional Commits:
+    - feat: ... para nuevas funcionalidades.
+    - fix: ... para correcciones de errores.
+    - docs: ... para cambios en documentación.
+    - refactor: ... para cambios de código que no corrigen bugs ni añaden funciones.
+
+---
+
+## Definition of Done (DoD)
 
 Antes de abrir un Pull Request, asegúrate de cumplir con:
 
-- [ ] **Linting:** `npm run lint` no debe arrojar errores ni warnings importantes.
-- [ ] **Build:** `npm run build` debe completar exitosamente.
-- [ ] **Documentación:** Si has cambiado un endpoint, actualiza `docs/api-spec.md`. Si has tomado una decisión arquitectónica, crea un ADR en `docs/decisions/`.
-- [ ] **Acceptance Criteria:** Todos los criterios del issue original deben estar marcados como completados.
-- [ ] **Mobile First:** Si es un cambio en `/register` o `/grader`, verifícalo en modo responsive.
+- [ ] Linting: npm run lint no debe arrojar errores ni warnings importantes.
+- [ ] Build: npm run build debe completar exitosamente.
+- [ ] Documentación: Si has cambiado un endpoint, actualiza docs/api-spec.md. Si has tomado una decisión arquitectónica, crea un ADR en docs/decisions/.
+- [ ] Acceptance Criteria: Todos los criterios del issue original deben estar marcados como completados.
+- [ ] Mobile First: Si es un cambio en /register o /grader, verifícalo en modo responsive.
 
 ---
 
-## 🛠️ Cómo Verificar tu Trabajo
+## Cómo Verificar tu Trabajo
 
 ### Backend (APIs)
-- Prueba los endpoints con `curl`, Postman o Thunder Client.
-- Verifica que los errores (400, 401, 404, 500) devuelvan el formato JSON `{ "error": "..." }`.
-- Asegúrate de que los guards de `requireRoles` funcionan (prueba con un token de otro rol).
+- Prueba los endpoints con curl, Postman o Thunder Client.
+- Verifica que los errores (400, 401, 404, 500) devuelvan el formato JSON { "error": "..." }.
+- Asegúrate de que los guards de requireRoles funcionan (prueba con un token de otro rol).
 
 ### Frontend (UI)
-- Verifica estados de **Carga** (Spinners), **Error** (Toasts) y **Vacío** (Empty states).
-- Asegúrate de usar `authFetch` para todas las peticiones protegidas.
+- Verifica estados de Carga (Spinners), Error (Toasts) y Vacío (Empty states).
+- Asegúrate de usar authFetch para todas las peticiones protegidas.
 - No uses Tailwind CSS; prefiere CSS plano o CSS Modules.
 
 ---
 
-## 🚫 Qué evitar
+## Qué evitar
 
-- **No formatear archivos ajenos:** Configura tu editor para formatear solo las líneas modificadas para evitar diffs ruidosos.
-- **No ignorar el ADR 0003:** No metas lógica compleja en los componentes de `src/app/`. Usa hooks y componentes de feature.
-- **No subir secretos:** Nunca hagas commit de archivos `.env` o llaves privadas.
+- No formatear archivos ajenos: Configura tu editor para formatear solo las líneas modificadas para evitar diffs ruidosos.
+- No ignorar el ADR 0003: No metas lógica compleja en los componentes de src/app/. Usa hooks y componentes de feature.
+- No subir secretos: Nunca hagas commit de archivos .env o llaves privadas.

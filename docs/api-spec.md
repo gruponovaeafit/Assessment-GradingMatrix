@@ -1,50 +1,50 @@
 # Especificación Formal de API - Assessment Grading Matrix
 
-Este documento define los contratos de comunicación entre el frontend y el backend basado en Next.js API Routes. Incluye endpoints productivos, endpoints internos de mantenimiento y endpoints legacy o de compatibilidad aún presentes en `src/pages/api`.
+Este documento define los contratos de comunicación entre el frontend y el backend basado en Next.js API Routes. Incluye endpoints productivos, endpoints internos de mantenimiento y endpoints legacy o de compatibilidad aún presentes en src/pages/api.
 
 ---
 
-## 🛠️ Convenciones Globales
+## Convenciones Globales
 
-1. **Métodos HTTP**
-   - `GET`: consulta de datos.
-   - `POST`: creación de recursos o acciones de negocio.
-   - `PUT`: actualización de recursos existentes.
-   - `DELETE`: eliminación de recursos.
+1. Métodos HTTP
+   - GET: consulta de datos.
+   - POST: creación de recursos o acciones de negocio.
+   - PUT: actualización de recursos existentes.
+   - DELETE: eliminación de recursos.
 
-2. **Formato de Respuesta**
-   - **Error estándar:** `{ "error": "Mensaje descriptivo del error" }`
-   - **Éxito estándar:** objeto o arreglo JSON según el endpoint.
-   - El código actual contiene algunos endpoints legacy que devuelven claves en `PascalCase` o mensajes no normalizados. En esos casos este documento describe el contrato observado.
+2. Formato de Respuesta
+   - Error estándar: { "error": "Mensaje descriptivo del error" }
+   - Éxito estándar: objeto o arreglo JSON según el endpoint.
+   - El código actual contiene algunos endpoints legacy que devuelven claves en PascalCase o mensajes no normalizados. En esos casos este documento describe el contrato observado.
 
-3. **Autenticación**
-   - Los endpoints protegidos requieren `Authorization: Bearer <JWT_TOKEN>`.
-   - La autorización se valida mediante `requireRoles(...)` o middleware equivalente.
+3. Autenticación
+   - Los endpoints protegidos requieren Authorization: Bearer <JWT_TOKEN>.
+   - La autorización se valida mediante requireRoles(...) o middleware equivalente.
 
-4. **Contexto de Assessment**
-   - Por estándar, los endpoints dependientes de un assessment deben recibir `assessmentId`.
-   - **Compatibilidad actual:** algunos handlers usan un assessment por defecto cuando el parámetro no se envía. Esto se indica explícitamente en las notas del endpoint.
+4. Contexto de Assessment
+   - Por estándar, los endpoints dependientes de un assessment deben recibir assessmentId.
+   - Compatibilidad actual: algunos handlers usan un assessment por defecto cuando el parámetro no se envía. Esto se indica explícitamente en las notas del endpoint.
 
-5. **Clasificación**
-   - **Productivo:** endpoint de uso normal por frontend o flujos de negocio.
-   - **Interno:** endpoint operativo, administrativo o de mantenimiento.
-   - **Legacy / compatibilidad:** endpoint antiguo o de transición, conservado por integración existente.
+5. Clasificación
+   - Productivo: endpoint de uso normal por frontend o flujos de negocio.
+   - Interno: endpoint operativo, administrativo o de mantenimiento.
+   - Legacy / compatibilidad: endpoint antiguo o de transición, conservado por integración existente.
 
 ---
 
-## 🔑 Autenticación
+## Autenticación
 
-### `POST /api/auth/login`
-Autentica a un usuario `admin`, `registrador` o `calificador`.
+### POST /api/auth/login
+Autentica a un usuario admin, registrador o calificador.
 
-- **Payload**
+- Payload
   ```json
   {
     "email": "string",
     "password": "string"
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "role": "admin" | "registrador" | "calificador",
@@ -65,16 +65,16 @@ Autentica a un usuario `admin`, `registrador` o `calificador`.
     "message": "Login exitoso"
   }
   ```
-- **Errores frecuentes**
-  - `400`: credenciales incompletas.
-  - `401`: credenciales incorrectas.
-  - `500`: configuración de admin incompleta o error interno.
+- Errores frecuentes
+  - 400: credenciales incompletas.
+  - 401: credenciales incorrectas.
+  - 500: configuración de admin incompleta o error interno.
 
-### `POST /api/auth/logout`
+### POST /api/auth/logout
 Cierra la sesión del usuario autenticado.
 
-- **Auth:** cualquier usuario autenticado.
-- **Respuesta (200 OK)**
+- Auth: cualquier usuario autenticado.
+- Respuesta (200 OK)
   ```json
   {
     "message": "Logout ok"
@@ -83,13 +83,13 @@ Cierra la sesión del usuario autenticado.
 
 ---
 
-## 🏛️ Gestión Administrativa
+## Gestión Administrativa
 
-### `GET /api/assessment/list`
+### GET /api/assessment/list
 Lista todos los assessments disponibles.
 
-- **Auth:** `admin`
-- **Respuesta (200 OK)**
+- Auth: admin
+- Respuesta (200 OK)
   ```json
   [
     {
@@ -100,12 +100,12 @@ Lista todos los assessments disponibles.
   ]
   ```
 
-### `GET /api/assessment/list-with-group`
+### GET /api/assessment/list-with-group
 Lista assessments incluyendo grupo estudiantil asociado.
 
-- **Tipo:** productivo
-- **Auth:** `admin`
-- **Respuesta (200 OK)**
+- Tipo: productivo
+- Auth: admin
+- Respuesta (200 OK)
   ```json
   [
     {
@@ -119,11 +119,11 @@ Lista assessments incluyendo grupo estudiantil asociado.
   ]
   ```
 
-### `POST /api/assessment/create`
+### POST /api/assessment/create
 Crea un assessment bajo un grupo estudiantil.
 
-- **Auth:** `admin`
-- **Payload**
+- Auth: admin
+- Payload
   ```json
   {
     "grupoEstudiantilId": 3,
@@ -132,7 +132,7 @@ Crea un assessment bajo un grupo estudiantil.
     "activo": true
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "message": "Assessment creado",
@@ -140,19 +140,19 @@ Crea un assessment bajo un grupo estudiantil.
   }
   ```
 
-### `POST /api/assessment/bulk-create`
+### POST /api/assessment/bulk-create
 Crea assessments masivamente para varios grupos estudiantiles, generando el nombre automáticamente.
 
-- **Tipo:** interno
-- **Auth:** `admin`
-- **Payload**
+- Tipo: interno
+- Auth: admin
+- Payload
   ```json
   {
     "grupoIds": [1, 2, 3],
     "activo": true
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "created": [
@@ -172,11 +172,11 @@ Crea assessments masivamente para varios grupos estudiantiles, generando el nomb
   }
   ```
 
-### `PUT /api/assessment/update`
+### PUT /api/assessment/update
 Actualiza un assessment existente.
 
-- **Auth:** `admin`
-- **Payload**
+- Auth: admin
+- Payload
   ```json
   {
     "assessmentId": 12,
@@ -185,10 +185,10 @@ Actualiza un assessment existente.
     "grupoEstudiantilId": 3
   }
   ```
-- **Notas**
-  - `assessmentId` es obligatorio.
-  - Si `activo` es `true`, el sistema desactiva otros assessments del mismo grupo estudiantil.
-- **Respuesta (200 OK)**
+- Notas
+  - assessmentId es obligatorio.
+  - Si activo es true, el sistema desactiva otros assessments del mismo grupo estudiantil.
+- Respuesta (200 OK)
   ```json
   {
     "message": "Assessment actualizado",
@@ -196,19 +196,19 @@ Actualiza un assessment existente.
   }
   ```
 
-### `POST /api/assessment/toggle-active`
+### POST /api/assessment/toggle-active
 Activa o desactiva un assessment. Si se activa, desactiva automáticamente otros assessments del mismo grupo.
 
-- **Auth:** `admin`
-- **Payload:** contrato observado en código de negocio para alternar estado del assessment.
-- **Respuesta (200 OK):** objeto JSON con confirmación de actualización.
+- Auth: admin
+- Payload: contrato observado en código de negocio para alternar estado del assessment.
+- Respuesta (200 OK): objeto JSON con confirmación de actualización.
 
-### `GET /api/grupo-estudiantil/list`
+### GET /api/grupo-estudiantil/list
 Lista grupos estudiantiles disponibles.
 
-- **Tipo:** productivo
-- **Auth:** `admin`
-- **Respuesta (200 OK)**
+- Tipo: productivo
+- Auth: admin
+- Respuesta (200 OK)
   ```json
   [
     {
@@ -219,13 +219,12 @@ Lista grupos estudiantiles disponibles.
   ]
   ```
 
-### `GET /api/admin/panel-data`
+### GET /api/admin/panel-data
 Devuelve datos agregados para el panel administrativo: grupos estudiantiles, assessments y administradores.
 
-- **Tipo:** interno
-- **Auth:** `admin`
-- **Respuesta (200 OK)**
-  ```json
+- Tipo: interno
+- Auth: admin
+- Respuesta (200 OK)
   {
     "groups": [
       {
@@ -254,24 +253,23 @@ Devuelve datos agregados para el panel administrativo: grupos estudiantiles, ass
       }
     ]
   }
-  ```
 
 ---
 
-## 📋 Configuración de Bases
+## Configuración de Bases
 
-### `GET /api/base/list?assessmentId=6`
+### GET /api/base/list?assessmentId=6
 Obtiene todas las bases configuradas para un assessment.
 
-- **Auth:** `admin`
-- **Query params**
-  - `assessmentId`: obligatorio.
+- Auth: admin
+- Query params
+  - assessmentId: obligatorio.
 
-### `POST /api/base/create`
+### POST /api/base/create
 Registra una nueva base de evaluación.
 
-- **Auth:** `admin`
-- **Payload**
+- Auth: admin
+- Payload
   ```json
   {
     "assessmentId": 6,
@@ -285,11 +283,11 @@ Registra una nueva base de evaluación.
   }
   ```
 
-### `PUT /api/base/update`
+### PUT /api/base/update
 Actualiza una base de evaluación existente.
 
-- **Auth:** `admin`
-- **Payload**
+- Auth: admin
+- Payload
   ```json
   {
     "idBase": 4,
@@ -297,29 +295,29 @@ Actualiza una base de evaluación existente.
   }
   ```
 
-### `DELETE /api/base/delete`
+### DELETE /api/base/delete
 Elimina una base si no tiene calificaciones ni staff asociado.
 
-- **Auth:** `admin`
-- **Payload**
+- Auth: admin
+- Payload
   ```json
   {
     "idBase": 4
   }
   ```
 
-### `POST /api/getBaseData`
+### POST /api/getBaseData
 Obtiene el detalle de una base por ID.
 
-- **Tipo:** legacy / compatibilidad
-- **Auth:** no protegido en el código actual.
-- **Payload**
+- Tipo: legacy / compatibilidad
+- Auth: no protegido en el código actual.
+- Payload
   ```json
   {
     "id_base": 4
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "ID_Base": 4,
@@ -334,18 +332,18 @@ Obtiene el detalle de una base por ID.
 
 ---
 
-## 👥 Staff y Usuarios
+## Staff y Usuarios
 
-### `GET /api/staff/admins`
+### GET /api/staff/admins
 Lista administradores registrados.
 
-- **Auth:** `admin`
+- Auth: admin
 
-### `POST /api/staff/create`
+### POST /api/staff/create
 Registra un miembro del staff.
 
-- **Auth:** `admin`
-- **Payload**
+- Auth: admin
+- Payload
   ```json
   {
     "assessmentId": 6,
@@ -356,11 +354,11 @@ Registra un miembro del staff.
   }
   ```
 
-### `PUT /api/staff/update`
+### PUT /api/staff/update
 Actualiza datos de un miembro del staff.
 
-- **Auth:** `admin`
-- **Payload**
+- Auth: admin
+- Payload
   ```json
   {
     "staffId": 14,
@@ -368,12 +366,12 @@ Actualiza datos de un miembro del staff.
   }
   ```
 
-### `POST /api/staff/update-rotation`
+### POST /api/staff/update-rotation
 Asigna o limpia el grupo de evaluación de un staff.
 
-- **Tipo:** interno
-- **Auth:** `admin`
-- **Payload**
+- Tipo: interno
+- Auth: admin
+- Payload
   ```json
   {
     "staffId": 14,
@@ -387,7 +385,7 @@ Asigna o limpia el grupo de evaluación de un staff.
     "grupoAssessmentId": null
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "id": 14,
@@ -399,21 +397,21 @@ Asigna o limpia el grupo de evaluación de un staff.
   }
   ```
 
-### `POST /api/staff/bulk-create-admins`
+### POST /api/staff/bulk-create-admins
 Crea administradores automáticamente para assessments activos.
 
-- **Tipo:** interno
-- **Auth:** `admin`
-- **Payload**
+- Tipo: interno
+- Auth: admin
+- Payload
   ```json
   {
     "assessmentIds": [1, 2, 3]
   }
   ```
-- **Notas**
-  - Si `assessmentIds` no se envía, opera sobre todos los assessments activos.
+- Notas
+  - Si assessmentIds no se envía, opera sobre todos los assessments activos.
   - Devuelve contraseñas generadas en texto plano para uso operativo inmediato.
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "created": [
@@ -436,13 +434,13 @@ Crea administradores automáticamente para assessments activos.
   }
   ```
 
-### `GET /api/users`
+### GET /api/users
 Lista participantes del assessment por defecto.
 
-- **Auth:** `admin`
-- **Notas**
+- Auth: admin
+- Notas
   - El código actual resuelve el assessment mediante un valor por defecto.
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   [
     {
@@ -455,37 +453,37 @@ Lista participantes del assessment por defecto.
   ]
   ```
 
-### `POST /api/users`
+### POST /api/users
 Registra rápidamente un participante en el assessment por defecto.
 
-- **Tipo:** legacy / compatibilidad
-- **Auth:** `admin`
-- **Payload**
+- Tipo: legacy / compatibilidad
+- Auth: admin
+- Payload
   ```json
   {
     "nombre": "Ana",
     "correo": "ana@example.com"
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "message": "Persona inscrita exitosamente"
   }
   ```
 
-### `POST /api/getCalificador`
+### POST /api/getCalificador
 Obtiene el correo de un calificador por ID.
 
-- **Tipo:** legacy / compatibilidad
-- **Auth:** `admin`, `calificador`
-- **Payload**
+- Tipo: legacy / compatibilidad
+- Auth: admin, calificador
+- Payload
   ```json
   {
     "id_calificador": 14
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "Correo": "grader@example.com"
@@ -494,18 +492,18 @@ Obtiene el correo de un calificador por ID.
 
 ---
 
-## 👤 Participantes
+## Participantes
 
-### `GET /api/participante/list?assessmentId=6`
+### GET /api/participante/list?assessmentId=6
 Lista participantes registrados en un assessment.
 
-- **Auth:** `admin`
+- Auth: admin
 
-### `POST /api/register`
+### POST /api/register
 Inscribe un nuevo participante.
 
-- **Auth:** `admin`, `registrador`
-- **Payload**
+- Auth: admin, registrador
+- Payload
   ```json
   {
     "assessmentId": 6,
@@ -515,11 +513,11 @@ Inscribe un nuevo participante.
   }
   ```
 
-### `PUT /api/update-person`
-Actualiza nombre, correo o estado `isImpostor` de un participante.
+### PUT /api/update-person
+Actualiza nombre, correo o estado isImpostor de un participante.
 
-- **Auth:** `admin`, `registrador`
-- **Payload**
+- Auth: admin, registrador
+- Payload
   ```json
   {
     "id": 99,
@@ -529,27 +527,27 @@ Actualiza nombre, correo o estado `isImpostor` de un participante.
   }
   ```
 
-### `POST /api/participante/assign-group`
-Asigna un participante a un `GrupoAssessment`.
+### POST /api/participante/assign-group
+Asigna un participante a un GrupoAssessment.
 
-- **Auth:** `admin`
-- **Payload:** contrato de negocio para asociar participante y grupo.
+- Auth: admin
+- Payload: contrato de negocio para asociar participante y grupo.
 
 ---
 
-## 🎲 Grupos y Calificaciones
+## Grupos y Calificaciones
 
-### `GET /api/assessment/groups?assessmentId=6`
+### GET /api/assessment/groups?assessmentId=6
 Lista los grupos de evaluación creados para un assessment.
 
-- **Auth:** `admin`
+- Auth: admin
 
-### `GET /api/assessment/groups-active?assessmentId=6`
+### GET /api/assessment/groups-active?assessmentId=6
 Lista únicamente los grupos que tienen participantes asignados en un assessment.
 
-- **Tipo:** productivo
-- **Auth:** `admin`
-- **Respuesta (200 OK)**
+- Tipo: productivo
+- Auth: admin
+- Respuesta (200 OK)
   ```json
   [
     {
@@ -559,11 +557,11 @@ Lista únicamente los grupos que tienen participantes asignados en un assessment
   ]
   ```
 
-### `POST /api/assessment/auto-groups`
+### POST /api/assessment/auto-groups
 Distribuye participantes automáticamente en grupos, repartiendo impostores de forma equilibrada.
 
-- **Auth:** `admin`
-- **Payload**
+- Auth: admin
+- Payload
   ```json
   {
     "assessmentId": 6,
@@ -571,12 +569,12 @@ Distribuye participantes automáticamente en grupos, repartiendo impostores de f
   }
   ```
 
-### `POST /api/groups`
+### POST /api/groups
 Persiste una distribución de grupos en el assessment por defecto.
 
-- **Tipo:** legacy / compatibilidad
-- **Auth:** `admin`
-- **Payload**
+- Tipo: legacy / compatibilidad
+- Auth: admin
+- Payload
   ```json
   {
     "groups": [
@@ -585,22 +583,22 @@ Persiste una distribución de grupos en el assessment por defecto.
     ]
   }
   ```
-- **Notas**
-  - Genera nombres `Grupo1`, `Grupo2`, etc.
+- Notas
+  - Genera nombres Grupo1, Grupo2, etc.
   - Limpia asignaciones previas antes de volver a asignar participantes.
 
-### `POST /api/groupsId`
+### POST /api/groupsId
 Obtiene los miembros del grupo asignado a un calificador.
 
-- **Tipo:** legacy / compatibilidad
-- **Auth:** `admin`, `calificador`
-- **Payload**
+- Tipo: legacy / compatibilidad
+- Auth: admin, calificador
+- Payload
   ```json
   {
     "idCalificador": 14
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   [
     {
@@ -614,19 +612,19 @@ Obtiene los miembros del grupo asignado a un calificador.
   ]
   ```
 
-### `POST /api/grader/groups`
+### POST /api/grader/groups
 Lista los grupos del assessment del calificador que aún no han sido calificados para una base.
 
-- **Tipo:** productivo
-- **Auth:** `admin`, `calificador`
-- **Payload**
+- Tipo: productivo
+- Auth: admin, calificador
+- Payload
   ```json
   {
     "idCalificador": 14,
     "idBase": 2
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   [
     {
@@ -636,19 +634,19 @@ Lista los grupos del assessment del calificador que aún no han sido calificados
   ]
   ```
 
-### `POST /api/grader/participants`
+### POST /api/grader/participants
 Lista los participantes de un grupo para ser calificados por un calificador.
 
-- **Tipo:** productivo
-- **Auth:** `admin`, `calificador`
-- **Payload**
+- Tipo: productivo
+- Auth: admin, calificador
+- Payload
   ```json
   {
     "idCalificador": 14,
     "idGrupo": 7
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   [
     {
@@ -662,12 +660,12 @@ Lista los participantes de un grupo para ser calificados por un calificador.
   ]
   ```
 
-### `POST /api/check-already-graded`
+### POST /api/check-already-graded
 Verifica si un calificador ya calificó un grupo en una base.
 
-- **Tipo:** productivo
-- **Auth:** `admin`, `calificador`
-- **Payload**
+- Tipo: productivo
+- Auth: admin, calificador
+- Payload
   ```json
   {
     "idCalificador": 14,
@@ -675,7 +673,7 @@ Verifica si un calificador ya calificó un grupo en una base.
     "idGrupo": 7
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "alreadyGraded": true,
@@ -683,19 +681,19 @@ Verifica si un calificador ya calificó un grupo en una base.
   }
   ```
 
-### `POST /api/get-calificaciones-by-calificador`
+### POST /api/get-calificaciones-by-calificador
 Obtiene las calificaciones emitidas por un calificador en una base.
 
-- **Tipo:** productivo
-- **Auth:** `admin`, `calificador`
-- **Payload**
+- Tipo: productivo
+- Auth: admin, calificador
+- Payload
   ```json
   {
     "idCalificador": 14,
     "idBase": 2
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "calificaciones": [
@@ -710,11 +708,11 @@ Obtiene las calificaciones emitidas por un calificador en una base.
   }
   ```
 
-### `POST /api/add-calificaciones`
+### POST /api/add-calificaciones
 Registra calificaciones para los participantes de un grupo.
 
-- **Auth:** `admin`, `calificador`
-- **Payload**
+- Auth: admin, calificador
+- Payload
   ```json
   {
     "idGrupo": 7,
@@ -729,39 +727,39 @@ Registra calificaciones para los participantes de un grupo.
     ]
   }
   ```
-- **Notas**
+- Notas
   - El flujo bloquea envíos duplicados para la misma base y grupo del mismo calificador.
 
 ---
 
-## 📊 Dashboards y Reportes
+## Dashboards y Reportes
 
-### `GET /api/dashboard/config?assessmentId=6`
+### GET /api/dashboard/config?assessmentId=6
 Devuelve el resumen de configuración para dashboard administrativo.
 
-- **Auth:** `admin`
-- **Uso esperado:** `GET`
-- **Notas**
-  - El código actual acepta `assessmentId` opcional y usa un assessment por defecto si no se envía.
-  - El handler actual no valida método explícitamente, pero debe consumirse vía `GET`.
+- Auth: admin
+- Uso esperado: GET
+- Notas
+  - El código actual acepta assessmentId opcional y usa un assessment por defecto si no se envía.
+  - El handler actual no valida método explícitamente, pero debe consumirse vía GET.
 
-### `GET /api/dashboard/gh?assessmentId=6`
+### GET /api/dashboard/gh?assessmentId=6
 Devuelve la sábana de resultados y promedios por base.
 
-- **Auth:** `admin`
-- **Uso esperado:** `GET`
-- **Notas**
-  - El código actual usa `assessmentId` opcional y cae al assessment por defecto.
-  - El handler actual no valida método explícitamente, pero debe consumirse vía `GET`.
+- Auth: admin
+- Uso esperado: GET
+- Notas
+  - El código actual usa assessmentId opcional y cae al assessment por defecto.
+  - El handler actual no valida método explícitamente, pero debe consumirse vía GET.
 
-### `GET /api/dashboard/rotations?assessmentId=6`
+### GET /api/dashboard/rotations?assessmentId=6
 Lista las rotaciones de calificadores, incluyendo base y grupo asignados.
 
-- **Tipo:** interno
-- **Auth:** `admin`
-- **Query params**
-  - `assessmentId`: opcional. Si no se envía, lista rotaciones de todos los assessments.
-- **Respuesta (200 OK)**
+- Tipo: interno
+- Auth: admin
+- Query params
+  - assessmentId: opcional. Si no se envía, lista rotaciones de todos los assessments.
+- Respuesta (200 OK)
   ```json
   [
     {
@@ -780,18 +778,18 @@ Lista las rotaciones de calificadores, incluyendo base y grupo asignados.
 
 ---
 
-## 🧰 Internos y Mantenimiento
+## Internos y Mantenimiento
 
-### `GET /api/db`
+### GET /api/db
 Endpoint de verificación de conexión con Supabase.
 
-- **Tipo:** interno
-- **Auth:** `admin`
-- **Uso esperado:** `GET`
-- **Notas**
+- Tipo: interno
+- Auth: admin
+- Uso esperado: GET
+- Notas
   - Usa el assessment por defecto para verificar conectividad.
   - El handler actual no valida método explícitamente.
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "message": "Conexión exitosa",
@@ -799,12 +797,12 @@ Endpoint de verificación de conexión con Supabase.
   }
   ```
 
-### `POST /api/admin/hash-passwords`
+### POST /api/admin/hash-passwords
 Migra contraseñas almacenadas en texto plano a hashes seguros.
 
-- **Tipo:** interno
-- **Auth:** `admin`
-- **Respuesta (200 OK)**
+- Tipo: interno
+- Auth: admin
+- Respuesta (200 OK)
   ```json
   {
     "message": "Se hashearon 3 contraseñas correctamente",
@@ -814,51 +812,51 @@ Migra contraseñas almacenadas en texto plano a hashes seguros.
 
 ---
 
-## 🧪 Legacy y Compatibilidad
+## Legacy y Compatibilidad
 
-### `GET /api/forms`
+### GET /api/forms
 Endpoint mínimo de prueba del backend.
 
-- **Tipo:** legacy
-- **Auth:** no requiere autenticación.
-- **Respuesta (200 OK)**
+- Tipo: legacy
+- Auth: no requiere autenticación.
+- Respuesta (200 OK)
   ```json
   {
     "message": "Hello from the backend!"
   }
   ```
 
-### `POST /api/groupG`
+### POST /api/groupG
 Genera grupos a partir de una base mock en memoria.
 
-- **Tipo:** legacy
-- **Auth:** no requiere autenticación.
-- **Payload**
+- Tipo: legacy
+- Auth: no requiere autenticación.
+- Payload
   ```json
   {
     "groups": 4
   }
   ```
-- **Respuesta (200 OK)**
+- Respuesta (200 OK)
   ```json
   {
     "message": "Groups generated",
     "groups": [["Alice"], ["Bob"]]
   }
   ```
-- **Notas**
+- Notas
   - Usa datos mock.
   - No sigue completamente la convención estándar de errores y mensajes en español.
 
 ---
 
-## 📝 Notas de Normalización Pendiente
+## Notas de Normalización Pendiente
 
-1. `dashboard/config`, `dashboard/gh` y `db` deberían validar explícitamente `GET` para alinearse con la convención global.
-2. `users` mezcla operaciones `GET` y `POST` en un solo endpoint; se conserva por compatibilidad.
-3. `getBaseData`, `getCalificador`, `groups`, `groupsId`, `forms` y `groupG` conservan nomenclaturas o contratos legacy.
-4. Los endpoints que hoy usan assessment por defecto deberían migrar gradualmente a requerir `assessmentId` explícito si se desea cumplir estrictamente la convención global.
+1. dashboard/config, dashboard/gh y db deberían validar explícitamente GET para alinearse con la convención global.
+2. users mezcla operaciones GET y POST en un solo endpoint; se conserva por compatibilidad.
+3. getBaseData, getCalificador, groups, groupsId, forms y groupG conservan nomenclaturas o contratos legacy.
+4. Los endpoints que hoy usan assessment por defecto deberían migrar gradualmente a requerir assessmentId explícito si se desea cumplir estrictamente la convención global.
 
 ---
 
-_Este documento es la referencia técnica para el desarrollo del frontend, la operación administrativa y el mantenimiento de contratos API en el proyecto._
+Este documento es la referencia técnica para el desarrollo del frontend, la operación administrativa y el mantenimiento de contratos API en el proyecto.

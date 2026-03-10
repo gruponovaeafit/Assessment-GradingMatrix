@@ -1,10 +1,10 @@
-# Assessment-GradingMatrix 🚀
+# Assessment-GradingMatrix
 
 Plataforma web con matriz de calificaciones para evaluar participantes en actividades de assessment del Grupo NOVA EAFIT.
 
 ---
 
-## 📚 Documentación Técnica (Recomendado para Onboarding)
+## Documentación Técnica (Recomendado para Onboarding)
 
 Para entender la arquitectura, el dominio y cómo contribuir, consulta los siguientes documentos:
 
@@ -19,7 +19,7 @@ Para entender la arquitectura, el dominio y cómo contribuir, consulta los sigui
 
 ---
 
-## 🛠️ Tecnologías
+## Tecnologías
 
 - **Framework**: Next.js 14 (App Router + Pages Router mixto)
 - **Lenguaje**: TypeScript / React
@@ -28,17 +28,17 @@ Para entender la arquitectura, el dominio y cómo contribuir, consulta los sigui
 
 ---
 
-## ⚙️ Configuración Inicial
+## Configuración Inicial
 
 1.  **Requisitos:** Node.js 20+, npm.
 2.  **Instalación:** `npm install`.
 3.  **Variables de Entorno:** Copia `.env.example` a `.env.local` y completa los valores.
-    > ⚠️ La `SUPABASE_SERVICE_ROLE_KEY` **nunca** debe usarse en el frontend.
+    > Nota: La `SUPABASE_SERVICE_ROLE_KEY` **nunca** debe usarse en el frontend.
 4.  **Desarrollo:** `npm run dev` abre `http://localhost:3000`.
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 src/
@@ -57,7 +57,7 @@ src/
 
 ---
 
-## 🤝 Contribución
+## Contribución
 
 Por favor, lee la **[Guía de Contribución](docs/contributing.md)** antes de abrir un Pull Request. 
 
@@ -67,6 +67,6 @@ Por favor, lee la **[Guía de Contribución](docs/contributing.md)** antes de ab
 
 ---
 
-## ⚖️ Licencia
+## Licencia
 
 MIT © Grupo Nova EAFIT
