@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error(error?.message || 'Error actualizando assessment');
     }
 
-    if (Boolean(activo)) {
+    if (activo) {
       const groupId = data.ID_GrupoEstudiantil as number;
       const { error: deactivateError } = await supabase
         .from('Assessment')

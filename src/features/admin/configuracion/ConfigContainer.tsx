@@ -106,7 +106,7 @@ export const ConfigContainer = () => {
   }, [data]);
 
   const filteredAndSortedData = useMemo(() => {
-    let filtered = data.filter((item) => {
+    const filtered = data.filter((item) => {
       const matchSearch =
         item.Participante.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.Correo.toLowerCase().includes(searchTerm.toLowerCase());
