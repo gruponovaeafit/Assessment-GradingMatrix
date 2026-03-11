@@ -51,3 +51,4 @@ specs/
 .agents/
 
 .ignore
+skills-lock.json
