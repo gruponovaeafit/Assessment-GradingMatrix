@@ -133,7 +133,7 @@ export const SuperAdminContainer = () => {
           </div>
           <button
             onClick={logout}
-            className="flex items-center gap-2 px-4 py-2 bg-error/10 text-error hover:bg-error hover:text-white rounded-xl text-sm font-bold transition-all group"
+            className="flex items-center gap-2 px-4 py-2 !bg-white !text-error border !border-error/20 hover:!bg-error hover:!text-white rounded-xl text-sm font-bold transition-all group !shadow-none"
           >
             <LogOut className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
             <span className="hidden sm:inline">Cerrar Sesión</span>
