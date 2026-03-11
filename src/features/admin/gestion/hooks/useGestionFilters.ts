@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { type ParticipantDashboardRow, type ClassificationRanges } from '../schemas/gestionSchemas';
+import { CheckCircle, ClipboardList, TriangleAlert, XCircle, Hourglass } from 'lucide-react';
 
 export function useGestionFilters(data: ParticipantDashboardRow[], classificationRanges: ClassificationRanges) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -12,13 +13,13 @@ export function useGestionFilters(data: ParticipantDashboardRow[], classificatio
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const getEstadoInfo = (promedio: number | null) => {
-    if (promedio == null) return { texto: "Pendiente", color: "text-white/60" };
-    if (promedio >= classificationRanges.group) return { texto: "✅ Pasa al grupo", color: "text-success" };
+    if (promedio == null) return { texto: "Pendiente", color: "text-white/60", Icon: Hourglass };
+    if (promedio >= classificationRanges.group) return { texto: "Pasa al grupo", color: "text-success", Icon: CheckCircle };
     if (promedio >= classificationRanges.interview)
-      return { texto: "📋 Pasa a entrevista", color: "text-success-light" };
+      return { texto: "Pasa a entrevista", color: "text-success-light", Icon: ClipboardList };
     if (promedio >= classificationRanges.discussion)
-      return { texto: "⚠️ Pasa a discusión", color: "text-yellow-400" };
-    return { texto: "❌ No pasa", color: "text-error" };
+      return { texto: "Pasa a discusión", color: "text-yellow-400", Icon: TriangleAlert };
+    return { texto: "No pasa", color: "text-error", Icon: XCircle };
   };
 
   const filteredAndSortedData = useMemo(() => {

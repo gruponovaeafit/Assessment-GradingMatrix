@@ -5,6 +5,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Spinner, Skeleton, SkeletonTableRow } from "@/components/UI/Loading";
 import { useConfirmModal } from "@/components/UI/ConfirmModal";
 import { useRouter } from "next/navigation";
+import { LayoutDashboard, LogOut } from "lucide-react";
 
 // Feature Hooks
 import { useGestionData } from "./hooks/useGestionData";
@@ -135,8 +136,20 @@ export const GestionContainer = () => {
       <div className="w-full max-w-7xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 px-1 sm:px-2">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center sm:text-left">Gestión del Assessment</h1>
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
-          <button onClick={() => router.push("/admin")} className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition">Admin</button>
-          <button onClick={logout} className="bg-error hover:bg-error-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition">Cerrar Sesión</button>
+          <button 
+            onClick={() => router.push("/admin")} 
+            className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 group"
+          >
+            <LayoutDashboard className="w-4 h-4 transition-transform group-hover:scale-110" />
+            Admin
+          </button>
+          <button 
+            onClick={logout} 
+            className="bg-error hover:bg-error-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 group"
+          >
+            <LogOut className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            Cerrar Sesión
+          </button>
         </div>
       </div>
 

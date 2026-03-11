@@ -1,4 +1,5 @@
 import React from "react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 
 interface PaginationProps {
   currentPage: number;
@@ -20,22 +21,27 @@ export const Pagination: React.FC<PaginationProps> = ({
       Math.abs(page - currentPage) <= 1
   );
 
+  const iconProps = { className: "w-4 h-4" };
+  const buttonClass = "px-3 py-1 rounded bg-gray-100 text-gray-900 hover:bg-[color:var(--color-accent)] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold transition";
+
   return (
     <div className="w-full max-w-7xl mt-6 px-1 sm:px-2">
       <div className="flex flex-wrap justify-center items-center gap-2 bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
         <button
           onClick={() => setCurrentPage(1)}
           disabled={currentPage === 1}
-          className="px-3 py-1 rounded bg-gray-100 text-gray-900 hover:bg-[color:var(--color-accent)] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold transition"
+          className={buttonClass}
+          aria-label="First page"
         >
-          ««
+          <ChevronsLeft {...iconProps} />
         </button>
         <button
           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
           disabled={currentPage === 1}
-          className="px-3 py-1 rounded bg-gray-100 text-gray-900 hover:bg-[color:var(--color-accent)] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold transition"
+          className={buttonClass}
+          aria-label="Previous page"
         >
-          «
+          <ChevronLeft {...iconProps} />
         </button>
         {pages.map((page, index, arr) => (
           <span key={page} className="flex items-center">
@@ -57,16 +63,18 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
           disabled={currentPage === totalPages}
-          className="px-3 py-1 rounded bg-gray-100 text-gray-900 hover:bg-[color:var(--color-accent)] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold transition"
+          className={buttonClass}
+          aria-label="Next page"
         >
-          »
+          <ChevronRight {...iconProps} />
         </button>
         <button
           onClick={() => setCurrentPage(totalPages)}
           disabled={currentPage === totalPages}
-          className="px-3 py-1 rounded bg-gray-100 text-gray-900 hover:bg-[color:var(--color-accent)] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold transition"
+          className={buttonClass}
+          aria-label="Last page"
         >
-          »»
+          <ChevronsRight {...iconProps} />
         </button>
       </div>
     </div>

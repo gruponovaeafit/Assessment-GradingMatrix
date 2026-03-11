@@ -1,4 +1,5 @@
 import React from 'react';
+import { RefreshCw, SlidersHorizontal, Download, Search, ArrowUp, ArrowDown, X } from 'lucide-react';
 import { Spinner } from '@/components/UI/Loading';
 import { type Assessment } from '../schemas/gestionSchemas';
 
@@ -74,12 +75,10 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50"
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 group"
           >
             {loading ? <Spinner size="sm" color="primary" /> : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
+              <RefreshCw className={`w-4 h-4 transition-transform ${loading ? 'animate-spin' : 'group-hover:rotate-180 duration-500'}`} />
             )}
             Actualizar
           </button>
@@ -88,22 +87,18 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={onOpenRanges}
-            className="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2"
+            className="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 group"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-            </svg>
+            <SlidersHorizontal className="w-4 h-4 transition-transform group-hover:scale-110" />
             Rangos
           </button>
           <button
             onClick={onExport}
             disabled={exporting}
-            className="bg-success hover:bg-success-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50"
+            className="bg-success hover:bg-success-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 group"
           >
             {exporting ? <Spinner size="sm" color="white" /> : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+              <Download className="w-4 h-4 transition-transform group-hover:-translate-y-1" />
             )}
             Exportar CSV
           </button>
@@ -114,9 +109,7 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
         <div className="relative lg:col-span-2">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <Search className="w-4 h-4" />
           </span>
           <input
             type="text"
@@ -144,10 +137,10 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
           className="px-3 py-2 rounded-lg bg-gray-50 text-gray-900 border border-transparent focus:bg-white focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none transition text-sm"
         >
           <option value="todos">Todos los estados</option>
-          <option value="✅ Pasa al grupo">✅ Pasa al grupo</option>
-          <option value="📋 Pasa a entrevista">📋 Pasa a entrevista</option>
-          <option value="⚠️ Pasa a discusión">⚠️ Pasa a discusión</option>
-          <option value="❌ No pasa">❌ No pasa</option>
+          <option value="Pasa al grupo">Pasa al grupo</option>
+          <option value="Pasa a entrevista">Pasa a entrevista</option>
+          <option value="Pasa a discusión">Pasa a discusión</option>
+          <option value="No pasa">No pasa</option>
           <option value="Pendiente">Pendiente</option>
         </select>
 
@@ -178,7 +171,7 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
                 onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
                 className="p-1 hover:bg-gray-100 rounded transition"
               >
-                {sortOrder === "asc" ? "↑" : "↓"}
+                {sortOrder === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
               </button>
             </div>
 
@@ -206,8 +199,9 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
                   setFilterEstado("todos");
                   setFilterRol("todos");
                 }}
-                className="text-[color:var(--color-accent)] hover:underline"
+                className="text-[color:var(--color-accent)] hover:underline flex items-center gap-1"
               >
+                <X className="w-3 h-3" />
                 Limpiar filtros
               </button>
             ) : null}
