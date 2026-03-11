@@ -24,12 +24,14 @@ export const buildAdminEmail = (
   nombre?: string, 
   personalEmail?: string
 ): string => {
-  const baseDomain = assessment?.grupoNombre || assessment?.nombre || assessmentId;
+  const baseDomain = assessment?.grupoNombre || assessment?.nombre;
   const domainSlug = baseDomain
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .replace(/_+/g, "_");
+    ? baseDomain
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .replace(/_+/g, "_")
+    : "grupo";
   
   const baseSeed =
     (nombre && personalEmail && `${nombre}|${personalEmail}`) ||
@@ -40,7 +42,7 @@ export const buildAdminEmail = (
     
   const seed = `${baseSeed}|${assessmentId}`;
   const hash = shortHash(seed);
-  return `${hash}_${assessmentId}@${domainSlug || "grupo"}.agm`;
+  return `${hash}_${assessmentId}@${domainSlug}.agm`;
 };
 
 /**

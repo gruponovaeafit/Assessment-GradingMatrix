@@ -85,7 +85,7 @@ export const SuperAdminToolbar: React.FC<SuperAdminToolbarProps> = ({
           <button
             onClick={onBulkAssessments}
             disabled={loadingBulkAssessments}
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-[color:var(--color-accent)] text-[color:var(--color-accent)] font-bold hover:bg-[color:var(--color-accent)] hover:text-white transition disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-[color:var(--color-accent)] !bg-white !text-[color:var(--color-accent)] font-bold hover:!bg-[color:var(--color-accent)] hover:!text-white transition disabled:opacity-50 !shadow-none"
           >
             <PlusCircle className="w-4 h-4" />
             Crear Assessments (Todos)
@@ -93,7 +93,7 @@ export const SuperAdminToolbar: React.FC<SuperAdminToolbarProps> = ({
           <button
             onClick={onBulkAdmins}
             disabled={loadingBulkAdmins}
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-[color:var(--color-accent)] text-[color:var(--color-accent)] font-bold hover:bg-[color:var(--color-accent)] hover:text-white transition disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-[color:var(--color-accent)] !bg-white !text-[color:var(--color-accent)] font-bold hover:!bg-[color:var(--color-accent)] hover:!text-white transition disabled:opacity-50 !shadow-none"
           >
             <Users className="w-4 h-4" />
             Crear Admins (Activos)

@@ -25,7 +25,10 @@ export const MassActionModal: React.FC<MassActionModalProps> = ({
             <h2 className="text-xl font-bold text-gray-900">{title}</h2>
             <p className="text-sm text-gray-500 mt-1">{description}</p>
           </div>
-          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 transition">
+          <button 
+            onClick={onCancel} 
+            className="!text-gray-400 hover:!text-gray-600 transition !bg-transparent hover:!bg-gray-100 p-1.5 rounded-full !border-none !shadow-none"
+          >
             <XCircle className="w-6 h-6" />
           </button>
         </div>
@@ -64,7 +67,7 @@ export const MassActionModal: React.FC<MassActionModalProps> = ({
         <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3 justify-end">
           <button
             onClick={onCancel}
-            className="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-bold hover:bg-white transition"
+            className="px-6 py-2.5 rounded-xl border border-gray-300 !bg-white !text-gray-700 font-bold hover:!bg-gray-50 transition !shadow-none"
           >
             Cancelar
           </button>
