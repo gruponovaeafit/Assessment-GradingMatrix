@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log("📊 Ejemplo de data:", data?.[0]);
 
     // Obtener nombres de grupos
-    let groupNameById = new Map<number, string>();
+    const groupNameById = new Map<number, string>();
     const groupIds = (data as StaffRow[])
       ?.map((row) => row.ID_GrupoAssessment)
       .filter((id): id is number => typeof id === "number" && id !== null);
@@ -69,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // ✅ Obtener información de las bases
-    let baseInfoById = new Map<number, { nombre: string; numero: number }>();
+    const baseInfoById = new Map<number, { nombre: string; numero: number }>();
     const baseIds = (data as StaffRow[])
       ?.map((row) => row.ID_Base)
       .filter((id): id is number => typeof id === "number" && id !== null);
