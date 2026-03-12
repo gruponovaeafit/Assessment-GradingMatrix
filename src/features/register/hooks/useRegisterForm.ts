@@ -47,6 +47,10 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
     if (isCompressError(result)) {
       setMensaje(result.error);
       setIsError(true);
+      setImagen(null);
+      setFileName('');
+      setPhoto('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 

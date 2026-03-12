@@ -135,13 +135,27 @@ describe('useRegisterForm', () => {
     expect(result.current.isError).toBe(false);
   });
 
-  it('handleImageSelect should set error on compression failure', async () => {
+  it('handleImageSelect should set error and clear previous state on compression failure', async () => {
+    // 1. Set a valid image first
+    const validFile = new File(['valid'], 'valid.jpg', { type: 'image/jpeg' });
+    const compressedValid = new File(['c'], 'valid.webp', { type: 'image/webp' });
+    (compressImage as Mock).mockResolvedValueOnce({ file: compressedValid });
+    (isCompressError as unknown as Mock).mockReturnValueOnce(false);
+
+    const { result } = renderHook(() => useRegisterForm());
+
+    await act(async () => {
+      await result.current.handleImageSelect(validFile);
+    });
+
+    expect(result.current.imagen).toBe(compressedValid);
+    expect(result.current.fileName).toBe('valid.jpg');
+
+    // 2. Now fail compression on a new file
     const mockFile = new File(['x'], 'huge.jpg', { type: 'image/jpeg' });
 
     (compressImage as Mock).mockResolvedValueOnce({ error: 'Too big' });
     (isCompressError as unknown as Mock).mockReturnValueOnce(true);
-
-    const { result } = renderHook(() => useRegisterForm());
 
     await act(async () => {
       await result.current.handleImageSelect(mockFile);
@@ -149,6 +163,9 @@ describe('useRegisterForm', () => {
 
     expect(result.current.mensaje).toBe('Too big');
     expect(result.current.isError).toBe(true);
+    expect(result.current.imagen).toBeNull();
+    expect(result.current.fileName).toBe('');
+    expect(result.current.photo).toBe('');
   });
 
   it('resetForm should clear all state', () => {
