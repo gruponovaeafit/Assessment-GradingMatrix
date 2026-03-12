@@ -78,3 +78,18 @@ export async function getAssessmentIdForStaff(staffId: number): Promise<{ id: nu
 
   return { id: data.ID_Assessment };
 }
+
+// Función para obtener el ID del Assessment asociado a un Participante específico
+export async function getAssessmentIdForParticipant(participantId: number): Promise<{ id: number } | { error: string; status: number }> {
+  const { data, error } = await supabase
+    .from('Participante')
+    .select('ID_Assessment')
+    .eq('ID_Participante', participantId)
+    .single();
+
+  if (error || !data) {
+    return { error: 'Participant not found', status: 404 };
+  }
+
+  return { id: data.ID_Assessment };
+}
