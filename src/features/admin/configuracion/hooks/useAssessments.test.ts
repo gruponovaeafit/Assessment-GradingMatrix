@@ -8,7 +8,6 @@ vi.mock('@/lib/auth/authFetch', () => ({
 }));
 
 describe('useAssessments', () => {
-  const getAuthHeaders = vi.fn().mockReturnValue({ Authorization: 'Bearer token' });
   const logout = vi.fn();
 
   beforeEach(() => {
@@ -16,7 +15,7 @@ describe('useAssessments', () => {
   });
 
   it('should initialize with empty assessments and not loading', () => {
-    const { result } = renderHook(() => useAssessments(getAuthHeaders, logout));
+    const { result } = renderHook(() => useAssessments(logout));
     
     expect(result.current.assessments).toEqual([]);
     expect(result.current.loading).toBe(false);
@@ -33,7 +32,7 @@ describe('useAssessments', () => {
       json: async () => mockData,
     } as Response);
 
-    const { result } = renderHook(() => useAssessments(getAuthHeaders, logout));
+    const { result } = renderHook(() => useAssessments(logout));
 
     await act(async () => {
       await result.current.refreshAssessments();
@@ -43,7 +42,7 @@ describe('useAssessments', () => {
     expect(result.current.assessments).toEqual(mockData);
     expect(authFetch).toHaveBeenCalledWith(
       '/api/assessment/list',
-      { headers: { Authorization: 'Bearer token' } },
+      {},
       expect.any(Function)
     );
   });
@@ -58,7 +57,7 @@ describe('useAssessments', () => {
       json: async () => invalidMockData,
     } as Response);
 
-    const { result } = renderHook(() => useAssessments(getAuthHeaders, logout));
+    const { result } = renderHook(() => useAssessments(logout));
 
     await act(async () => {
       await result.current.refreshAssessments();
@@ -73,7 +72,7 @@ describe('useAssessments', () => {
       ok: false,
     } as Response);
 
-    const { result } = renderHook(() => useAssessments(getAuthHeaders, logout));
+    const { result } = renderHook(() => useAssessments(logout));
 
     await act(async () => {
       await result.current.refreshAssessments();

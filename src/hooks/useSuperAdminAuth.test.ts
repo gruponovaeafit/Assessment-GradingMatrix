@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useSuperAdminAuth } from './useSuperAdminAuth';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { useRouter } from 'next/navigation';
@@ -14,44 +14,51 @@ describe('useSuperAdminAuth', () => {
     vi.clearAllMocks();
     vi.mocked(useRouter).mockReturnValue({ push: mockPush } as any);
     localStorage.clear();
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+    // Default mock: not super admin
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ 
+      ok: true, 
+      json: async () => ({ role: 'not-admin' }) 
+    }));
   });
 
-  it('should initialize as not super admin if localStorage is empty', () => {
+  it('should initialize as not super admin if localStorage is empty', async () => {
     const { result } = renderHook(() => useSuperAdminAuth());
-    expect(result.current.isSuperAdmin).toBe(false);
-    expect(result.current.isLoading).toBe(false);
+    await waitFor(() => {
+      expect(result.current.isSuperAdmin).toBe(false);
+      expect(result.current.isLoading).toBe(false);
+    });
   });
 
-  it('should identify super admin from localStorage if valid and not expired', () => {
+  it('should identify super admin from localStorage if valid and not expired', async () => {
     const validAuth = {
       isAdmin: true,
       isSuperAdmin: true,
       timestamp: Date.now()
     };
     localStorage.setItem('adminAuth', JSON.stringify(validAuth));
-    localStorage.setItem('authToken', 'test-token');
 
     const { result } = renderHook(() => useSuperAdminAuth());
     
-    expect(result.current.isSuperAdmin).toBe(true);
-    expect(result.current.token).toBe('test-token');
+    await waitFor(() => {
+      expect(result.current.isSuperAdmin).toBe(true);
+    });
   });
 
-  it('should identify as NOT super admin if isSuperAdmin flag is missing', () => {
+  it('should identify as NOT super admin if isSuperAdmin flag is missing', async () => {
     const invalidAuth = {
       isAdmin: true,
-      // isSuperAdmin: true, // Missing
       timestamp: Date.now()
     };
     localStorage.setItem('adminAuth', JSON.stringify(invalidAuth));
 
     const { result } = renderHook(() => useSuperAdminAuth());
     
-    expect(result.current.isSuperAdmin).toBe(false);
+    await waitFor(() => {
+      expect(result.current.isSuperAdmin).toBe(false);
+    });
   });
 
-  it('should identify as NOT super admin if session expired', () => {
+  it('should identify as NOT super admin if session expired', async () => {
     const expiredAuth = {
       isAdmin: true,
       isSuperAdmin: true,
@@ -61,12 +68,18 @@ describe('useSuperAdminAuth', () => {
 
     const { result } = renderHook(() => useSuperAdminAuth());
     
-    expect(result.current.isSuperAdmin).toBe(false);
+    await waitFor(() => {
+      expect(result.current.isSuperAdmin).toBe(false);
+    });
   });
 
-  it('requireSuperAdmin should redirect if not authorized', () => {
+  it('requireSuperAdmin should redirect if not authorized', async () => {
     const { result } = renderHook(() => useSuperAdminAuth());
     
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
     act(() => {
       result.current.requireSuperAdmin();
     });
@@ -75,14 +88,14 @@ describe('useSuperAdminAuth', () => {
   });
 
   it('logout should clear storage and redirect', async () => {
-    localStorage.setItem('authToken', 'token');
+    localStorage.setItem('adminAuth', JSON.stringify({ isAdmin: true, isSuperAdmin: true, timestamp: Date.now() }));
     const { result } = renderHook(() => useSuperAdminAuth());
 
     await act(async () => {
       result.current.logout();
     });
 
-    expect(localStorage.getItem('authToken')).toBeNull();
+    expect(localStorage.getItem('adminAuth')).toBeNull();
     expect(mockPush).toHaveBeenCalledWith('/auth/login');
   });
 });

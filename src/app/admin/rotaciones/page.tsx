@@ -23,7 +23,7 @@ type StaffRow = {
 type GrupoItem = { id: number; nombre: string };
 
 export default function RotationsDashboard() {
-  const { isAdmin, isLoading: authLoading, logout, getAuthHeaders } = useAdminAuth();
+  const { isAdmin, isLoading: authLoading, logout } = useAdminAuth();
 
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ export default function RotationsDashboard() {
       try {
         const res = await authFetch(
           "/api/assessment/list",
-          { headers: { ...getAuthHeaders() } },
+          {},
           () => logout()
         );
         if (!res.ok) throw new Error("Error al cargar assessments");
@@ -62,7 +62,7 @@ export default function RotationsDashboard() {
         const query = selectedAssessment ? `?assessmentId=${selectedAssessment}` : "";
         const res = await authFetch(
           `/api/dashboard/rotations${query}`,
-          { headers: { ...getAuthHeaders() } },
+          {},
           () => logout()
         );
         if (!res.ok) {
@@ -91,7 +91,7 @@ export default function RotationsDashboard() {
       try {
         const res = await authFetch(
           `/api/assessment/groups-active?assessmentId=${selectedAssessment}`,
-          { headers: { ...getAuthHeaders() } },
+          {},
           () => logout()
         );
         if (!res.ok) throw new Error("Error al cargar grupos");
@@ -126,7 +126,7 @@ export default function RotationsDashboard() {
         "/api/staff/update-rotation",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             staffId: editModal.id,
             grupoAssessmentId: editModal.grupoId,

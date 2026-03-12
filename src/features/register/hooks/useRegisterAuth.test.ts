@@ -12,10 +12,10 @@ vi.mock('next/navigation', () => ({
 describe('useRegisterAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
   });
 
-  it('should redirect to login when no token exists', async () => {
+  it('should redirect to login when fetch fails (not authorized)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
     const { result } = renderHook(() => useRegisterAuth());
 
     await waitFor(() => {
@@ -25,8 +25,10 @@ describe('useRegisterAuth', () => {
   });
 
   it('should redirect to login when role is invalid', async () => {
-    localStorage.setItem('authToken', 'valid-token');
-    localStorage.setItem('authRole', 'calificador');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ 
+      ok: true, 
+      json: async () => ({ role: 'calificador' }) 
+    }));
 
     renderHook(() => useRegisterAuth());
 
@@ -36,8 +38,10 @@ describe('useRegisterAuth', () => {
   });
 
   it('should stop checking auth for registrador role', async () => {
-    localStorage.setItem('authToken', 'valid-token');
-    localStorage.setItem('authRole', 'registrador');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ 
+      ok: true, 
+      json: async () => ({ role: 'registrador' }) 
+    }));
 
     const { result } = renderHook(() => useRegisterAuth());
 
@@ -48,8 +52,10 @@ describe('useRegisterAuth', () => {
   });
 
   it('should stop checking auth for admin role', async () => {
-    localStorage.setItem('authToken', 'valid-token');
-    localStorage.setItem('authRole', 'admin');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ 
+      ok: true, 
+      json: async () => ({ role: 'admin' }) 
+    }));
 
     const { result } = renderHook(() => useRegisterAuth());
 

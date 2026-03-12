@@ -7,8 +7,8 @@ Este documento recopila problemas comunes y sus soluciones para ahorrarte tiempo
 ## Autenticación y Acceso
 
 ### ¿Por qué recibo 401 localmente si mis credenciales son correctas?
-- Causa 1: El token JWT en el localStorage ha expirado o ya no coincide con el JWT_SECRET de Supabase.
-- Solución: Limpia el localStorage y vuelve a iniciar sesión.
+- Causa 1: El token JWT en la cookie `session` ha expirado o ya no coincide con el JWT_SECRET de Supabase.
+- Solución: Vuelve a iniciar sesión desde `/auth/login` (esto limpia y reemplaza la cookie automáticamente), o bórrala en la pestaña de Application de tu navegador.
 - Causa 2: El flag Active del usuario staff en la DB puede estar impidiendo un nuevo login (si la lógica de "sesión única" está activa).
 - Solución: Ve a la tabla Staff en Supabase y pon Active = false.
 

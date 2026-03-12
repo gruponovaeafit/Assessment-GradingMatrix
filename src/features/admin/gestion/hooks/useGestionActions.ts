@@ -4,7 +4,6 @@ import { showToast } from "@/components/UI/Toast";
 import { type ParticipantDashboardRow } from "../schemas/gestionSchemas";
 
 export function useGestionActions(
-  getAuthHeaders: () => any,
   logout: () => void,
   setData: React.Dispatch<React.SetStateAction<ParticipantDashboardRow[]>>
 ) {
@@ -28,7 +27,7 @@ export function useGestionActions(
     try {
       const res = await authFetch("/api/update-person", {
         method: "PUT",
-        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
       }, () => logout());
 

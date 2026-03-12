@@ -17,9 +17,7 @@ export const useGraderData = () => {
     const storedData = localStorage.getItem("storedData");
     const parsedData = storedData ? JSON.parse(storedData) : null;
     const id_Calificador = parsedData?.id_Calificador;
-    const authToken = localStorage.getItem("authToken");
-    const authHeaders: HeadersInit = authToken ? { Authorization: `Bearer ${authToken}` } : {};
-    const jsonHeaders: HeadersInit = { 'Content-Type': 'application/json', ...authHeaders };
+    const jsonHeaders: HeadersInit = { 'Content-Type': 'application/json' };
 
     if (!id_Calificador) {
       setLoading(false);
@@ -33,16 +31,19 @@ export const useGraderData = () => {
           fetch('/api/grader/groups', {
             method: 'POST',
             headers: jsonHeaders,
+            credentials: 'include',
             body: JSON.stringify({ idCalificador: id_Calificador, idBase: idBase ?? undefined }),
           }),
           idBase ? fetch('/api/getBaseData', {
             method: 'POST',
             headers: jsonHeaders,
+            credentials: 'include',
             body: JSON.stringify({ id_base: idBase }),
           }) : Promise.resolve(null),
           fetch('/api/getCalificador', {
             method: 'POST',
             headers: jsonHeaders,
+            credentials: 'include',
             body: JSON.stringify({ id_calificador: id_Calificador }),
           })
         ]);
@@ -79,10 +80,7 @@ export const useGraderData = () => {
     const parsedData = storedData ? JSON.parse(storedData) : null;
     const id_Calificador = parsedData?.id_Calificador;
     const idBase = parsedData?.id_base;
-    const authToken = localStorage.getItem("authToken");
-    const jsonHeaders: HeadersInit = authToken
-      ? { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` }
-      : { 'Content-Type': 'application/json' };
+    const jsonHeaders: HeadersInit = { 'Content-Type': 'application/json' };
 
     if (!selectedGroupId || !id_Calificador || !idBase) {
       setUsuarios([]);
@@ -98,11 +96,13 @@ export const useGraderData = () => {
           fetch('/api/grader/participants', {
             method: 'POST',
             headers: jsonHeaders,
+            credentials: 'include',
             body: JSON.stringify({ idCalificador: id_Calificador, idGrupo: Number(selectedGroupId) }),
           }),
           fetch('/api/check-already-graded', {
             method: 'POST',
             headers: jsonHeaders,
+            credentials: 'include',
             body: JSON.stringify({
               idCalificador: id_Calificador,
               idBase,

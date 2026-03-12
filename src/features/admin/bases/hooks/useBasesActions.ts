@@ -11,7 +11,7 @@ interface UseBasesActionsProps {
 }
 
 export const useBasesActions = ({ bases, setBases, selectedAssessment }: UseBasesActionsProps) => {
-  const { logout, getAuthHeaders } = useAdminAuth();
+  const { logout } = useAdminAuth();
 
   const [showModal, setShowModal] = useState(false);
   const [editingBase, setEditingBase] = useState<Base | null>(null);
@@ -70,7 +70,7 @@ export const useBasesActions = ({ bases, setBases, selectedAssessment }: UseBase
           '/api/base/update',
           {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               idBase: editingBase.ID_Base,
               nombre: formData.nombre,
@@ -105,7 +105,7 @@ export const useBasesActions = ({ bases, setBases, selectedAssessment }: UseBase
           '/api/base/create',
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               assessmentId: Number(selectedAssessment),
               numeroBase: Number(formData.numeroBase),
@@ -131,7 +131,7 @@ export const useBasesActions = ({ bases, setBases, selectedAssessment }: UseBase
         // Refresh bases
         const refreshResponse = await authFetch(
           `/api/base/list?assessmentId=${selectedAssessment}`,
-          { headers: { ...getAuthHeaders() } },
+          {},
           () => logout()
         );
         if (refreshResponse.ok) {
@@ -158,7 +158,7 @@ export const useBasesActions = ({ bases, setBases, selectedAssessment }: UseBase
         '/api/base/delete',
         {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idBase: baseId }),
         },
         () => logout()

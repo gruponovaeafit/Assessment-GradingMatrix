@@ -8,13 +8,15 @@
     "start": "next start",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "vitest run",
-    "schema:dump": "node scripts/dump-schema.mjs"
+    "schema:dump": "node scripts/dump-schema.mjs",
+    "db:seed": "npx tsx scripts/seed-test-data.ts"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.28.0",
     "@supabase/supabase-js": "^2.93.2",
     "bcryptjs": "^3.0.3",
     "browser-image-compression": "^2.0.2",
+    "cookie": "^1.1.1",
     "csv-stringify": "^6.6.0",
     "dotenv": "^17.3.1",
     "file-saver": "^2.0.5",
@@ -36,6 +38,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/bcryptjs": "^2.4.6",
+    "@types/cookie": "^0.6.0",
     "@types/file-saver": "^2.0.7",
     "@types/formidable": "^3.4.5",
     "@types/jsonwebtoken": "^9.0.10",

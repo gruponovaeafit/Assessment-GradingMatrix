@@ -3,7 +3,7 @@ import { authFetch } from '@/lib/auth/authFetch';
 import { z } from 'zod';
 import { ParticipantDashboardRowSchema, type ParticipantDashboardRow } from '../schemas/gestionSchemas';
 
-export function useGestionData(getAuthHeaders: () => any, logout: () => void) {
+export function useGestionData(logout: () => void) {
   const [data, setData] = useState<ParticipantDashboardRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export function useGestionData(getAuthHeaders: () => any, logout: () => void) {
       const query = assessmentId ? `?assessmentId=${assessmentId}` : "";
       const response = await authFetch(
         `/api/dashboard/gh${query}`,
-        { headers: { ...getAuthHeaders() }, signal: controller.signal },
+        { signal: controller.signal },
         () => logout()
       );
 
@@ -50,7 +50,7 @@ export function useGestionData(getAuthHeaders: () => any, logout: () => void) {
         setLoading(false);
       }
     }
-  }, [getAuthHeaders, logout]);
+  }, [logout]);
 
   useEffect(() => {
     return () => {

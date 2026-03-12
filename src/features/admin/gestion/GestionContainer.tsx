@@ -29,13 +29,13 @@ import { type ParticipantDashboardRow } from "./schemas/gestionSchemas";
 import { showToast } from "@/components/UI/Toast";
 
 export const GestionContainer = () => {
-  const { isAdmin, isLoading: authLoading, logout, getAuthHeaders } = useAdminAuth();
+  const { isAdmin, isLoading: authLoading, logout } = useAdminAuth();
   const router = useRouter();
 
   // Domain Hooks
   const { classificationRanges, updateRanges } = useClassificationRanges();
-  const { assessments, refreshAssessments } = useAssessments(getAuthHeaders, logout);
-  const { data, setData, loading: dataLoading, error: dataError, fetchData } = useGestionData(getAuthHeaders, logout);
+  const { assessments, refreshAssessments } = useAssessments(logout);
+  const { data, setData, loading: dataLoading, error: dataError, fetchData } = useGestionData(logout);
 
   // UI State
   const [selectedAssessment, setSelectedAssessment] = useState<string>("");
@@ -50,7 +50,7 @@ export const GestionContainer = () => {
     handleUpdate,
     openEditModal,
     closeEditModal
-  } = useGestionActions(getAuthHeaders, logout, setData);
+  } = useGestionActions(logout, setData);
 
   // Filtering Hook
   const {

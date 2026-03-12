@@ -4,7 +4,7 @@ import { showToast } from '@/components/UI/Toast';
 import { z } from 'zod';
 import { CalificacionSchema, type Calificacion } from '../schemas/configSchemas';
 
-export function useConfigData(getAuthHeaders: () => any, logout: () => void) {
+export function useConfigData(logout: () => void) {
   const [data, setData] = useState<Calificacion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +26,7 @@ export function useConfigData(getAuthHeaders: () => any, logout: () => void) {
 
       const response = await authFetch(
         url,
-        { headers: { ...getAuthHeaders() }, signal: controller.signal },
+        { signal: controller.signal },
         () => logout()
       );
 
@@ -61,7 +61,7 @@ export function useConfigData(getAuthHeaders: () => any, logout: () => void) {
         fetchAbortRef.current = null;
       }
     }
-  }, [getAuthHeaders, logout]);
+  }, [logout]);
 
   useEffect(() => {
     return () => {

@@ -3,7 +3,7 @@ import { authFetch } from '@/lib/auth/authFetch';
 import { z } from 'zod';
 import { ParticipantSchema, GroupSchema, type Participant, type Group } from '../schemas/configSchemas';
 
-export function useParticipantsAndGroups(getAuthHeaders: () => any, logout: () => void) {
+export function useParticipantsAndGroups(logout: () => void) {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
@@ -20,12 +20,12 @@ export function useParticipantsAndGroups(getAuthHeaders: () => any, logout: () =
       const [participantsRes, groupsRes] = await Promise.all([
         authFetch(
           `/api/participante/list?assessmentId=${assessmentId}`,
-          { headers: { ...getAuthHeaders() } },
+          {},
           () => logout()
         ),
         authFetch(
           `/api/assessment/groups?assessmentId=${assessmentId}`,
-          { headers: { ...getAuthHeaders() } },
+          {},
           () => logout()
         ),
       ]);
@@ -46,7 +46,7 @@ export function useParticipantsAndGroups(getAuthHeaders: () => any, logout: () =
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders, logout]);
+  }, [logout]);
 
   return { participants, groups, loading, loadParticipantsAndGroups };
 }

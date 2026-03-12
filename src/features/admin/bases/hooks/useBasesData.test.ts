@@ -15,11 +15,13 @@ vi.mock('@/components/UI/Toast', () => ({
   }
 }));
 
-const mockPush = vi.fn();
+const { mockPush, mockRouter } = vi.hoisted(() => {
+  const pushFn = vi.fn();
+  return { mockPush: pushFn, mockRouter: { push: pushFn } };
+});
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-  }),
+  useRouter: () => mockRouter,
 }));
 
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -30,18 +32,16 @@ vi.mock('@/hooks/useAdminAuth', () => ({
 
 describe('useBasesData', () => {
   const mockLogout = vi.fn();
-  const mockGetAuthHeaders = vi.fn(() => ({ Authorization: 'Bearer token' }));
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   const setupHook = (isAdmin = true, authLoading = false) => {
-    (useAdminAuth as vi.Mock).mockReturnValue({
+    (useAdminAuth as any).mockReturnValue({
       isAdmin,
       isLoading: authLoading,
       logout: mockLogout,
-      getAuthHeaders: mockGetAuthHeaders,
     });
     
     return renderHook(() => useBasesData());
@@ -61,7 +61,7 @@ describe('useBasesData', () => {
 
   it('should fetch assessments on mount if auth is ready and user is admin', async () => {
     const mockAssessments = [{ id: 1, nombre: 'A1', activo: true }];
-    (authFetch as vi.Mock).mockResolvedValueOnce({
+    (authFetch as any).mockResolvedValueOnce({
       ok: true,
       status: 200,
       json: async () => mockAssessments
@@ -81,7 +81,7 @@ describe('useBasesData', () => {
   });
 
   it('should handle assessment fetch errors gracefully', async () => {
-    (authFetch as vi.Mock).mockResolvedValueOnce({
+    (authFetch as any).mockResolvedValueOnce({
       ok: false,
       status: 500,
       json: async () => ({ error: 'Error' })
@@ -97,7 +97,7 @@ describe('useBasesData', () => {
   });
 
   it('should redirect to login if authFetch returns 401', async () => {
-    (authFetch as vi.Mock).mockResolvedValueOnce({
+    (authFetch as any).mockResolvedValueOnce({
       ok: false,
       status: 401,
       json: async () => ({})
@@ -112,7 +112,7 @@ describe('useBasesData', () => {
 
   it('should fetch bases when an assessment is selected', async () => {
     // Initial fetch for assessments
-    (authFetch as vi.Mock).mockResolvedValueOnce({
+    (authFetch as any).mockResolvedValueOnce({
       ok: true,
       status: 200,
       json: async () => [{ id: 1, nombre: 'A1', activo: true }]
@@ -126,7 +126,7 @@ describe('useBasesData', () => {
     });
 
     const mockBases = [{ ID_Base: 10, Nombre_Base: 'Base 1' }];
-    (authFetch as vi.Mock).mockResolvedValueOnce({
+    (authFetch as any).mockResolvedValueOnce({
       ok: true,
       status: 200,
       json: async () => mockBases

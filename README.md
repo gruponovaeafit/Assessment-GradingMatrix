@@ -37,6 +37,7 @@ Para entender la arquitectura, el dominio y cómo contribuir, consulta los sigui
 3.  **Tests:** `npm test` para ejecutar la suite de pruebas.
 4.  **Variables de Env:** Copia `.env.example` a `.env.local` y completa los valores.
 5.  **Desarrollo:** `npm run dev` abre `http://localhost:3000`.
+6.  **Datos Mock:** (Opcional) `npm run db:seed` genera un assessment y calificadores temporales para poder probar.
 
 ---
 

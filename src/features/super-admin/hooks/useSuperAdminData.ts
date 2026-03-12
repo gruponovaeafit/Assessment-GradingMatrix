@@ -7,7 +7,7 @@ import {
   type AdminUser 
 } from '../schemas/superAdminSchemas';
 
-export function useSuperAdminData(getAuthHeaders: () => any, logout: () => void) {
+export function useSuperAdminData(logout: () => void) {
   const [gruposEstudiantiles, setGruposEstudiantiles] = useState<GrupoEstudiantil[]>([]);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [admins, setAdmins] = useState<AdminUser[]>([]);
@@ -35,7 +35,7 @@ export function useSuperAdminData(getAuthHeaders: () => any, logout: () => void)
     try {
       const response = await authFetch(
         "/api/admin/panel-data",
-        { headers: { ...getAuthHeaders() }, signal: controller.signal },
+        { signal: controller.signal },
         () => logout()
       );
 
@@ -81,7 +81,7 @@ export function useSuperAdminData(getAuthHeaders: () => any, logout: () => void)
         setLoading(false);
       }
     }
-  }, [getAuthHeaders, logout]);
+  }, [logout]);
 
   useEffect(() => {
     return () => {
