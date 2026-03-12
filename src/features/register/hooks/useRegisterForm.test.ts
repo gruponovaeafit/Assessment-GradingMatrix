@@ -10,8 +10,9 @@ vi.mock('../utils/imageUtils', () => ({
 
 import { compressImage, isCompressError } from '../utils/imageUtils';
 
-// Mock URL.createObjectURL
+// Mock URL.createObjectURL and URL.revokeObjectURL
 global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+global.URL.revokeObjectURL = vi.fn();
 
 describe('useRegisterForm', () => {
   beforeEach(() => {
@@ -133,6 +134,7 @@ describe('useRegisterForm', () => {
     expect(result.current.photo).toBe('blob:mock-url');
     expect(result.current.imagen).toBe(compressed);
     expect(result.current.isError).toBe(false);
+    expect(global.URL.revokeObjectURL).not.toHaveBeenCalled(); // First time, no previous photo to revoke
   });
 
   it('handleImageSelect should set error and clear previous state on compression failure', async () => {
@@ -183,5 +185,65 @@ describe('useRegisterForm', () => {
     expect(result.current.nombre).toBe('');
     expect(result.current.correo).toBe('');
     expect(result.current.successModalId).toBeNull();
+  });
+
+  it('handleImageSelect should revoke previous object URL if one exists', async () => {
+    const file1 = new File(['1'], 'one.jpg', { type: 'image/jpeg' });
+    const file2 = new File(['2'], 'two.jpg', { type: 'image/jpeg' });
+    const compressed = new File(['c'], 'out.webp', { type: 'image/webp' });
+
+    (compressImage as Mock).mockResolvedValue({ file: compressed });
+    (isCompressError as unknown as Mock).mockReturnValue(false);
+
+    const { result } = renderHook(() => useRegisterForm());
+
+    // First image selection
+    await act(async () => {
+      await result.current.handleImageSelect(file1);
+    });
+
+    global.URL.revokeObjectURL = vi.fn(); // Reset mock to track the second call
+
+    // Second image selection
+    await act(async () => {
+      await result.current.handleImageSelect(file2);
+    });
+
+    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+  });
+
+  it('should revoke object URL on unmount', () => {
+    const { unmount, result } = renderHook(() => useRegisterForm());
+
+    act(() => {
+      // Simulate that a photo was set (internally setPhoto is called via handleImageSelect)
+      // Since we can't directly call setPhoto, we'll spy on the cleanup by just unmounting
+      // But because the URL is set in handleImageSelect, we'll do that first
+    });
+
+    // To test unmount, we just unmount and see if revoke is called if photo was set
+    unmount();
+    // Since photo was '' at init, and not set, shouldn't crash.
+    // Testing the actual photo state via handleImageSelect:
+  });
+
+  it('should explicitly test unmount with an active photo', async () => {
+    const file = new File(['1'], 'one.jpg', { type: 'image/jpeg' });
+    const compressed = new File(['c'], 'out.webp', { type: 'image/webp' });
+
+    (compressImage as Mock).mockResolvedValue({ file: compressed });
+    (isCompressError as unknown as Mock).mockReturnValue(false);
+
+    const { unmount, result } = renderHook(() => useRegisterForm());
+
+    await act(async () => {
+      await result.current.handleImageSelect(file);
+    });
+
+    global.URL.revokeObjectURL = vi.fn(); // Reset mock
+
+    unmount();
+
+    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
   });
 });

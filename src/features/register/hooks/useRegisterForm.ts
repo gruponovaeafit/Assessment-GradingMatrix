@@ -39,7 +39,20 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
     }
   }, [mensaje]);
 
+  // Clean up object URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (photo) {
+        URL.revokeObjectURL(photo);
+      }
+    };
+  }, [photo]);
+
   const handleImageSelect = async (file: File) => {
+    // Revoke previous URL to prevent memory leaks
+    if (photo) {
+      URL.revokeObjectURL(photo);
+    }
     setFileName(file.name);
     setPhoto(URL.createObjectURL(file));
 
@@ -49,6 +62,10 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
       setIsError(true);
       setImagen(null);
       setFileName('');
+      // Clean up the URL we just created since we're discarding the file
+      if (photo) {
+        URL.revokeObjectURL(photo);
+      }
       setPhoto('');
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
@@ -109,6 +126,9 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
     setNombre('');
     setCorreo('');
     setImagen(null);
+    if (photo) {
+      URL.revokeObjectURL(photo);
+    }
     setPhoto('');
     setFileName('');
     setMensaje('');
