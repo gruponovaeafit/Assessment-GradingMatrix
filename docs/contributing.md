@@ -33,6 +33,20 @@ Antes de abrir un Pull Request, asegúrate de cumplir con:
 
 ---
 
+## Descripción del Pull Request
+
+Todos los PRs deben incluir la siguiente estructura en su descripción. GitHub la pre-llena automáticamente con la plantilla en `.github/PULL_REQUEST_TEMPLATE.md`.
+
+| Sección | Descripción |
+|---------|-------------|
+| **Related work item** | `Closes #N` para cerrar el issue automáticamente al hacer merge, o `Relates to #N` si solo está relacionado. |
+| **Summary** | 1–3 líneas describiendo qué cambió. |
+| **Context** | Por qué fue necesario el cambio. Enlaza ADRs, issues o discusiones si es relevante. |
+| **Testing** | Qué probaste localmente o en CI. Incluye comandos, capturas o logs. |
+| **Impact** | Cambios breaking, migraciones, capturas de pantalla o notas para el revisor. Omitir si no aplica. |
+
+---
+
 ## Cómo Verificar tu Trabajo
 
 ### Backend (APIs)
