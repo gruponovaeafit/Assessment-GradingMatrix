@@ -3,7 +3,7 @@ import { authFetch } from '@/lib/auth/authFetch';
 import { z } from 'zod';
 import { BaseSchema, type Base } from '../schemas/configSchemas';
 
-export function useBases(getAuthHeaders: () => any, logout: () => void) {
+export function useBases(logout: () => void) {
   const [basesList, setBasesList] = useState<Base[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +17,7 @@ export function useBases(getAuthHeaders: () => any, logout: () => void) {
     try {
       const res = await authFetch(
         `/api/base/list?assessmentId=${assessmentId}`,
-        { headers: { ...getAuthHeaders() } },
+        {},
         () => logout()
       );
 
@@ -34,7 +34,7 @@ export function useBases(getAuthHeaders: () => any, logout: () => void) {
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders, logout]);
+  }, [logout]);
 
   return { basesList, loading, loadBases };
 }

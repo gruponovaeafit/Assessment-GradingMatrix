@@ -10,7 +10,6 @@ import {
 import { getBulkAssessmentPayloads, getBulkAdminPayloads } from '../utils/superAdminUtils';
 
 export function useSuperAdminActions(
-  getAuthHeaders: () => any,
   logout: () => void,
   gruposEstudiantiles: GrupoEstudiantil[],
   assessments: Assessment[],
@@ -39,7 +38,7 @@ export function useSuperAdminActions(
         "/api/assessment/bulk-create",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             grupoIds: payloads.map((item) => item.grupoEstudiantilId),
             activo: assessmentActivo,
@@ -94,7 +93,7 @@ export function useSuperAdminActions(
         "/api/staff/bulk-create-admins",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ assessmentIds: payloads.map((item) => item.assessment.id) }),
         },
         () => logout()
@@ -145,7 +144,7 @@ export function useSuperAdminActions(
         "/api/assessment/update",
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: assessmentId,
             descripcion: edit.descripcion,
@@ -183,7 +182,7 @@ export function useSuperAdminActions(
         "/api/staff/update",
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: adminId,
             correo: edit.correo,

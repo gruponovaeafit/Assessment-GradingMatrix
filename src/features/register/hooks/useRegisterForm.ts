@@ -49,12 +49,9 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
   }, [photo]);
 
   const handleImageSelect = async (file: File) => {
-    // Revoke previous URL to prevent memory leaks
-    if (photo) {
-      URL.revokeObjectURL(photo);
-    }
+    const tempUrl = URL.createObjectURL(file);
     setFileName(file.name);
-    setPhoto(URL.createObjectURL(file));
+    setPhoto(tempUrl);
 
     const result = await compressImage(file);
     if (isCompressError(result)) {
@@ -62,11 +59,8 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
       setIsError(true);
       setImagen(null);
       setFileName('');
-      // Clean up the URL we just created since we're discarding the file
-      if (photo) {
-        URL.revokeObjectURL(photo);
-      }
       setPhoto('');
+      URL.revokeObjectURL(tempUrl);
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
@@ -95,11 +89,9 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
         formData.append('image', imagen);
       }
 
-      const token = localStorage.getItem('authToken');
-
       const response = await fetch('/api/register', {
         method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        credentials: 'include',
         body: formData,
       });
 
@@ -126,9 +118,6 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
     setNombre('');
     setCorreo('');
     setImagen(null);
-    if (photo) {
-      URL.revokeObjectURL(photo);
-    }
     setPhoto('');
     setFileName('');
     setMensaje('');

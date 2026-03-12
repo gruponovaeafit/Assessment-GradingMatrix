@@ -28,6 +28,7 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -37,26 +38,16 @@ export default function Login() {
 
       const data = await response.json();
       
-      // Guardar token si viene en la respuesta
-      if (data.token) {
-        localStorage.setItem("authToken", data.token);
-      }
-
-      if (data.role) {
-        localStorage.setItem("authRole", data.role);
-      }
-      
       if (data.role === "admin") {
         const isSuper = Boolean(data.superAdmin);
-        loginAsAdmin(data.token, isSuper);
+        loginAsAdmin(isSuper);
         router.push(isSuper ? "/k7v9x2q0m5p8n1t6z3r4w9y1" : "/admin");
       } else if (data.role === "registrador") {
         router.push("/register");
       } else if (data.role === "calificador") {
-        // Save grader-specific data
+        // Save grader-specific data (operational, not sensitive)
         saveData(data.ID_Grupo, data.ID_Calificador, data.ID_Base);
-        // Login as grader (this sets the graderAuth in localStorage)
-        loginAsGrader(data.token);
+        loginAsGrader();
         router.push(`/grader`);
       } else {
         router.push("/dashboard");

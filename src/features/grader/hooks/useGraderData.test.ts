@@ -33,7 +33,6 @@ describe('useGraderData', () => {
 
     it('should fetch initial data successfully on mount', async () => {
         localStorage.setItem('storedData', JSON.stringify({ id_Calificador: 1, id_base: 10 }));
-        localStorage.setItem('authToken', 'fake_token');
 
         const mockGroups = [{ id: 100, nombre: 'Group A' }];
         const mockBase = { id: 10, nombre: 'Base 1' };

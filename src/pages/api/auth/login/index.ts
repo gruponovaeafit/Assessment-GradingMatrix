@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { comparePassword, generateToken, hashPassword } from '@/lib/auth';
+import { setSessionCookie } from '@/lib/auth/cookie';
 
 // API de login
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -31,10 +32,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (isAdminPasswordValid) {
       const token = generateToken({ id: 0, email: adminEmail, role: 'admin' });
+      setSessionCookie(res, token, 'admin');
       return res.status(200).json({
         role: 'admin',
         superAdmin: true,
-        token,
         message: 'Login exitoso',
       });
     }
@@ -95,6 +96,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       role,
     });
 
+    setSessionCookie(res, token, role);
+
     await supabase
       .from('Staff')
       .update({ Active: true })
@@ -106,7 +109,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ID_Grupo: null,
       ID_Base: staff.ID_Base,
       ID_Calificador: staff.ID_Staff,
-      token,
       message: 'Login exitoso',
     });
   } catch (error) {

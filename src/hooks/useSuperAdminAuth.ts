@@ -2,13 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 const ADMIN_KEY = "adminAuth";
-const TOKEN_KEY = "authToken";
 
 interface AdminAuth {
   isAdmin: boolean;
   isSuperAdmin?: boolean;
   timestamp: number;
-  token?: string;
 }
 
 const SESSION_DURATION = 8 * 60 * 60 * 1000;
@@ -20,32 +18,44 @@ const SESSION_DURATION = 8 * 60 * 60 * 1000;
 export const useSuperAdminAuth = () => {
   const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null); // null = loading
   const [isLoading, setIsLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
+      // Check local state first (for superAdmin flag)
       const savedAuth = localStorage.getItem(ADMIN_KEY);
-      const savedToken = localStorage.getItem(TOKEN_KEY);
 
       if (savedAuth) {
         try {
           const authData: AdminAuth = JSON.parse(savedAuth);
           const now = Date.now();
 
-          // Only valid if isAdmin is true AND isSuperAdmin is true AND not expired
           if (authData.isAdmin && authData.isSuperAdmin && (now - authData.timestamp < SESSION_DURATION)) {
             setIsSuperAdmin(true);
-            setToken(savedToken);
-          } else {
-            setIsSuperAdmin(false);
-            setToken(null);
+            setIsLoading(false);
+            return;
           }
         } catch (e) {
           console.error("Failed to parse adminAuth", e);
+        }
+      }
+
+      // Validate session via cookie
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          // /api/auth/me returns role=admin, but we need localStorage for isSuperAdmin flag
+          if (data.role === "admin" && savedAuth) {
+            const authData: AdminAuth = JSON.parse(savedAuth);
+            setIsSuperAdmin(Boolean(authData.isSuperAdmin));
+          } else {
+            setIsSuperAdmin(false);
+          }
+        } else {
           setIsSuperAdmin(false);
         }
-      } else {
+      } catch {
         setIsSuperAdmin(false);
       }
       setIsLoading(false);
@@ -54,20 +64,19 @@ export const useSuperAdminAuth = () => {
     checkAuth();
   }, []);
 
-  const logout = useCallback(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY);
-    if (storedToken) {
-      fetch("/api/auth/logout", {
+  const logout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", {
         method: "POST",
-        headers: { Authorization: `Bearer ${storedToken}` },
-      }).catch(() => {});
+        credentials: "include",
+      });
+    } catch {
+      // No-op
     }
     localStorage.removeItem(ADMIN_KEY);
-    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem("storedData");
     localStorage.removeItem("authRole");
     setIsSuperAdmin(false);
-    setToken(null);
     router.push("/auth/login");
   }, [router]);
 
@@ -77,17 +86,10 @@ export const useSuperAdminAuth = () => {
     }
   }, [isLoading, isSuperAdmin, router]);
 
-  const getAuthHeaders = useCallback((): HeadersInit => {
-    const activeToken = token || (typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null);
-    return activeToken ? { Authorization: `Bearer ${activeToken}` } : {};
-  }, [token]);
-
   return {
     isSuperAdmin,
     isLoading,
-    token,
     logout,
     requireSuperAdmin,
-    getAuthHeaders,
   };
 };

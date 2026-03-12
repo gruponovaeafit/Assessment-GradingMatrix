@@ -3,7 +3,7 @@ import { authFetch } from '@/lib/auth/authFetch';
 import { z } from 'zod';
 import { AssessmentSchema, type Assessment } from '../schemas/configSchemas';
 
-export function useAssessments(getAuthHeaders: () => any, logout: () => void) {
+export function useAssessments(logout: () => void) {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -12,7 +12,7 @@ export function useAssessments(getAuthHeaders: () => any, logout: () => void) {
     try {
       const response = await authFetch(
         '/api/assessment/list',
-        { headers: { ...getAuthHeaders() } },
+        {},
         () => logout()
       );
       if (!response.ok) throw new Error('Error al cargar assessments');
@@ -30,7 +30,7 @@ export function useAssessments(getAuthHeaders: () => any, logout: () => void) {
     } finally {
       setLoading(false);
     }
-  }, [getAuthHeaders, logout]);
+  }, [logout]);
 
   return { assessments, loading, refreshAssessments };
 }

@@ -30,15 +30,14 @@ export const ConfigContainer = () => {
     isSuperAdmin,
     isLoading: authLoading,
     logout,
-    getAuthHeaders,
   } = useAdminAuth();
   const router = useRouter();
 
   // Domain Hooks
-  const { data, setData, loading: dataLoading, error: dataError, fetchData } = useConfigData(getAuthHeaders, logout);
-  const { assessments, refreshAssessments } = useAssessments(getAuthHeaders, logout);
-  const { participants, groups, loadParticipantsAndGroups } = useParticipantsAndGroups(getAuthHeaders, logout);
-  const { basesList, loadBases } = useBases(getAuthHeaders, logout);
+  const { data, setData, loading: dataLoading, error: dataError, fetchData } = useConfigData(logout);
+  const { assessments, refreshAssessments } = useAssessments(logout);
+  const { participants, groups, loadParticipantsAndGroups } = useParticipantsAndGroups(logout);
+  const { basesList, loadBases } = useBases(logout);
 
   // UI State
   const [editModal, setEditModal] = useState<Calificacion | null>(null);
@@ -169,7 +168,7 @@ export const ConfigContainer = () => {
       '/api/update-person',
       {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       },
       () => logout()
@@ -198,7 +197,7 @@ export const ConfigContainer = () => {
         '/api/assessment/toggle-active',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ assessmentId, activo: !activo }),
         },
         () => logout()
@@ -234,7 +233,7 @@ export const ConfigContainer = () => {
         '/api/staff/create',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             assessmentId: Number(staffAssessmentId),
             correo: staffCorreo.trim(),
@@ -274,7 +273,7 @@ export const ConfigContainer = () => {
         '/api/participante/assign-group',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             assessmentId: Number(configAssessmentId),
             participanteId: Number(selectedParticipant),
@@ -315,7 +314,7 @@ export const ConfigContainer = () => {
         '/api/assessment/auto-groups',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             assessmentId: Number(configAssessmentId),
             numGroups,
@@ -351,7 +350,7 @@ export const ConfigContainer = () => {
         '/api/assessment/create',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             grupoEstudiantilId: Number(grupoEstudiantilId),
             nombre: assessmentNombre.trim(),

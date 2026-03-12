@@ -21,7 +21,7 @@ import { Pagination } from "@/features/admin/gestion/components/Pagination"; // 
 import { handleExportAdminsCSV } from "./utils/superAdminUtils";
 
 export const SuperAdminContainer = () => {
-  const { isSuperAdmin, isLoading: authLoading, logout, getAuthHeaders, requireSuperAdmin } = useSuperAdminAuth();
+  const { isSuperAdmin, isLoading: authLoading, logout, requireSuperAdmin } = useSuperAdminAuth();
   
   // Data Hook
   const {
@@ -37,7 +37,7 @@ export const SuperAdminContainer = () => {
     loading: dataLoading,
     error: dataError,
     fetchData
-  } = useSuperAdminData(getAuthHeaders, logout);
+  } = useSuperAdminData(logout);
 
   // Filters Hook
   const {
@@ -71,7 +71,6 @@ export const SuperAdminContainer = () => {
     handleUpdateAssessment,
     handleUpdateAdmin
   } = useSuperAdminActions(
-    getAuthHeaders, 
     logout, 
     gruposEstudiantiles, 
     assessments, 

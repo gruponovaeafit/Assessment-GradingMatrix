@@ -46,13 +46,12 @@ export const useGraderActions = (
       if (!id_calificador || !id_base) return;
 
       try {
-        const authToken = localStorage.getItem("authToken");
-        const authHeaders: HeadersInit = authToken ? { Authorization: `Bearer ${authToken}` } : {};
-        const jsonHeaders: HeadersInit = { 'Content-Type': 'application/json', ...authHeaders };
+        const jsonHeaders: HeadersInit = { 'Content-Type': 'application/json' };
 
         const response = await fetch('/api/get-calificaciones-by-calificador', {
           method: 'POST',
           headers: jsonHeaders,
+          credentials: 'include',
           body: JSON.stringify({ idCalificador: id_calificador, idBase: id_base }),
         });
 
@@ -160,13 +159,12 @@ export const useGraderActions = (
     });
 
     try {
-      const authToken = localStorage.getItem("authToken");
-      const authHeaders: HeadersInit = authToken ? { Authorization: `Bearer ${authToken}` } : {};
-      const jsonHeaders: HeadersInit = { 'Content-Type': 'application/json', ...authHeaders };
+      const jsonHeaders: HeadersInit = { 'Content-Type': 'application/json' };
 
       const response = await fetch('/api/add-calificaciones', {
         method: 'POST',
         headers: jsonHeaders,
+        credentials: 'include',
         body: JSON.stringify({
           calificaciones: payload,
           idGrupo: selectedGroupId ? Number(selectedGroupId) : undefined,

@@ -23,7 +23,6 @@ vi.mock('@/hooks/useAdminAuth', () => ({
 
 describe('useBasesActions', () => {
   const mockLogout = vi.fn();
-  const mockGetAuthHeaders = vi.fn(() => ({ Authorization: 'Bearer token' }));
   const mockSetBases = vi.fn();
 
   const mockBases: Base[] = [
@@ -44,7 +43,6 @@ describe('useBasesActions', () => {
     vi.clearAllMocks();
     (useAdminAuth as vi.Mock).mockReturnValue({
       logout: mockLogout,
-      getAuthHeaders: mockGetAuthHeaders,
     });
     
     // Auto-mock window.confirm

@@ -6,7 +6,7 @@ import { showToast } from '@/components/UI/Toast';
 import { type Assessment, type Base } from '../schemas/basesSchemas';
 
 export const useBasesData = () => {
-  const { isAdmin, isLoading: authLoading, logout, getAuthHeaders } = useAdminAuth();
+  const { isAdmin, isLoading: authLoading, logout } = useAdminAuth();
   const router = useRouter();
   
   const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -22,7 +22,7 @@ export const useBasesData = () => {
       try {
         const response = await authFetch(
           '/api/assessment/list',
-          { headers: { ...getAuthHeaders() } },
+          {},
           () => logout()
         );
 
@@ -41,7 +41,7 @@ export const useBasesData = () => {
     };
 
     fetchAssessments();
-  }, [authLoading, isAdmin, router, getAuthHeaders, logout]);
+  }, [authLoading, isAdmin, router, logout]);
 
   // Load bases when selected assessment changes
   useEffect(() => {
@@ -56,7 +56,7 @@ export const useBasesData = () => {
       try {
         const response = await authFetch(
           `/api/base/list?assessmentId=${selectedAssessment}`,
-          { headers: { ...getAuthHeaders() } },
+          {},
           () => logout()
         );
 
@@ -77,7 +77,7 @@ export const useBasesData = () => {
     };
 
     fetchBases();
-  }, [selectedAssessment, authLoading, isAdmin, router, getAuthHeaders, logout]);
+  }, [selectedAssessment, authLoading, isAdmin, router, logout]);
 
   return {
     assessments,
