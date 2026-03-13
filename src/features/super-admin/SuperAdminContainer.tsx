@@ -21,7 +21,7 @@ import { Pagination } from "@/features/admin/gestion/components/Pagination"; // 
 import { handleExportAdminsCSV } from "./utils/superAdminUtils";
 
 export const SuperAdminContainer = () => {
-  const { isSuperAdmin, isLoading: authLoading, logout, requireSuperAdmin } = useSuperAdminAuth();
+  const { isSuperAdmin, isLoading: authLoading, logout } = useSuperAdminAuth();
   
   // Data Hook
   const {
@@ -83,9 +83,7 @@ export const SuperAdminContainer = () => {
 
   const [assessmentActivo, setAssessmentActivo] = useState(true);
 
-  useEffect(() => {
-    requireSuperAdmin();
-  }, [requireSuperAdmin]);
+
 
   useEffect(() => {
     if (authLoading || !isSuperAdmin) return;

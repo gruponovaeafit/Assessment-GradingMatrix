@@ -12,7 +12,7 @@ import { BaseInfoPopup } from './BaseInfoPopup';
 import { GraderCarousel } from './GraderCarousel';
 
 export const GraderContainer: React.FC = () => {
-  const { isGrader, isLoading: authLoading, requireGrader } = useGraderAuth();
+  const { isGrader, isLoading: authLoading } = useGraderAuth();
   const { confirm, setIsLoading, ConfirmModalComponent } = useConfirmModal();
 
   // Data hook
@@ -57,9 +57,7 @@ export const GraderContainer: React.FC = () => {
 
   const [showBaseInfoPopup, setShowBaseInfoPopup] = useState(false);
 
-  useEffect(() => {
-    requireGrader();
-  }, [requireGrader]);
+
 
   if (loading || authLoading) {
     return (

@@ -91,26 +91,11 @@ export const useAdminAuth = () => {
     router.push("/auth/login");
   }, [router]);
 
-  // Route protection
-  const requireAdmin = useCallback(() => {
-    if (!isLoading && !isAdmin) {
-      router.push("/auth/login");
-    }
-  }, [isAdmin, isLoading, router]);
-
-  const requireSuperAdmin = useCallback(() => {
-    if (!isLoading && !isSuperAdmin) {
-      router.push("/auth/login");
-    }
-  }, [isLoading, isSuperAdmin, router]);
-
   return {
     isAdmin,
     isSuperAdmin,
     isLoading,
     loginAsAdmin,
     logout,
-    requireAdmin,
-    requireSuperAdmin,
   };
 };

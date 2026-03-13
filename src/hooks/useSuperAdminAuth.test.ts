@@ -73,19 +73,8 @@ describe('useSuperAdminAuth', () => {
     });
   });
 
-  it('requireSuperAdmin should redirect if not authorized', async () => {
-    const { result } = renderHook(() => useSuperAdminAuth());
-    
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
 
-    act(() => {
-      result.current.requireSuperAdmin();
-    });
 
-    expect(mockPush).toHaveBeenCalledWith('/auth/login');
-  });
 
   it('logout should clear storage and redirect', async () => {
     localStorage.setItem('adminAuth', JSON.stringify({ isAdmin: true, isSuperAdmin: true, timestamp: Date.now() }));

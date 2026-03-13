@@ -1,16 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-
 import { Spinner } from "@/components/UI/Loading";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { isAdmin, isLoading: authLoading, requireAdmin } = useAdminAuth();
-
-  useEffect(() => {
-    requireAdmin();
-  }, [requireAdmin]);
+  const { isAdmin, isLoading: authLoading } = useAdminAuth();
 
   if (authLoading || !isAdmin) {
     return (

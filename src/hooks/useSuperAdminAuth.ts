@@ -80,16 +80,9 @@ export const useSuperAdminAuth = () => {
     router.push("/auth/login");
   }, [router]);
 
-  const requireSuperAdmin = useCallback(() => {
-    if (!isLoading && !isSuperAdmin) {
-      router.push("/auth/login");
-    }
-  }, [isLoading, isSuperAdmin, router]);
-
   return {
     isSuperAdmin,
     isLoading,
     logout,
-    requireSuperAdmin,
   };
 };

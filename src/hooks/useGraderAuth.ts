@@ -76,12 +76,5 @@ export const useGraderAuth = () => {
     router.push("/auth/login");
   };
 
-  // Route protection
-  const requireGrader = () => {
-    if (!isLoading && !isGrader) {
-      router.push("/auth/login");
-    }
-  };
-
-  return { isGrader, isLoading, loginAsGrader, logout, requireGrader };
+  return { isGrader, isLoading, loginAsGrader, logout };
 };

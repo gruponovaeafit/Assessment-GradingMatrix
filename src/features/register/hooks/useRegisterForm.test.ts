@@ -19,6 +19,8 @@ describe('useRegisterForm', () => {
     vi.clearAllMocks();
     localStorage.clear();
     global.fetch = vi.fn();
+    global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+    global.URL.revokeObjectURL = vi.fn();
   });
 
   it('should initialize with empty state', () => {
@@ -195,6 +197,11 @@ describe('useRegisterForm', () => {
     (compressImage as Mock).mockResolvedValue({ file: compressed });
     (isCompressError as unknown as Mock).mockReturnValue(false);
 
+    // Return distinct URLs so the `photo` state actually changes between selections
+    let callCount = 0;
+    global.URL.createObjectURL = vi.fn(() => `blob:mock-url-${++callCount}`);
+    global.URL.revokeObjectURL = vi.fn();
+
     const { result } = renderHook(() => useRegisterForm());
 
     // First image selection
@@ -202,14 +209,13 @@ describe('useRegisterForm', () => {
       await result.current.handleImageSelect(file1);
     });
 
-    global.URL.revokeObjectURL = vi.fn(); // Reset mock to track the second call
-
-    // Second image selection
+    // Second image selection — the useEffect cleanup should revoke the first URL
     await act(async () => {
       await result.current.handleImageSelect(file2);
     });
 
-    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+    // The useEffect cleanup for `photo` revokes the previous URL when photo changes
+    expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url-1');
   });
 
   it('should revoke object URL on unmount', () => {

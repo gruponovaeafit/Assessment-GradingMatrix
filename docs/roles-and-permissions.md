@@ -57,8 +57,8 @@ El sistema usa requireRoles(req, res, [roles]) para proteger los handlers.
 
 ## Mecanismos de Seguridad
 
-1. Client-Side Guards: Componentes como useAdminAuth verifican el rol en el cliente para redirecciones rápidas.
-2. Server-Side Validation: Obligatoria. El middleware y los handlers de API deben verificar el JWT. No confíes solo en la ocultación de elementos en el frontend.
+1. **Middleware (`src/proxy.ts`):** Intercepta todas las peticiones a rutas protegidas (`/admin/*`, `/grader`, `/register`, Panel Superadmin) y valida la cookie `session` (JWT) usando `jose` en Edge Runtime. Si no es válida o el rol no tiene acceso, redirige a `/auth/login`.
+2. Server-Side Validation: Obligatoria. Los handlers de API deben verificar el JWT vía `requireRoles()`. No confíes solo en middleware para APIs.
 3. Supabase RLS: Las tablas tienen políticas de PostgreSQL que restringen qué filas puede ver un ID_Staff según su rol. Consulta src/db/rls-policies.sql.
 
 ---
