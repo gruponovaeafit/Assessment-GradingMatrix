@@ -30,7 +30,131 @@ Este documento define los contratos de comunicación entre el frontend y el back
    - Interno: endpoint operativo, administrativo o de mantenimiento.
    - Legacy / compatibilidad: endpoint antiguo o de transición, conservado por integración existente.
 
----
+
+
+6. Resolución y validación de `assessmentId`
+
+    Como parte del requerimiento **[REQ] Eliminar fallback `getDefaultAssessmentId` y requerir `assessmentId` explícito (#58)**, se implementó una capa centralizada para la **resolución y validación de `assessmentId`** en:
+
+    `src/lib/assessment.ts`
+
+    El objetivo es asegurar que **todos los flujos del sistema utilicen un `assessmentId` explícito y válido**, eliminando cualquier inferencia o valor por defecto.
+
+    ---
+
+    #### Resumen de cambios
+    - `assessmentId` es obligatorio en todos los endpoints y vistas que operan sobre un assessment específico.
+    - No se infiere más el `assessmentId` en runtime ni en backend ni en frontend.
+    - Los endpoints retornan 400 si `assessmentId` falta o es inválido.
+    - El frontend siempre debe enviar `assessmentId` en los flujos afectados.
+    - Se mantiene la consistencia de contrato de error (`{ error: string }`) y códigos HTTP.
+    - Se eliminaron las funciones y rutas relacionadas con `getDefaultAssessmentId`.
+
+    #### Endpoints afectados
+    - `/api/register`
+    - `/api/update-person` (obtiene el assessmentId de la persona por medio de la funcion getAssessmentIdForParticipant)
+    - `/api/dashboard/config`
+    - `/api/dashboard/gh`
+    - `/api/groups/index`
+    - `/api/users/index`
+    - `/api/db` (ya no requiere `assessmentId` para verificación de conexión)
+    - Vistas cliente: `src/app/admin/**`, `page.tsx`, y relacionadas
+
+    #### Ejemplo de contrato actualizado
+    **Antes (legacy, no recomendado):**
+    ```
+    GET /api/dashboard/config
+    // Si no se enviaba assessmentId, se usaba uno por defecto (legacy)
+    ```
+
+    **Ahora (obligatorio):**
+    ```
+    GET /api/dashboard/config?assessmentId=6
+    // assessmentId es obligatorio. Si falta o es inválido, retorna 400.
+    ```
+
+    **Ejemplo de error:**
+    ```json
+    {
+      "error": "assessmentId is required"
+    }
+    ```
+
+    #### Notas de migración
+    - No existe fallback: Si el frontend no envía `assessmentId`, la operación falla explícitamente.
+    - Compatibilidad: Flujos legacy que no envíen `assessmentId` dejarán de funcionar hasta ser actualizados.
+    - Recomendación: Actualiza cualquier integración, script o cliente que consuma estos endpoints para enviar `assessmentId` de forma explícita.
+
+    > **Referencia:** Ver [ADR 0004: Determinismo en API: assessmentId Explícito](../decisions/0004-explicit-assessment-id.md) para el razonamiento y contexto completo de esta decisión.
+
+    ---
+
+    ### Funciones principales
+
+    #### `resolveAssessmentId(data: string | string[] | undefined)`
+    Valida y resuelve el `assessmentId` recibido desde diferentes fuentes de la API (query params, body, etc.).
+
+    **Validaciones realizadas:**
+    - El parámetro no puede faltar
+    - No puede ser un array
+    - Debe ser un entero positivo
+    - Debe existir en la base de datos
+
+    **Comportamiento:**
+    Si alguna validación falla, retorna un error estructurado junto con el status HTTP correspondiente.
+
+    | Caso                          | Status             |
+    |-------------------------------|--------------------|
+    | Parámetro faltante o inválido  | 400 Bad Request    |
+    | `assessmentId` inexistente    | 404 Not Found      |
+
+    **Contrato de error:**
+    ```json
+    {
+      "error": "Descripción del error"
+    }
+    ```
+
+    **Ejemplo de uso en endpoints:**
+    ```ts
+    const result = await resolveAssessmentId(req.query.assessmentId);
+    if ('error' in result) return res.status(result.status).json({ error: result.error });
+    const assessmentId = result.id;
+    ```
+
+    ---
+
+    #### `getAssessmentIdForStaff(staffId: number)`
+    Obtiene el `assessmentId` asociado a un staff específico.
+
+    - Si existe: `{ id: number }`
+    - Si no existe: `{ error: string, status: number }`
+
+    ---
+
+    #### `getAssessmentIdForParticipant(participantId: number)`
+    Obtiene el `assessmentId` asociado a un participante específico.
+
+    - Si existe: `{ id: number }`
+    - Si no existe: `{ error: string, status: number }`
+
+    ---
+
+    #### Notas de diseño
+    - Estas funciones reemplazan cualquier inferencia o fallback previo (`getDefaultAssessmentId`).
+    - Se garantiza un contrato de error consistente en toda la API: `{ "error": "mensaje" }` y status HTTP adecuado.
+    - El `assessmentId` debe ser siempre explícito y válido en todos los flujos API y UI.
+
+    #### Impacto en la arquitectura
+    - Se elimina completamente el fallback automático de assessmentId.
+    - Se fuerza a que todos los endpoints y componentes envíen el assessmentId explícitamente.
+    - Se centraliza la validación para evitar duplicación de lógica y errores inconsistentes.
+
+    Esto asegura el cumplimiento del requerimiento:
+
+    **[REQ] Eliminar fallback getDefaultAssessmentId y requerir assessmentId explícito (#58).**
+
+    ---
 
 ## Autenticación
 
@@ -787,7 +911,6 @@ Endpoint de verificación de conexión con Supabase.
 - Auth: admin
 - Uso esperado: GET
 - Notas
-  - Usa el assessment por defecto para verificar conectividad.
   - El handler actual no valida método explícitamente.
 - Respuesta (200 OK)
   ```json
