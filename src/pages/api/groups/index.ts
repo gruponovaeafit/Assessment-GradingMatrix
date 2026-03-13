@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
-import { getDefaultAssessmentId } from '@/lib/assessment';
+import { resolveAssessmentId } from '@/lib/assessment';
 import { requireRoles } from '@/lib/auth/apiAuth';
 
 // API para subir la distribución de los grupos
@@ -11,14 +11,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!requireRoles(req, res, ['admin'])) return;
 
-  const { groups } = req.body;
+  const { groups, assessmentId: bodyAssessmentId } = req.body;
+  const { assessmentId: queryAssessmentId } = req.query;
 
   if (!groups || !Array.isArray(groups)) {
     return res.status(400).json({ error: 'Datos de grupos inválidos' });
   }
 
   try {
-    const assessmentId = await getDefaultAssessmentId();
+    const assessmentResult = await resolveAssessmentId(bodyAssessmentId || queryAssessmentId);
+    if ('error' in assessmentResult) {
+      return res.status(assessmentResult.status).json({ error: assessmentResult.error });
+    }
+    const assessmentId = assessmentResult.id;
     const groupNames = groups.map((_: unknown, index: number) => `Grupo${index + 1}`);
 
     const { data: existingGroups, error: existingError } = await supabase

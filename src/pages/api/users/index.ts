@@ -1,13 +1,21 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
-import { getDefaultAssessmentId } from '@/lib/assessment';
+import { resolveAssessmentId } from '@/lib/assessment';
 import { requireRoles } from '@/lib/auth/apiAuth';
 
 // API para manejar GET y POST
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!requireRoles(req, res, ['admin'])) return;
-    const assessmentId = await getDefaultAssessmentId();
+    
+    const { assessmentId: queryAssessmentId } = req.query;
+    const { assessmentId: bodyAssessmentId } = req.body;
+    
+    const assessmentResult = await resolveAssessmentId(queryAssessmentId || bodyAssessmentId);
+    if ('error' in assessmentResult) {
+      return res.status(assessmentResult.status).json({ error: assessmentResult.error });
+    }
+    const assessmentId = assessmentResult.id;
 
     if (req.method === 'GET') {
       const { data, error } = await supabase
