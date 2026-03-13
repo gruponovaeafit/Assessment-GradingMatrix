@@ -1,7 +1,7 @@
 // pages/api/dashboard/config.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from '@/lib/supabase/server';
-import { getDefaultAssessmentId } from "@/lib/assessment";
+import { supabase } from "@/lib/supabase/server";
+import { resolveAssessmentId } from "@/lib/assessment";
 import { requireRoles } from "@/lib/auth/apiAuth";
 import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 
@@ -9,14 +9,12 @@ import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!requireRoles(req, res, ["admin"])) return;
-    const rawAssessmentId = Array.isArray(req.query.assessmentId)
-      ? req.query.assessmentId[0]
-      : req.query.assessmentId;
-    const parsedAssessmentId = rawAssessmentId ? Number(rawAssessmentId) : null;
-    if (parsedAssessmentId !== null && !Number.isFinite(parsedAssessmentId)) {
-      return res.status(400).json({ error: "assessmentId inválido" });
+    
+    const assessmentResult = await resolveAssessmentId(req.query.assessmentId);
+    if ('error' in assessmentResult) {
+      return res.status(assessmentResult.status).json({ error: assessmentResult.error });
     }
-    const assessmentId = parsedAssessmentId ?? await getDefaultAssessmentId();
+    const assessmentId = assessmentResult.id;
 
     const { data: assessment, error: assessmentError } = await supabase
     .from('Assessment')

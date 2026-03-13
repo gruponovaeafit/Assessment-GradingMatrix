@@ -1,19 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from '@/lib/supabase/server';
-import { getDefaultAssessmentId } from "@/lib/assessment";
+import { supabase } from "@/lib/supabase/server";
+import { resolveAssessmentId } from "@/lib/assessment";
 import { requireRoles } from "@/lib/auth/apiAuth";
 import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!requireRoles(req, res, ["admin"])) return;
-    const queryAssessment = Array.isArray(req.query.assessmentId)
-      ? req.query.assessmentId[0]
-      : req.query.assessmentId;
-    const parsedAssessment = queryAssessment ? Number(queryAssessment) : null;
-    const assessmentId = parsedAssessment && !Number.isNaN(parsedAssessment)
-      ? parsedAssessment
-      : await getDefaultAssessmentId();
+    
+    const assessmentResult = await resolveAssessmentId(req.query.assessmentId);
+    if ('error' in assessmentResult) {
+      return res.status(assessmentResult.status).json({ error: assessmentResult.error });
+    }
+    const assessmentId = assessmentResult.id;
 
     // Obtener participantes y su grupo
     const { data: participantes, error: participantesError } = await supabase
