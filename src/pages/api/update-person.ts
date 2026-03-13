@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
-import { getDefaultAssessmentId } from '@/lib/assessment';
+import { getAssessmentIdForParticipant } from '@/lib/assessment';
 import { requireRoles } from '@/lib/auth/apiAuth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -21,7 +21,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const assessmentId = await getDefaultAssessmentId();
+    const assessmentResult = await getAssessmentIdForParticipant(Number(id));
+    if ('error' in assessmentResult) {
+      return res.status(assessmentResult.status).json({ error: assessmentResult.error });
+    }
+    const assessmentId = assessmentResult.id;
     const updateData: Record<string, unknown> = {};
 
     if (nombre !== undefined) {
