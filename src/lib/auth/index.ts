@@ -76,7 +76,7 @@ export function withAuth(handler: AuthenticatedHandler, allowedRoles?: ('admin' 
       
       if (!token) {
         // Intentar obtener de cookies
-        const cookieToken = req.cookies?.authToken;
+        const cookieToken = req.cookies?.session;
         if (cookieToken) {
           token = cookieToken;
         }

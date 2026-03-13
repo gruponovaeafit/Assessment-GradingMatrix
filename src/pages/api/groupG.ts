@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const users = mockDatabase.users;
 
-    let groupsGenerated: string[][] = [];
+    const groupsGenerated: string[][] = [];
 
     for (let i = 0; i < groups; i++) {
         groupsGenerated.push([]);

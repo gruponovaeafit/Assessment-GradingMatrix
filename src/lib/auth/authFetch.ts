@@ -3,7 +3,10 @@ export async function authFetch(
   init: RequestInit = {},
   onUnauthorized?: () => void
 ): Promise<Response> {
-  const res = await fetch(input, init);
+  const res = await fetch(input, {
+    ...init,
+    credentials: 'include', // Send cookies automatically
+  });
 
   if (res.status === 401) {
     if (onUnauthorized) {

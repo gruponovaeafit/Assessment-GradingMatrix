@@ -36,13 +36,21 @@ create table public."GrupoAssessment" (
   "Nombre_GrupoAssessment" varchar(100) not null,
   "Descripcion_GrupoAssessment" varchar(255),
   "CreatedAt_GrupoAssessment" timestamptz not null default now(),
+  -- Calificador asignado a este grupo (nullable; se asigna después de crear el grupo)
+  "ID_Staff" integer null,
   constraint "FK_GrupoAssessment_Assessment"
     foreign key ("ID_Assessment") references public."Assessment"("ID_Assessment")
-    on update restrict on delete restrict
+    on update restrict on delete restrict,
+  constraint "FK_GrupoAssessment_Staff"
+    foreign key ("ID_Staff") references public."Staff"("ID_Staff")
+    on update restrict on delete set null
 );
 
 create index if not exists "IX_GrupoAssessment_Assessment"
   on public."GrupoAssessment" ("ID_Assessment");
+
+create index if not exists "IX_GrupoAssessment_Staff"
+  on public."GrupoAssessment" ("ID_Staff");
 
 -- -------------------------
 -- Bases (N por Assessment) + Numero_Base único por assessment

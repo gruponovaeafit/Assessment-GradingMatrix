@@ -1,49 +1,57 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
-const ADMIN_KEY = "adminAuth";
-const TOKEN_KEY = "authToken";
-
 interface AdminAuth {
   isAdmin: boolean;
   isSuperAdmin?: boolean;
   timestamp: number;
-  token?: string;
 }
 
-// Tiempo de expiración de la sesión (8 horas en ms)
+const ADMIN_KEY = "adminAuth";
+
+// Session duration (8 hours in ms) — only for local state expiry
 const SESSION_DURATION = 8 * 60 * 60 * 1000;
 
 export const useAdminAuth = () => {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null); // null = cargando
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null); // null = loading
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const savedAuth = localStorage.getItem(ADMIN_KEY);
-      const savedToken = localStorage.getItem(TOKEN_KEY);
-
-      if (savedAuth) {
-        const authData: AdminAuth = JSON.parse(savedAuth);
-        const now = Date.now();
-
-        // Verificar si la sesión no ha expirado
-        if (authData.isAdmin && now - authData.timestamp < SESSION_DURATION) {
-          setIsAdmin(true);
-          setIsSuperAdmin(Boolean(authData.isSuperAdmin));
-          setToken(savedToken);
-        } else {
-          // Sesión expirada, limpiar
+    const checkAuth = async () => {
+      try {
+        // Check local state first (for role/superAdmin info)
+        const savedAuth = localStorage.getItem(ADMIN_KEY);
+        if (savedAuth) {
+          const authData: AdminAuth = JSON.parse(savedAuth);
+          const now = Date.now();
+          if (authData.isAdmin && now - authData.timestamp < SESSION_DURATION) {
+            setIsAdmin(true);
+            setIsSuperAdmin(Boolean(authData.isSuperAdmin));
+            setIsLoading(false);
+            return;
+          }
+          // Expired local state, clear it
           localStorage.removeItem(ADMIN_KEY);
-          localStorage.removeItem(TOKEN_KEY);
+        }
+
+        // Validate session via cookie-based endpoint
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.role === "admin") {
+            setIsAdmin(true);
+            // Note: superAdmin info isn't in JWT, so we check localStorage
+            setIsSuperAdmin(Boolean(savedAuth && JSON.parse(savedAuth).isSuperAdmin));
+          } else {
+            setIsAdmin(false);
+          }
+        } else {
           setIsAdmin(false);
           setIsSuperAdmin(false);
-          setToken(null);
         }
-      } else {
+      } catch {
         setIsAdmin(false);
         setIsSuperAdmin(false);
       }
@@ -53,44 +61,37 @@ export const useAdminAuth = () => {
     checkAuth();
   }, []);
 
-  // Función para establecer admin auth (llamar después de login exitoso)
-  const loginAsAdmin = useCallback((authToken?: string, superAdmin = false) => {
+  // Set admin auth after login — only stores role info locally, NOT the token
+  const loginAsAdmin = useCallback((superAdmin = false) => {
     const authData: AdminAuth = {
       isAdmin: true,
       isSuperAdmin: superAdmin,
       timestamp: Date.now(),
     };
     localStorage.setItem(ADMIN_KEY, JSON.stringify(authData));
-    if (authToken) {
-      localStorage.setItem(TOKEN_KEY, authToken);
-      setToken(authToken);
-    }
     setIsAdmin(true);
     setIsSuperAdmin(superAdmin);
   }, []);
 
-  // Función para cerrar sesión
-  const logout = useCallback(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY);
-    if (storedToken) {
-      fetch("/api/auth/logout", {
+  // Logout — server clears cookies
+  const logout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", {
         method: "POST",
-        headers: { Authorization: `Bearer ${storedToken}` },
-      }).catch(() => {
-        // No-op: logout local continúa aunque falle el request.
+        credentials: "include",
       });
+    } catch {
+      // No-op: local logout continues even if request fails
     }
     localStorage.removeItem(ADMIN_KEY);
-    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem("storedData");
     localStorage.removeItem("authRole");
     setIsAdmin(false);
     setIsSuperAdmin(false);
-    setToken(null);
     router.push("/auth/login");
   }, [router]);
 
-  // Función para proteger rutas - redirige si no es admin
+  // Route protection
   const requireAdmin = useCallback(() => {
     if (!isLoading && !isAdmin) {
       router.push("/auth/login");
@@ -103,27 +104,13 @@ export const useAdminAuth = () => {
     }
   }, [isLoading, isSuperAdmin, router]);
 
-  // Función para obtener headers con token de autenticación
-  const getAuthHeaders = useCallback((): HeadersInit => {
-    if (token) {
-      return { Authorization: `Bearer ${token}` };
-    }
-    if (typeof window !== "undefined") {
-      const storedToken = localStorage.getItem(TOKEN_KEY);
-      return storedToken ? { Authorization: `Bearer ${storedToken}` } : {};
-    }
-    return {};
-  }, [token]);
-
   return {
     isAdmin,
     isSuperAdmin,
     isLoading,
-    token,
     loginAsAdmin,
     logout,
     requireAdmin,
     requireSuperAdmin,
-    getAuthHeaders,
   };
 };

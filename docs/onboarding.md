@@ -39,7 +39,7 @@ Para probar las funcionalidades de **Admin**, **Registrador** o **Calificador** 
 
 ## Solución de Problemas Comunes (FAQ)
 
-- **"Recibo un error 401 al llamar a las APIs":** Verifica que tu token JWT sea válido. Si has reiniciado Supabase o cambiado el `JWT_SECRET`, limpia el `localStorage` de tu navegador.
+- **"Recibo un error 401 al llamar a las APIs":** Verifica que tu cookie de sesión siga activa. Si has reiniciado Supabase o cambiado el `JWT_SECRET`, borra la cookie `session` desde el panel de Application/Cookies en las DevTools de tu navegador, o simplemente vuelve a iniciar sesión para sobreescribirla.
 - **"El build falla por variables faltantes":** Next.js requiere ciertas variables en tiempo de compilación. Asegúrate de que `.env.local` esté completo antes de ejecutar `npm run build`.
 - **"No puedo ver assessments en el panel admin":** Recuerda que los admins ahora están filtrados por `ID_GrupoEstudiantil` (**ADR 0002**). Verifica que tu usuario staff tenga asignado un grupo que posea assessments.
 

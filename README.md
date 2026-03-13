@@ -21,9 +21,11 @@ Para entender la arquitectura, el dominio y cómo contribuir, consulta los sigui
 
 ## Tecnologías
 
-- **Framework**: Next.js 14 (App Router + Pages Router mixto)
-- **Lenguaje**: TypeScript / React
-- **Estilos**: **Vanilla CSS** (Priorizado sobre frameworks para control estético total).
+- **Framework**: Next.js 15 (App Router + Pages Router mixto)
+- **Lenguaje**: TypeScript / React 19
+- **Estilos**: **Tailwind CSS** (Integrado con variables CSS para consistencia).
+- **Validación**: **Zod** (Validación de esquemas en runtime).
+- **Testing**: **Vitest** + React Testing Library.
 - **Base de datos**: Supabase (PostgreSQL)
 
 ---
@@ -32,9 +34,10 @@ Para entender la arquitectura, el dominio y cómo contribuir, consulta los sigui
 
 1.  **Requisitos:** Node.js 20+, npm.
 2.  **Instalación:** `npm install`.
-3.  **Variables de Entorno:** Copia `.env.example` a `.env.local` y completa los valores.
-    > Nota: La `SUPABASE_SERVICE_ROLE_KEY` **nunca** debe usarse en el frontend.
-4.  **Desarrollo:** `npm run dev` abre `http://localhost:3000`.
+3.  **Tests:** `npm test` para ejecutar la suite de pruebas.
+4.  **Variables de Env:** Copia `.env.example` a `.env.local` y completa los valores.
+5.  **Desarrollo:** `npm run dev` abre `http://localhost:3000`.
+6.  **Datos Mock:** (Opcional) `npm run db:seed` genera un assessment y calificadores temporales para poder probar.
 
 ---
 
@@ -42,17 +45,13 @@ Para entender la arquitectura, el dominio y cómo contribuir, consulta los sigui
 
 ```
 src/
-├── app/                      # UI (App Router)
-│   ├── admin/                # Hub de Administración (Bases, Gestión, Configuración)
-│   ├── auth/login/           # Autenticación
-│   ├── grader/               # Vista de Calificador (Mobile-first)
-│   ├── register/             # Vista de Registrador (Mobile-first)
-│   └── k7v9.../              # Panel de Superadmin
-├── components/               # Componentes UI reutilizables
-├── hooks/                    # Hooks de dominio (Auth, Fetching)
+├── app/                      # Rutas y Layouts (Thin Pages)
+├── features/                 # Módulos por funcionalidad (Hooks, Components, Schemas)
+├── components/               # UI Atoms/Primitives (Button, Toast, Modal)
+├── hooks/                    # Hooks globales compartidos
 ├── lib/                      # Utilidades core (Supabase, Auth, Helpers)
 ├── db/                       # Esquema SQL y Políticas RLS
-└── pages/api/                # Backend (Pages Router)
+└── pages/api/                # API Endpoints (Backend)
 ```
 
 ---
