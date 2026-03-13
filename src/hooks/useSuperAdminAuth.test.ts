@@ -13,15 +13,14 @@ describe('useSuperAdminAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useRouter).mockReturnValue({ push: mockPush } as any);
-    localStorage.clear();
-    // Default mock: not super admin
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ 
-      ok: true, 
-      json: async () => ({ role: 'not-admin' }) 
-    }));
   });
 
-  it('should initialize as not super admin if localStorage is empty', async () => {
+  it('should initialize as not super admin if API returns non-admin role', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ 
+      ok: true, 
+      json: async () => ({ role: 'not-admin', isSuperAdmin: false }) 
+    }));
+
     const { result } = renderHook(() => useSuperAdminAuth());
     await waitFor(() => {
       expect(result.current.isSuperAdmin).toBe(false);
@@ -29,62 +28,62 @@ describe('useSuperAdminAuth', () => {
     });
   });
 
-  it('should identify super admin from localStorage if valid and not expired', async () => {
-    const validAuth = {
-      isAdmin: true,
-      isSuperAdmin: true,
-      timestamp: Date.now()
-    };
-    localStorage.setItem('adminAuth', JSON.stringify(validAuth));
+  it('should identify super admin if API returns admin role and isSuperAdmin true', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ 
+      ok: true, 
+      json: async () => ({ role: 'admin', isSuperAdmin: true }) 
+    }));
 
     const { result } = renderHook(() => useSuperAdminAuth());
     
     await waitFor(() => {
       expect(result.current.isSuperAdmin).toBe(true);
+      expect(result.current.isLoading).toBe(false);
     });
   });
 
-  it('should identify as NOT super admin if isSuperAdmin flag is missing', async () => {
-    const invalidAuth = {
-      isAdmin: true,
-      timestamp: Date.now()
-    };
-    localStorage.setItem('adminAuth', JSON.stringify(invalidAuth));
+  it('should identify as NOT super admin if API returns admin role but isSuperAdmin false', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ 
+      ok: true, 
+      json: async () => ({ role: 'admin', isSuperAdmin: false }) 
+    }));
 
     const { result } = renderHook(() => useSuperAdminAuth());
     
     await waitFor(() => {
       expect(result.current.isSuperAdmin).toBe(false);
+      expect(result.current.isLoading).toBe(false);
     });
   });
 
-  it('should identify as NOT super admin if session expired', async () => {
-    const expiredAuth = {
-      isAdmin: true,
-      isSuperAdmin: true,
-      timestamp: Date.now() - (9 * 60 * 60 * 1000) // 9 hours ago
-    };
-    localStorage.setItem('adminAuth', JSON.stringify(expiredAuth));
+  it('should identify as NOT super admin if API request fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ 
+      ok: false,
+      status: 401
+    }));
 
     const { result } = renderHook(() => useSuperAdminAuth());
     
     await waitFor(() => {
       expect(result.current.isSuperAdmin).toBe(false);
+      expect(result.current.isLoading).toBe(false);
     });
   });
 
+  it('logout should call api, clear state and redirect', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ 
+      ok: true, 
+      json: async () => ({ role: 'admin', isSuperAdmin: true }) 
+    }));
 
-
-
-  it('logout should clear storage and redirect', async () => {
-    localStorage.setItem('adminAuth', JSON.stringify({ isAdmin: true, isSuperAdmin: true, timestamp: Date.now() }));
     const { result } = renderHook(() => useSuperAdminAuth());
+    await waitFor(() => expect(result.current.isSuperAdmin).toBe(true));
 
     await act(async () => {
       result.current.logout();
     });
 
-    expect(localStorage.getItem('adminAuth')).toBeNull();
+    expect(result.current.isSuperAdmin).toBe(false);
     expect(mockPush).toHaveBeenCalledWith('/auth/login');
   });
 });

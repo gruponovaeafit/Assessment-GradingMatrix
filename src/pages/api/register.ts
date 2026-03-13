@@ -4,7 +4,7 @@ import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
-import { getDefaultAssessmentId } from '@/lib/assessment';
+import { resolveAssessmentId, getAssessmentIdForStaff } from '@/lib/assessment';
 import { requireRoles } from '@/lib/auth/apiAuth';
 
 export const config = {
@@ -58,7 +58,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // 🔐 Roles
-    if (!requireRoles(req, res, ['admin', 'registrador'])) return;
+    const decoded = requireRoles(req, res, ['admin', 'registrador']);
+    if (!decoded) return;
+    console.log(decoded);
 
     const { fields, files } = await parseForm(req);
     const file = Array.isArray(files.image) ? files.image[0] : files.image;
@@ -69,6 +71,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!nombre || !correo || !file?.filepath) {
       return res.status(400).json({ error: 'Nombre, correo e imagen son obligatorios' });
     }
+
+    // Resolver ID_Assessment según rol
+    let assessmentId: number;
+    if (decoded.role === 'registrador') {
+      const result = await getAssessmentIdForStaff(decoded.id);
+      if ('error' in result) return res.status(result.status).json({ error: result.error });
+      assessmentId = result.id;
+    } else {
+      const result = await resolveAssessmentId(fields.assessmentId);
+      if ('error' in result) return res.status(result.status).json({ error: result.error });
+      assessmentId = result.id;
+    }
+
 
     if (!ALLOWED_MIME_TYPES.has(file.mimetype || '')) {
       return res.status(400).json({ error: 'Formato de imagen no permitido' });
@@ -90,7 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fileName = `participantes/${uuidv4()}.webp`;
 
     const { error: uploadError } = await supabase.storage
-      .from('imagenes_participantes') 
+      .from('imagenes_participantes')
       .upload(fileName, optimizedBuffer, {
         contentType: 'image/webp',
         upsert: false,
@@ -105,7 +120,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const photoStoragePath = fileName;
 
     // 🧠 Insertar en DB
-    const assessmentId = await getDefaultAssessmentId();
+
+    console.log(assessmentId);
 
     const { data: inserted, error: dbError } = await supabase
       .from('Participante')

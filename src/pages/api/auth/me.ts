@@ -35,5 +35,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     id: decoded.id,
     email: decoded.email,
     role: decoded.role,
+    isSuperAdmin: decoded.role === 'admin' && decoded.email === process.env.ADMIN_EMAIL,
   });
 }
