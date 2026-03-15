@@ -73,8 +73,11 @@ El proyecto utiliza **Vitest** y **React Testing Library** para pruebas unitaria
 
 ---
 
-## Qué NO hacer
+## Reglas de Arquitectura Críticas (MANDATORIAS)
 
-1. No usar Supabase Service Key en el Frontend: Esta llave tiene privilegios totales. Solo debe usarse en scripts o API routes (server-side).
-2. No crear Páginas Monolíticas: Si tu archivo en src/app/ supera las 300 líneas, es hora de aplicar el ADR 0003 (Decomposición de Vistas).
-3. No saltarse authFetch: No uses fetch plano para llamadas internas, ya que perderás la gestión de tokens y expiración de sesión.
+Para evitar regresiones en seguridad y deudas técnicas, todo desarrollador debe seguir estas reglas:
+
+1. **`proxy.ts` es EL Middleware**: En Next.js 16, el archivo `src/proxy.ts` es el único punto de entrada para la intercepción de rutas en Edge Runtime. **NO crear `src/middleware.ts`** — tener ambos causa un error fatal de compilación. No borrar ni desactivar `src/proxy.ts`; es la columna vertebral de la autenticación.
+2. **`assessmentId` debe ser siempre explícito**: Todos los endpoints bajo `src/pages/api/dashboard/**` y los hooks de datos de admin (`useConfigData`, `useGestionData`, etc.) **DEBEN** requerir `assessmentId` como un parámetro explícito — nunca inferir un valor por defecto. Usar `resolveAssessmentId(req.query.assessmentId)` y retornar 400 si falta.
+3. **Los hooks de Auth no replican la protección de rutas**: Los hooks de frontend (`useAdminAuth`, `useGraderAuth`, etc.) son solo para estado de UI (ej. mostrar el botón de logout, leer el rol actual). La protección de rutas es responsabilidad exclusiva de `src/proxy.ts`. No añadir guardas basadas en `localStorage`.
+4. **Coordinación de PRs en archivos compartidos**: Antes de abrir una PR que toque `src/features/admin/**`, `src/pages/api/dashboard/**` o `src/proxy.ts`, verificar si hay otras PRs abiertas modificando los mismos archivos para evitar conflictos de refactorización paralela.

@@ -131,7 +131,35 @@ export const GestionContainer = () => {
     );
   }
 
+  if (!selectedAssessment) {
+    return (
+      <div className="flex flex-col items-center min-h-screen py-4 sm:py-8 px-3 sm:px-4 bg-white">
+        <div className="w-full max-w-7xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 px-1 sm:px-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center sm:text-left">Gestión del Assessment</h1>
+        </div>
+        <GestionToolbar
+          assessments={assessments}
+          selectedAssessment={selectedAssessment}
+          setSelectedAssessment={setSelectedAssessment}
+          searchTerm="" setSearchTerm={() => {}}
+          filterGrupo="" setFilterGrupo={() => {}}
+          filterEstado="" setFilterEstado={() => {}}
+          filterRol="" setFilterRol={() => {}}
+          sortBy="nombre" setSortBy={() => {}}
+          sortOrder="asc" setSortOrder={() => {}}
+          itemsPerPage={10} setItemsPerPage={() => {}}
+          onRefresh={() => {}} onExport={() => {}} onOpenRanges={() => {}}
+          grupos={[]} loading={false} exporting={false}
+        />
+        <div className="flex flex-col items-center justify-center flex-1 py-12">
+          <p className="text-lg text-gray-500">Selecciona un assessment para ver los resultados.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
+
     <div className="flex flex-col items-center min-h-screen py-4 sm:py-8 px-3 sm:px-4 bg-white">
       <div className="w-full max-w-7xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 px-1 sm:px-2">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center sm:text-left">Gestión del Assessment</h1>
