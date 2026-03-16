@@ -10,7 +10,13 @@ export function useConfigData(logout: () => void) {
   const [error, setError] = useState<string | null>(null);
   const fetchAbortRef = useRef<AbortController | null>(null);
 
-  const fetchData = useCallback(async (assessmentId?: string) => {
+  const fetchData = useCallback(async (assessmentId: string) => {
+    if (!assessmentId) {
+      setError("assessmentId es obligatorio");
+      showToast.error("assessmentId es obligatorio");
+      return;
+    }
+
     if (fetchAbortRef.current) {
       fetchAbortRef.current.abort();
     }
@@ -20,9 +26,7 @@ export function useConfigData(logout: () => void) {
     setLoading(true);
     setError(null);
     try {
-      const url = assessmentId
-        ? `/api/dashboard/config?assessmentId=${assessmentId}`
-        : '/api/dashboard/config';
+      const url = `/api/dashboard/config?assessmentId=${assessmentId}`;
 
       const response = await authFetch(
         url,
@@ -38,7 +42,7 @@ export function useConfigData(logout: () => void) {
       }
 
       const result = await response.json();
-      
+
       // Runtime Validation
       const parsedResult = z.array(CalificacionSchema).safeParse(result);
       if (!parsedResult.success) {

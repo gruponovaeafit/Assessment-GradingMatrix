@@ -1,6 +1,6 @@
 // pages/api/dashboard/config.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from "@/lib/supabase/server";
+import { supabase } from '@/lib/supabase/server';
 import { resolveAssessmentId } from "@/lib/assessment";
 import { requireRoles } from "@/lib/auth/apiAuth";
 import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
@@ -9,12 +9,12 @@ import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!requireRoles(req, res, ["admin"])) return;
-    
-    const assessmentResult = await resolveAssessmentId(req.query.assessmentId);
-    if ('error' in assessmentResult) {
-      return res.status(assessmentResult.status).json({ error: assessmentResult.error });
+
+    const result = await resolveAssessmentId(req.query.assessmentId);
+    if ("error" in result) {
+      return res.status(result.status).json({ error: result.error });
     }
-    const assessmentId = assessmentResult.id;
+    const assessmentId = result.id;
 
     const { data: assessment, error: assessmentError } = await supabase
     .from('Assessment')
@@ -91,14 +91,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const data = (participantes || []).map((p, i) => {
       const promedio = generalPromByPersona[p.ID_Participante] ?? null;
 
-      const grupoNombre = p.GrupoAssessment 
-        ? (Array.isArray(p.GrupoAssessment) 
-            ? p.GrupoAssessment[0]?.Nombre_GrupoAssessment 
+      const grupoNombre = p.GrupoAssessment
+        ? (Array.isArray(p.GrupoAssessment)
+            ? p.GrupoAssessment[0]?.Nombre_GrupoAssessment
             : (p.GrupoAssessment as any).Nombre_GrupoAssessment)
         : null;
 
       return {
-        Grupo: grupoNombre ?? 'Sin grupo',        
+        Grupo: grupoNombre ?? 'Sin grupo',
         ID: p.ID_Participante,
         Participante: p.Nombre_Participante,
         Correo: p.Correo_Participante,
