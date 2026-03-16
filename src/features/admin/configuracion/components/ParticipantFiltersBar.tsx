@@ -16,7 +16,7 @@ interface ParticipantFiltersBarProps {
   setSortOrder: (val: "asc" | "desc") => void;
   visibleAssessments: Assessment[];
   grupos: string[];
-  onFetchData: (assessmentId?: string) => void;
+  onFetchData: (assessmentId: string) => void;
   setCurrentPage: (val: number) => void;
 }
 
@@ -61,11 +61,7 @@ export const ParticipantFiltersBar: React.FC<ParticipantFiltersBarProps> = ({
               const value = e.target.value;
               setFilterAssessment(value);
               setCurrentPage(1);
-              if (value === "default") {
-                onFetchData(undefined);
-              } else {
-                onFetchData(value);
-              }
+              onFetchData(value);
             }}
             className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-base"
           >

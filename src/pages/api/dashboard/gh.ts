@@ -7,7 +7,7 @@ import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (!requireRoles(req, res, ["admin"])) return;
-    
+
     const assessmentResult = await resolveAssessmentId(req.query.assessmentId);
     if ('error' in assessmentResult) {
       return res.status(assessmentResult.status).json({ error: assessmentResult.error });

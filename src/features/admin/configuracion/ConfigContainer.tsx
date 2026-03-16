@@ -42,7 +42,7 @@ export const ConfigContainer = () => {
   // UI State
   const [editModal, setEditModal] = useState<Calificacion | null>(null);
   const [originalData, setOriginalData] = useState<Calificacion | null>(null);
-  
+
   const [configAssessmentId, setConfigAssessmentId] = useState<string>("");
   const [selectedParticipant, setSelectedParticipant] = useState<string>("");
   const [selectedGroup, setSelectedGroup] = useState<string>("");
@@ -64,7 +64,7 @@ export const ConfigContainer = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterGrupo, setFilterGrupo] = useState<string>("todos");
   const [filterRol, setFilterRol] = useState<string>("todos");
-  const [filterAssessment, setFilterAssessment] = useState<string>("default");
+  const [filterAssessment, setFilterAssessment] = useState<string>("");
   const [sortBy, setSortBy] = useState<"nombre" | "promedio" | "grupo">("nombre");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -72,7 +72,6 @@ export const ConfigContainer = () => {
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
-    fetchData(); 
     refreshAssessments();
   }, [authLoading, isAdmin, fetchData, refreshAssessments]);
 
@@ -95,9 +94,23 @@ export const ConfigContainer = () => {
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
-    loadParticipantsAndGroups(configAssessmentId);
-    loadBases(staffAssessmentId);
-  }, [authLoading, isAdmin, configAssessmentId, staffAssessmentId, loadParticipantsAndGroups, loadBases]);
+    if (configAssessmentId) {
+      fetchData(configAssessmentId);
+      loadParticipantsAndGroups(configAssessmentId);
+    }
+    if (staffAssessmentId) {
+      loadBases(staffAssessmentId);
+    }
+  }, [authLoading, isAdmin, configAssessmentId, staffAssessmentId, loadParticipantsAndGroups, loadBases, fetchData]);
+
+  // Cuando el usuario cambia el filtro de assessment
+  const handleAssessmentChange = (id: string) => {
+    setConfigAssessmentId(id);
+    setFilterAssessment(id);
+    setCurrentPage(1);
+    fetchData(id);
+    loadParticipantsAndGroups(id);
+  };
 
   const grupos = useMemo(() => {
     const uniqueGrupos = [...new Set(data.map((item) => item.Grupo))];
@@ -134,7 +147,7 @@ export const ConfigContainer = () => {
   }, [data, searchTerm, filterGrupo, filterRol, sortBy, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(filteredAndSortedData.length / itemsPerPage));
-  
+
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -392,12 +405,12 @@ export const ConfigContainer = () => {
       </div>
     );
   }
-  
+
   if (dataError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
         <p className="text-error text-xl">{dataError}</p>
-        <button 
+        <button
           onClick={() => router.refresh()}
           className="mt-4 px-4 py-2 bg-gray-100 text-gray-900 rounded-lg border border-gray-200 hover:bg-gray-200"
         >
@@ -482,7 +495,7 @@ export const ConfigContainer = () => {
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         filterAssessment={filterAssessment}
-        setFilterAssessment={setFilterAssessment}
+        setFilterAssessment={handleAssessmentChange}
         filterGrupo={filterGrupo}
         setFilterGrupo={setFilterGrupo}
         filterRol={filterRol}
@@ -497,25 +510,32 @@ export const ConfigContainer = () => {
         setCurrentPage={setCurrentPage}
       />
 
-      <div className="w-full max-w-[900px] flex flex-col items-center">
-        <div className="w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-gray-500 text-xs mb-2 px-4">
-          <span>Mostrando {paginatedData.length} de {filteredAndSortedData.length} resultados</span>
-          {(searchTerm || filterGrupo !== "todos" || filterRol !== "todos") && (
-            <button onClick={() => { setSearchTerm(""); setFilterGrupo("todos"); setFilterRol("todos"); }} className="text-[color:var(--color-accent)] hover:text-gray-500 underline">Limpiar filtros</button>
-          )}
+      {!configAssessmentId ? (
+        <div className="w-full max-w-[900px] flex flex-col items-center justify-center py-12">
+          <p className="text-lg text-gray-500">Selecciona un assessment para ver los resultados.</p>
         </div>
-        
-        <ParticipantGrid
-          paginatedData={paginatedData}
-          onEdit={(p) => { setEditModal({ ...p }); setOriginalData({ ...p }); }}
-        />
+      ) : (
 
-        <ParticipantPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          setCurrentPage={setCurrentPage}
-        />
-      </div>
+        <div className="w-full max-w-[900px] flex flex-col items-center">
+          <div className="w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-gray-500 text-xs mb-2 px-4">
+            <span>Mostrando {paginatedData.length} de {filteredAndSortedData.length} resultados</span>
+            {(searchTerm || filterGrupo !== "todos" || filterRol !== "todos") && (
+              <button onClick={() => { setSearchTerm(""); setFilterGrupo("todos"); setFilterRol("todos"); }} className="text-[color:var(--color-accent)] hover:text-gray-500 underline">Limpiar filtros</button>
+            )}
+          </div>
+
+          <ParticipantGrid
+            paginatedData={paginatedData}
+            onEdit={(p) => { setEditModal({ ...p }); setOriginalData({ ...p }); }}
+          />
+
+          <ParticipantPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            setCurrentPage={setCurrentPage}
+          />
+        </div>
+      )}
 
       {editModal && (
         <EditParticipantModal
