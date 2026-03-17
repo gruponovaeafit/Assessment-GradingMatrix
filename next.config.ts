@@ -19,11 +19,6 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: "/dashboard/rotations",
-        destination: "/admin/rotations",
-        permanent: true,
-      },
-      {
         source: "/dashboard/bases",
         destination: "/admin/bases",
         permanent: true,
@@ -36,11 +31,6 @@ const nextConfig: NextConfig = {
       {
         source: "/admin/gestion",
         destination: "/admin/management",
-        permanent: true,
-      },
-      {
-        source: "/admin/rotaciones",
-        destination: "/admin/rotations",
         permanent: true,
       },
     ];

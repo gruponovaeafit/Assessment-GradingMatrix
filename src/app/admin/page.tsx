@@ -44,16 +44,16 @@ export default function AdminHub() {
           </button>
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-xl shadow p-5 flex flex-col gap-3 md:col-span-2">
-          <h2 className="text-xl font-bold text-gray-900">Rotaciones</h2>
+        <div className="bg-white border border-gray-100 rounded-xl shadow p-5 flex flex-col gap-3">
+          <h2 className="text-xl font-bold text-gray-900">Bases</h2>
           <p className="text-sm text-gray-600">
-            Administra el grupo asignado a cada calificador y el contador de rotaciones.
+            Administra las bases del assessment: define criterios, rangos de clasificación y valores.
           </p>
           <button
-            onClick={() => (window.location.href = "/admin/rotations")}
+            onClick={() => (window.location.href = "/admin/bases")}
             className="mt-2 w-full bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
-            Ir a Rotaciones
+            Ir a Bases
           </button>
         </div>
       </div>
