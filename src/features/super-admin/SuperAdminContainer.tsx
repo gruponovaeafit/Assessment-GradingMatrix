@@ -15,7 +15,7 @@ import { SuperAdminToolbar } from "./components/SuperAdminToolbar";
 import { AssessmentList } from "./components/AssessmentList";
 import { AdminUserList } from "./components/AdminUserList";
 import { MassActionModal } from "./components/MassActionModal";
-import { Pagination } from "@/features/admin/gestion/components/Pagination"; // Reusing the pagination component
+import { Pagination } from "@/features/admin/management/components/Pagination"; // Reusing the pagination component
 
 // Utilities
 import { handleExportAdminsCSV } from "./utils/superAdminUtils";

@@ -11,7 +11,7 @@ export function useAssessments(logout: () => void) {
     setLoading(true);
     try {
       const response = await authFetch(
-        '/api/assessment/list',
+        '/api/assessment/list?activo=true',
         {},
         () => logout()
       );

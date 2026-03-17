@@ -21,7 +21,7 @@ export const useBasesData = () => {
     const fetchAssessments = async () => {
       try {
         const response = await authFetch(
-          '/api/assessment/list',
+          '/api/assessment/list?activo=true',
           {},
           () => logout()
         );

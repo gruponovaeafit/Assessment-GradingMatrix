@@ -26,31 +26,31 @@ describe('proxy', () => {
   });
 
   it('should redirect to login when no session cookie exists', async () => {
-    const req = makeRequest('/admin/gestion');
+    const req = makeRequest('/admin/management');
     const res = await proxy(req);
 
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('/auth/login');
   });
 
-  it('should allow admin to access /admin/gestion', async () => {
+  it('should allow admin to access /admin/management', async () => {
     (verifyTokenEdge as any).mockResolvedValue({
       id: 1, email: 'admin@test.com', role: 'admin',
     });
 
-    const req = makeRequest('/admin/gestion', 'valid-admin-token');
+    const req = makeRequest('/admin/management', 'valid-admin-token');
     const res = await proxy(req);
 
     // NextResponse.next() returns 200
     expect(res.status).toBe(200);
   });
 
-  it('should redirect calificador trying to access /admin/gestion', async () => {
+  it('should redirect calificador trying to access /admin/management', async () => {
     (verifyTokenEdge as any).mockResolvedValue({
       id: 2, email: 'grader@test.com', role: 'calificador',
     });
 
-    const req = makeRequest('/admin/gestion', 'valid-grader-token');
+    const req = makeRequest('/admin/management', 'valid-grader-token');
     const res = await proxy(req);
 
     expect(res.status).toBe(307);

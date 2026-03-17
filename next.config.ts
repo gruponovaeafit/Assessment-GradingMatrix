@@ -10,22 +10,27 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/dashboard/gh",
-        destination: "/admin/gestion",
+        destination: "/admin/management",
         permanent: true,
       },
       {
         source: "/dashboard/config",
-        destination: "/admin/configuracion",
-        permanent: true,
-      },
-      {
-        source: "/dashboard/rotations",
-        destination: "/admin/rotaciones",
+        destination: "/admin/configuration",
         permanent: true,
       },
       {
         source: "/dashboard/bases",
         destination: "/admin/bases",
+        permanent: true,
+      },
+      {
+        source: "/admin/configuracion",
+        destination: "/admin/configuration",
+        permanent: true,
+      },
+      {
+        source: "/admin/gestion",
+        destination: "/admin/management",
         permanent: true,
       },
     ];
