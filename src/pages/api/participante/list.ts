@@ -1,20 +1,24 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { resolveAssessmentId, verifyAssessmentAccess } from '@/lib/assessment';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  if (!requireRoles(req, res, ['admin'])) return;
+  const user = requireRoles(req, res, ['admin']);
+  if (!user) return;
 
-  const assessmentId = Array.isArray(req.query.assessmentId)
-    ? req.query.assessmentId[0]
-    : req.query.assessmentId;
+  const assessmentResult = await resolveAssessmentId(req.query.assessmentId);
+  if ('error' in assessmentResult) {
+    return res.status(assessmentResult.status).json({ error: assessmentResult.error });
+  }
+  const assessmentId = assessmentResult.id;
 
-  if (!assessmentId) {
-    return res.status(400).json({ error: 'assessmentId es obligatorio' });
+  if (!verifyAssessmentAccess(user, assessmentId, res)) {
+    return;
   }
 
   try {

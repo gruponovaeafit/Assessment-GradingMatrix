@@ -32,12 +32,10 @@ export const useSuperAdminAuth = () => {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch {}
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
     setIsSuperAdmin(false);
     router.push("/auth/login");
   }, [router]);

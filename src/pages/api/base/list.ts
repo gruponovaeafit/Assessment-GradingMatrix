@@ -3,18 +3,28 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { resolveAssessmentId, verifyAssessmentAccess } from '@/lib/assessment';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  if (!requireRoles(req, res, ['admin'])) return;
+  const user = requireRoles(req, res, ['admin']);
+  if (!user) return;
 
-  const { assessmentId } = req.query;
+  const assessmentResult = await resolveAssessmentId(req.query.assessmentId);
+  if ('error' in assessmentResult) {
+    return res.status(assessmentResult.status).json({ error: assessmentResult.error });
+  }
+  const assessmentId = assessmentResult.id;
+
+  if (!verifyAssessmentAccess(user, assessmentId, res)) {
+    return;
+  }
 
   try {
-    let query = supabase
+    const { data: bases, error } = await supabase
       .from('Bases')
       .select(`
         ID_Base,
@@ -27,14 +37,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Comportamiento2_Base,
         Comportamiento3_Base
       `)
+      .eq('ID_Assessment', assessmentId)
       .order('Numero_Base', { ascending: true });
-
-    // Filtrar por assessment si se proporciona
-    if (assessmentId) {
-      query = query.eq('ID_Assessment', Number(assessmentId));
-    }
-
-    const { data: bases, error } = await query;
 
     if (error) {
       throw error;

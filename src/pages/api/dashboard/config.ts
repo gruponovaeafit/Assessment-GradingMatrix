@@ -1,26 +1,31 @@
 // pages/api/dashboard/config.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { supabase } from '@/lib/supabase/server';
-import { resolveAssessmentId } from "@/lib/assessment";
+import { supabase } from "@/lib/supabase/server";
+import { resolveAssessmentId, verifyAssessmentAccess } from "@/lib/assessment";
 import { requireRoles } from "@/lib/auth/apiAuth";
 import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 
 // API para obtener datos del dashboard admin
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    if (!requireRoles(req, res, ["admin"])) return;
+    const user = requireRoles(req, res, ["admin"]);
+    if (!user) return;
 
-    const result = await resolveAssessmentId(req.query.assessmentId);
-    if ("error" in result) {
-      return res.status(result.status).json({ error: result.error });
+    const assessmentResult = await resolveAssessmentId(req.query.assessmentId);
+    if ('error' in assessmentResult) {
+      return res.status(assessmentResult.status).json({ error: assessmentResult.error });
     }
-    const assessmentId = result.id;
+    const assessmentId = assessmentResult.id;
+
+    if (!verifyAssessmentAccess(user, assessmentId, res)) {
+      return;
+    }
 
     const { data: assessment, error: assessmentError } = await supabase
-    .from('Assessment')
-    .select('ID_Assessment, Nombre_Assessment')
-    .eq('ID_Assessment', assessmentId)
-    .single();
+      .from('Assessment')
+      .select('ID_Assessment, Nombre_Assessment')
+      .eq('ID_Assessment', assessmentId)
+      .single();
 
     if (assessmentError) {
       console.error("❌ Error al obtener el assessment:", assessmentError);
@@ -93,8 +98,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const grupoNombre = p.GrupoAssessment
         ? (Array.isArray(p.GrupoAssessment)
-            ? p.GrupoAssessment[0]?.Nombre_GrupoAssessment
-            : (p.GrupoAssessment as any).Nombre_GrupoAssessment)
+          ? p.GrupoAssessment[0]?.Nombre_GrupoAssessment
+          : (p.GrupoAssessment as any).Nombre_GrupoAssessment)
         : null;
 
       return {

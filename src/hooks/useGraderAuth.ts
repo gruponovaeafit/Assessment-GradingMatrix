@@ -34,12 +34,10 @@ export const useGraderAuth = () => {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch {}
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
     localStorage.removeItem("storedData");
     setIsGrader(false);
     router.push("/auth/login");

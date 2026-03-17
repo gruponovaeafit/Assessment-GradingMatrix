@@ -4,7 +4,7 @@ import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
-import { resolveAssessmentId, getAssessmentIdForStaff } from '@/lib/assessment';
+import { resolveAssessmentId, getAssessmentIdForStaff, verifyAssessmentAccess } from '@/lib/assessment';
 import { requireRoles } from '@/lib/auth/apiAuth';
 
 export const config = {
@@ -82,6 +82,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const result = await resolveAssessmentId(fields.assessmentId);
       if ('error' in result) return res.status(result.status).json({ error: result.error });
       assessmentId = result.id;
+
+      if (!verifyAssessmentAccess(decoded, assessmentId, res)) {
+        return;
+      }
     }
 
 
