@@ -24,7 +24,7 @@ export default function AdminHub() {
             Administra personas del assessment, revisa calificaciones y exporta resultados.
           </p>
           <button
-            onClick={() => (window.location.href = "/admin/gestion")}
+            onClick={() => (window.location.href = "/admin/management")}
             className="mt-2 w-full bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Ir a Gestión
@@ -37,7 +37,7 @@ export default function AdminHub() {
             Crea assessments, activa/inactiva, registra calificadores y asigna grupos.
           </p>
           <button
-            onClick={() => (window.location.href = "/admin/configuracion")}
+            onClick={() => (window.location.href = "/admin/configuration")}
             className="mt-2 w-full bg-success hover:bg-success-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Ir a Configuración
@@ -50,7 +50,7 @@ export default function AdminHub() {
             Administra el grupo asignado a cada calificador y el contador de rotaciones.
           </p>
           <button
-            onClick={() => (window.location.href = "/admin/rotaciones")}
+            onClick={() => (window.location.href = "/admin/rotations")}
             className="mt-2 w-full bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Ir a Rotaciones

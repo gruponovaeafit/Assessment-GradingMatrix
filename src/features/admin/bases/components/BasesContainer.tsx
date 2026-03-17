@@ -41,7 +41,7 @@ export const BasesContainer: React.FC = () => {
   return (
     <div className="flex flex-col items-center min-h-screen py-4 sm:py-8 px-3 sm:px-4 bg-white">
       <BasesHeader 
-        onBack={() => router.push('/admin/configuracion')} 
+        onBack={() => router.push('/admin/configuration')} 
         onLogout={logout} 
       />
       <AssessmentSelector
