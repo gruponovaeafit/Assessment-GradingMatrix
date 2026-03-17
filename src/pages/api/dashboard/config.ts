@@ -1,7 +1,7 @@
 // pages/api/dashboard/config.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase/server";
-import { resolveAssessmentId, verifyAssessmentAccess } from "@/lib/assessment";
+import { verifyAssessmentAccess } from "@/lib/assessment";
 import { requireRoles } from "@/lib/auth/apiAuth";
 import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 
@@ -11,13 +11,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const user = requireRoles(req, res, ["admin"]);
     if (!user) return;
 
-    const assessmentResult = await resolveAssessmentId(req.query.assessmentId);
-    if ('error' in assessmentResult) {
-      return res.status(assessmentResult.status).json({ error: assessmentResult.error });
-    }
-    const assessmentId = assessmentResult.id;
-
-    if (!verifyAssessmentAccess(user, assessmentId, res)) {
+    const assessmentId = user.assessmentId;
+    if (!verifyAssessmentAccess(user, assessmentId as number, res)) {
       return;
     }
 

@@ -7,16 +7,11 @@ export function useBases(logout: () => void) {
   const [basesList, setBasesList] = useState<Base[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const loadBases = useCallback(async (assessmentId: string) => {
-    if (!assessmentId) {
-      setBasesList([]);
-      return;
-    }
-
+  const loadBases = useCallback(async () => {
     setLoading(true);
     try {
       const res = await authFetch(
-        `/api/base/list?assessmentId=${assessmentId}`,
+        '/api/base/list',
         {},
         () => logout()
       );

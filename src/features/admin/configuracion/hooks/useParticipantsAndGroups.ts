@@ -8,23 +8,17 @@ export function useParticipantsAndGroups(logout: () => void) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const loadParticipantsAndGroups = useCallback(async (assessmentId: string) => {
-    if (!assessmentId) {
-      setParticipants([]);
-      setGroups([]);
-      return;
-    }
-
+  const loadParticipantsAndGroups = useCallback(async () => {
     setLoading(true);
     try {
       const [participantsRes, groupsRes] = await Promise.all([
         authFetch(
-          `/api/participante/list?assessmentId=${assessmentId}`,
+          '/api/participante/list',
           {},
           () => logout()
         ),
         authFetch(
-          `/api/assessment/groups?assessmentId=${assessmentId}`,
+          '/api/assessment/groups',
           {},
           () => logout()
         ),
