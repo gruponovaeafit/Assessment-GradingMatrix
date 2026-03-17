@@ -9,10 +9,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (!requireRoles(req, res, ['admin'])) return;
-    const { data, error } = await supabase
+    
+    const { activo } = req.query;
+    let query = supabase
       .from('Assessment')
       .select('ID_Assessment, Nombre_Assessment, Activo_Assessment')
       .order('ID_Assessment', { ascending: true });
+
+    if (activo === 'true') {
+      query = query.eq('Activo_Assessment', true);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       throw new Error(error.message);

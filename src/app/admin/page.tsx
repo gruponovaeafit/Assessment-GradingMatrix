@@ -8,7 +8,7 @@ export default function AdminHub() {
   return (
     <div className="flex flex-col items-center min-h-screen py-6 px-4 bg-white">
       <div className="w-full max-w-4xl flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-extrabold text-gray-900">Admin</h1>
+        <h1 className="text-3xl drop-shadow-lg font-extrabold text-[color:var(--color-accent)]">Admin</h1>
         <button
           onClick={logout}
           className="bg-error hover:bg-error-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition"
@@ -32,22 +32,22 @@ export default function AdminHub() {
         </div>
 
         <div className="bg-white border border-gray-100 rounded-xl shadow p-5 flex flex-col gap-3">
-          <h2 className="text-xl font-bold text-gray-900">Configuración</h2>
+          <h2 className="text-xl font-bold text-gray-900 ">Configuración</h2>
           <p className="text-sm text-gray-600">
             Crea assessments, activa/inactiva, registra calificadores y asigna grupos.
           </p>
           <button
             onClick={() => (window.location.href = "/admin/configuration")}
-            className="mt-2 w-full bg-success hover:bg-success-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+            className="mt-2 w-full bg-[color:var(--color-accent)] hover:bg-success-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Ir a Configuración
           </button>
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-xl shadow p-5 flex flex-col gap-3">
-          <h2 className="text-xl font-bold text-gray-900">Bases</h2>
+        <div className="bg-white border border-gray-100 rounded-xl shadow p-5 flex flex-col gap-3 md:col-span-2">
+          <h2 className="text-xl font-bold text-gray-900">Gestionar Bases</h2>
           <p className="text-sm text-gray-600">
-            Administra las bases del assessment: define criterios, rangos de clasificación y valores.
+            Administra las bases del assessment: define criterios, rangos de clasificación y valores. 
           </p>
           <button
             onClick={() => (window.location.href = "/admin/bases")}
