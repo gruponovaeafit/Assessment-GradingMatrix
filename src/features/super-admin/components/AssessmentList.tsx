@@ -1,6 +1,7 @@
 import React from 'react';
-import { Save, CheckCircle2, XCircle } from 'lucide-react';
+import { Save, CheckCircle2, XCircle, LogIn } from 'lucide-react';
 import { type Assessment, type GrupoEstudiantil } from '../schemas/superAdminSchemas';
+import { useRouter } from 'next/navigation';
 
 /**
  * AssessmentList - View and Edit Assessments
@@ -24,6 +25,31 @@ export const AssessmentList: React.FC<AssessmentListProps> = ({
   onUpdate,
   loading,
 }) => {
+  const router = useRouter();
+  const [switchingAssessment, setSwitchingAssessment] = React.useState<number | null>(null);
+
+  const handleSwitchAssessment = async (assessmentId: number) => {
+    setSwitchingAssessment(assessmentId);
+    try {
+      const response = await fetch('/api/auth/switch-assessment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assessmentId }),
+      });
+
+      if (response.ok) {
+        router.push('/admin');
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Error al cambiar de assessment');
+      }
+    } catch {
+      alert('Error al cambiar de assessment');
+    } finally {
+      setSwitchingAssessment(null);
+    }
+  };
+
   if (assessments.length === 0) {
     return (
       <div className="p-10 text-center text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200">
@@ -106,7 +132,16 @@ export const AssessmentList: React.FC<AssessmentListProps> = ({
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-50 flex justify-end">
+            <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between">
+              <button
+                type="button"
+                onClick={() => handleSwitchAssessment(assessment.id)}
+                disabled={switchingAssessment === assessment.id}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition disabled:opacity-50"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                {switchingAssessment === assessment.id ? 'Entrando...' : 'Entrar como admin'}
+              </button>
               <button
                 type="button"
                 onClick={() => onUpdate(assessment.id)}

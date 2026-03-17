@@ -9,11 +9,7 @@ export function useGestionData(logout: () => void) {
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const fetchData = useCallback(async (assessmentId: string) => {
-    if (!assessmentId) {
-      setError("assessmentId is required");
-      return;
-    }
+  const fetchData = useCallback(async () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -24,7 +20,7 @@ export function useGestionData(logout: () => void) {
     setError(null);
     try {
       const response = await authFetch(
-        `/api/dashboard/gh?assessmentId=${assessmentId}`,
+        '/api/dashboard/gh',
         { signal: controller.signal },
         () => logout()
       );

@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { data: staff, error } = await supabase
       .from('Staff')
-      .select('ID_Staff, Correo_Staff, Contrasena_Staff, ID_Base, Rol_Staff, Active')
+      .select('ID_Staff, Correo_Staff, Contrasena_Staff, ID_Base, ID_Assessment, Rol_Staff, Active')
       .eq('Correo_Staff', email)
       .single();
 
@@ -94,6 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       id: staff.ID_Staff,
       email: staff.Correo_Staff,
       role,
+      assessmentId: staff.ID_Assessment,
     });
 
     setSessionCookie(res, token, role);

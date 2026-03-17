@@ -16,6 +16,7 @@ export interface TokenPayload {
   id: number;
   email: string;
   role: 'admin' | 'calificador' | 'registrador';
+  assessmentId?: number;
   iat?: number;
   exp?: number;
 }
@@ -73,7 +74,7 @@ export function withAuth(handler: AuthenticatedHandler, allowedRoles?: ('admin' 
     try {
       // Obtener token del header Authorization o cookies
       let token = req.headers.authorization?.replace('Bearer ', '');
-      
+
       if (!token) {
         // Intentar obtener de cookies
         const cookieToken = req.cookies?.session;
@@ -87,7 +88,7 @@ export function withAuth(handler: AuthenticatedHandler, allowedRoles?: ('admin' 
       }
 
       const decoded = verifyToken(token);
-      
+
       if (!decoded) {
         return res.status(401).json({ error: 'No autorizado: Token inválido o expirado' });
       }

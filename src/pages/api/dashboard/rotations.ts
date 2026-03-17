@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase/server";
 import { requireRoles } from "@/lib/auth/apiAuth";
+import { verifyAssessmentAccess } from "@/lib/assessment";
 
 type StaffRow = {
   ID_Staff: number;
@@ -16,24 +17,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  if (!requireRoles(req, res, ["admin"])) return;
+  const user = requireRoles(req, res, ["admin"]);
+  if (!user) return;
+
+  const assessmentId = user.assessmentId;
+  if (!verifyAssessmentAccess(user, assessmentId as number, res)) {
+    return;
+  }
 
   try {
-    const assessmentId = req.query.assessmentId ? Number(req.query.assessmentId) : null;
-
     const fullSelect = "ID_Staff, Correo_Staff, Rol_Staff, ID_Assessment, ID_Base, ID_GrupoAssessment";
 
-    let query = supabase
+    const { data, error } = await supabase
       .from("Staff")
       .select(fullSelect)
       .eq("Rol_Staff", "calificador")
+      .eq("ID_Assessment", assessmentId)
       .order("ID_Staff", { ascending: true });
-    
-    if (assessmentId) {
-      query = query.eq("ID_Assessment", assessmentId);
-    }
-
-    const { data, error } = await query;
 
     if (error) {
       console.error("❌ Error en query inicial:", error);
@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const groupIds = (data as StaffRow[])
       ?.map((row) => row.ID_GrupoAssessment)
       .filter((id): id is number => typeof id === "number" && id !== null);
-    
+
     console.log("🔍 Group IDs encontrados:", groupIds);
 
     if (groupIds && groupIds.length > 0) {
@@ -56,9 +56,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from("GrupoAssessment")
         .select("ID_GrupoAssessment, Nombre_GrupoAssessment")
         .in("ID_GrupoAssessment", Array.from(new Set(groupIds)));
-      
+
       console.log("📦 Grupos obtenidos:", groups);
-      
+
       if (!groupsError && groups) {
         for (const group of groups) {
           groupNameById.set(group.ID_GrupoAssessment as number, group.Nombre_GrupoAssessment as string);
@@ -73,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const baseIds = (data as StaffRow[])
       ?.map((row) => row.ID_Base)
       .filter((id): id is number => typeof id === "number" && id !== null);
-    
+
     console.log("🔍 Base IDs encontrados:", baseIds);
 
     if (baseIds && baseIds.length > 0) {
@@ -81,9 +81,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from("Bases")
         .select("ID_Base, Nombre_Base, Numero_Base")
         .in("ID_Base", Array.from(new Set(baseIds)));
-      
+
       console.log("📦 Bases obtenidas:", bases);
-      
+
       if (!basesError && bases) {
         for (const base of bases) {
           baseInfoById.set(base.ID_Base as number, {

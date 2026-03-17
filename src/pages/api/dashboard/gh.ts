@@ -1,18 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase/server";
-import { resolveAssessmentId } from "@/lib/assessment";
+import { verifyAssessmentAccess } from "@/lib/assessment";
 import { requireRoles } from "@/lib/auth/apiAuth";
 import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    if (!requireRoles(req, res, ["admin"])) return;
+    const user = requireRoles(req, res, ["admin"]);
+    if (!user) return;
 
-    const assessmentResult = await resolveAssessmentId(req.query.assessmentId);
-    if ('error' in assessmentResult) {
-      return res.status(assessmentResult.status).json({ error: assessmentResult.error });
+    const assessmentId = user.assessmentId;
+    if (!verifyAssessmentAccess(user, assessmentId as number, res)) {
+      return;
     }
-    const assessmentId = assessmentResult.id;
 
     // Obtener participantes y su grupo
     const { data: participantes, error: participantesError } = await supabase
@@ -64,9 +64,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const fotoUrls = await resolveParticipantPhotoUrls(
-          supabase,
-          (participantes || []).map((p) => p.FotoUrl_Participante)
-        );
+      supabase,
+      (participantes || []).map((p) => p.FotoUrl_Participante)
+    );
 
     const data = (participantes || []).map((p, i) => {
       const basesRecord = basePromByPersona[p.ID_Participante] || {};

@@ -79,10 +79,8 @@ export const GestionContainer = () => {
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
-    if (selectedAssessment) {
-      fetchData(selectedAssessment);
-    }
-  }, [authLoading, isAdmin, selectedAssessment, fetchData]);
+    fetchData();
+  }, [authLoading, isAdmin, fetchData]);
 
   const onExportCSV = () => {
     setExporting(true);
@@ -135,7 +133,7 @@ export const GestionContainer = () => {
 
   if (!selectedAssessment) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+      <div className="flex flex-col items-center min-h-screen py-4 sm:py-8 px-3 sm:px-4 bg-white">
         <div className="w-full max-w-7xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 px-1 sm:px-2">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center sm:text-left">Gestión del Assessment</h1>
         </div>
@@ -143,48 +141,38 @@ export const GestionContainer = () => {
           assessments={assessments}
           selectedAssessment={selectedAssessment}
           setSelectedAssessment={setSelectedAssessment}
-          searchTerm=""
-          setSearchTerm={() => {}}
-          filterGrupo=""
-          setFilterGrupo={() => {}}
-          filterEstado=""
-          setFilterEstado={() => {}}
-          filterRol=""
-          setFilterRol={() => {}}
-          sortBy="nombre"
-          setSortBy={() => {}}
-          sortOrder="asc"
-          setSortOrder={() => {}}
-          itemsPerPage={10}
-          setItemsPerPage={() => {}}
-          onRefresh={() => {}}
-          onExport={() => {}}
-          onOpenRanges={() => {}}
-          grupos={[]}
-          loading={false}
-          exporting={false}
+          searchTerm="" setSearchTerm={() => {}}
+          filterGrupo="" setFilterGrupo={() => {}}
+          filterEstado="" setFilterEstado={() => {}}
+          filterRol="" setFilterRol={() => {}}
+          sortBy="nombre" setSortBy={() => {}}
+          sortOrder="asc" setSortOrder={() => {}}
+          itemsPerPage={10} setItemsPerPage={() => {}}
+          onRefresh={() => {}} onExport={() => {}} onOpenRanges={() => {}}
+          grupos={[]} loading={false} exporting={false}
         />
         <div className="flex flex-col items-center justify-center flex-1 py-12">
-          <p className="text-lg text-gray-500">Select an assessment to view results.</p>
+          <p className="text-lg text-gray-500">Selecciona un assessment para ver los resultados.</p>
         </div>
       </div>
     );
   }
 
   return (
+
     <div className="flex flex-col items-center min-h-screen py-4 sm:py-8 px-3 sm:px-4 bg-white">
       <div className="w-full max-w-7xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 px-1 sm:px-2">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center sm:text-left">Gestión del Assessment</h1>
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
-          <button
-            onClick={() => router.push("/admin")}
+          <button 
+            onClick={() => router.push("/admin")} 
             className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 group"
           >
             <LayoutDashboard className="w-4 h-4 transition-transform group-hover:scale-110" />
             Admin
           </button>
-          <button
-            onClick={logout}
+          <button 
+            onClick={logout} 
             className="bg-error hover:bg-error-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 group"
           >
             <LogOut className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
@@ -211,7 +199,7 @@ export const GestionContainer = () => {
         setSortOrder={setSortOrder}
         itemsPerPage={itemsPerPage}
         setItemsPerPage={setItemsPerPage}
-        onRefresh={() => fetchData(selectedAssessment)}
+        onRefresh={() => fetchData()}
         onExport={onExportCSV}
         onOpenRanges={() => setIsRangesModalOpen(true)}
         grupos={grupos}

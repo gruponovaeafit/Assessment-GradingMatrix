@@ -1,4 +1,45 @@
 import { supabase } from '@/lib/supabase/server';
+import type { TokenPayload } from '@/lib/auth';
+import { clearSessionCookie } from '@/lib/auth/cookie';
+import type { NextApiResponse } from 'next';
+
+// Super admin tiene id 0 en el token
+const SUPER_ADMIN_ID = 0;
+
+/**
+ * Verifica si el usuario tiene acceso al assessment solicitado.
+ * Para super-admin (id=0), permite acceso a cualquier assessment.
+ * Para otros roles, verifica que el assessmentId del token coincida con el solicitado.
+ * Si no hay acceso, destruye la sesión.
+ */
+export function verifyAssessmentAccess(
+  user: TokenPayload,
+  requestedAssessmentId: number,
+  res: NextApiResponse
+): boolean {
+  // Super admin tiene acceso a todos los assessments
+  if (user.id === SUPER_ADMIN_ID) {
+    return true;
+  }
+
+  // Verificar que el usuario tenga un assessmentId en su token
+  if (!user.assessmentId) {
+    console.warn('[verifyAssessmentAccess] Usuario sin assessmentId en token');
+    clearSessionCookie(res);
+    res.status(403).json({ error: 'Sin acceso a ningún assessment' });
+    return false;
+  }
+
+  // Verificar que el assessmentId coincida
+  if (user.assessmentId !== requestedAssessmentId) {
+    console.warn(`[verifyAssessmentAccess] Acceso denegado: usuario ${user.id} intenta acceder a assessment ${requestedAssessmentId}, tiene ${user.assessmentId}`);
+    clearSessionCookie(res);
+    res.status(403).json({ error: 'No tienes acceso a este assessment' });
+    return false;
+  }
+
+  return true;
+}
 
 // Función para resolver el ID del Assessment a partir de un string (por ejemplo, de una query)
 export async function resolveAssessmentId(data: string | string[] | undefined): Promise<{ id: number } | { error: string; status: number }> {
