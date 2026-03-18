@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { 
-  type Participant, 
-  type CalificacionesType, 
+import {
+  type Participant,
+  type CalificacionesType,
   type CalificacionKey,
   type BaseData
 } from '../schemas/graderSchemas';
@@ -37,13 +37,14 @@ export const GraderCarousel: React.FC<GraderCarouselProps> = ({
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef<number>(0);
-  
+  const [showTip, setShowTip] = useState(true);
+
   const SWIPE_THRESHOLD = 80;
   const DRAG_CLAMP = 120;
 
   const hasParticipants = participantes.length > 0;
-  const currentIndex = hasParticipants 
-    ? (carouselIndex % participantes.length + participantes.length) % participantes.length 
+  const currentIndex = hasParticipants
+    ? (carouselIndex % participantes.length + participantes.length) % participantes.length
     : 0;
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -63,6 +64,7 @@ export const GraderCarousel: React.FC<GraderCarouselProps> = ({
     if (Math.abs(dragOffset) >= SWIPE_THRESHOLD) {
       if (dragOffset > 0) onPrev();
       else onNext();
+      setShowTip(false);
     }
     setDragOffset(0);
   };
@@ -106,6 +108,17 @@ export const GraderCarousel: React.FC<GraderCarouselProps> = ({
                 className="flex-shrink-0 px-1 min-w-0 relative"
                 style={{ flexBasis: `${cardWidthPercent}%` }}
               >
+              {showTip && idx === currentIndex && (
+                <div className="md:hidden w-full flex justify-center mb-2">
+                  <span className="flex items-center gap-2 bg-black bg-opacity-70 text-white text-xs font-medium rounded-full px-3 py-1 shadow-lg">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M4 12h16M16 8l4 4-4 4" />
+                    </svg>
+                    Desliza para cambiar de participante
+                  </span>
+                </div>
+              )}
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onShowBaseInfo(); }}
@@ -174,7 +187,6 @@ export const GraderCarousel: React.FC<GraderCarouselProps> = ({
           </svg>
         </button>
       </div>
-      <p className="text-center text-xs text-gray-400 mt-2 md:hidden">Desliza para cambiar de participante</p>
     </>
   );
 };
