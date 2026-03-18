@@ -115,7 +115,7 @@ export const GraderCarousel: React.FC<GraderCarouselProps> = ({
                   ?
                 </button>
                 <div className="flex flex-col items-center gap-2 mb-4">
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-gray-100 border-2 border-[color:var(--color-accent)] flex items-center justify-center">
+                  <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-2xl overflow-hidden bg-gray-100 border-2 border-[color:var(--color-accent)] flex items-center justify-center">
                     {(typeof usuario.Photo === 'string' && usuario.Photo.trim()) ? (
                       <img
                         src={usuario.Photo}
