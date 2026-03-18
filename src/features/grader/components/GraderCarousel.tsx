@@ -38,6 +38,7 @@ export const GraderCarousel: React.FC<GraderCarouselProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef<number>(0);
   const [showTip, setShowTip] = useState(true);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const SWIPE_THRESHOLD = 80;
   const DRAG_CLAMP = 120;
@@ -133,7 +134,8 @@ export const GraderCarousel: React.FC<GraderCarouselProps> = ({
                       <img
                         src={usuario.Photo}
                         alt={`Foto de ${usuario.Nombre}`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover cursor-zoom-in"
+                        onClick={() => setPhotoPreview(usuario.Photo ?? null)}
                         onError={(e) => {
                           const t = e.target as HTMLImageElement;
                           t.style.display = 'none';
@@ -187,6 +189,32 @@ export const GraderCarousel: React.FC<GraderCarouselProps> = ({
           </svg>
         </button>
       </div>
+      {photoPreview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
+          onClick={() => setPhotoPreview(null)}
+          aria-modal="true"
+          tabIndex={-1}
+        >
+          <div className="relative" onClick={e => e.stopPropagation()}>
+            <img
+              src={photoPreview}
+              alt="Foto ampliada"
+              className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-lg"
+            />
+            <button
+              className="absolute top-2 right-2 bg-white rounded-full p-2 shadow focus:outline-none"
+              onClick={() => setPhotoPreview(null)}
+              aria-label="Cerrar"
+              autoFocus
+            >
+              <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };
