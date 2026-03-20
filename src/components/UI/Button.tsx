@@ -16,7 +16,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const base =
-    'inline-flex items-center justify-center rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)] focus:ring-offset-2 px-4 py-2 text-base shadow-sm';
+    'inline-flex items-center justify-center rounded-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)] focus:ring-offset-2 px-4 py-2 text-base shadow-sm';
   const variants: Record<string, string> = {
     accent:
       'bg-[color:var(--color-accent)] text-white hover:bg-[#5B21B6] disabled:bg-[color:var(--color-accent)]/60',

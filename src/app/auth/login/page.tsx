@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useStoredId } from "@/hooks/useStoredId";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useGraderAuth } from "@/hooks/useGraderAuth";
-import { Spinner } from "@/components/UI/Loading";
+import { Box } from "@/components/UI/Box";
+import { InputBox } from "@/components/UI/InputBox";
+import { Button } from "@/components/UI/Button";
 
 export default function Login() {
   const { saveData } = useStoredId();
@@ -25,9 +27,7 @@ export default function Login() {
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ email, password }),
       });
@@ -37,7 +37,7 @@ export default function Login() {
       }
 
       const data = await response.json();
-      
+
       if (data.role === "admin") {
         const isSuper = Boolean(data.superAdmin);
         loginAsAdmin(isSuper);
@@ -45,7 +45,6 @@ export default function Login() {
       } else if (data.role === "registrador") {
         router.push("/register");
       } else if (data.role === "calificador") {
-        // Save grader-specific data (operational, not sensitive)
         saveData(data.ID_Grupo, data.ID_Calificador, data.ID_Base);
         loginAsGrader();
         router.push(`/grader`);
@@ -60,56 +59,65 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-full min-h-screen bg-white px-4">
-      <div className="w-full max-w-md mx-auto flex items-center justify-center">
-        <form onSubmit={handleLogin} className="flex flex-col items-center gap-4 p-8 w-full max-w-[380px] bg-white shadow-lg rounded-2xl border border-gray-100">
-          <h1 className="text-3xl font-extrabold mb-4 text-gray-900 text-center">Ingresar Credenciales</h1>
-          <div className="mb-2 w-full">
-            <label className="block text-lg font-semibold mb-1 text-gray-800">Correo Electrónico</label>
-            <input
-              type="email"
-              placeholder="Correo Electrónico"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={isLoading}
-              className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)] placeholder-gray-400 text-base disabled:opacity-50"
-            />
-          </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4 py-8 lg:py-6">
 
-          <div className="mb-2 w-full">
-            <label className="block text-lg font-semibold mb-1 text-gray-800">Contraseña</label>
-            <input
-              type="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-              className="w-full px-3 py-2 border border-gray-300 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)] placeholder-gray-400 text-base disabled:opacity-50"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full mt-2 rounded-lg bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white text-lg font-semibold py-3 transition shadow flex items-center justify-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <Spinner size="sm" />
-                <span>Iniciando sesión...</span>
-              </>
-            ) : (
-              "Iniciar Sesión"
-            )}
-          </button>
-
-          {error && <p className="text-error text-sm font-medium text-center">{error}</p>}
-        </form>
+      {/* Header */}
+      <div className="text-center mb-4 lg:mb-6 xl:mb-10 w-full max-w-2xl">
+        <h1 className="text-4xl sm:text-5xl xl:text-6xl font-extrabold text-purple-400 leading-tight drop-shadow-[3px_4px_1.5px_rgba(0,0,0,0.15)]">
+          Assessment Grading Matrix
+        </h1>
+        <p className="mt-2 xl:mt-4 text-gray-400 text-sm xl:text-lg font-semibold">
+          Sistema moderno y sobrio para calificar y gestionar el assessment fácilmente.
+        </p>
       </div>
-      <footer className="mb-5 w-full text-lg sm:text-xl text-center mt-10 sm:mt-20 italic text-gray-400">
-        POWERED BY <span className="font-bold text-2xl sm:text-3xl text-[color:var(--color-accent)]">Nova</span>
+
+      <form onSubmit={handleLogin} className="w-full max-w-[380px]">
+        <Box className="flex flex-col gap-4 xl:gap-5">
+
+          <h2 className="text-xl xl:text-2xl font-bold text-gray-800 text-center">
+            Ingresar Credenciales
+          </h2>
+
+          <InputBox
+            label="Correo Electrónico"
+            type="email"
+            placeholder="Correo Electrónico"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading}
+          />
+
+          <InputBox
+            label="Contraseña"
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
+          />
+
+          <Button
+            type="submit"
+            variant="accent"
+            loading={isLoading}
+            className="w-full mt-2 py-3 text-lg"
+          >
+            {!isLoading && "Iniciar Sesión"}
+          </Button>
+
+          {error && (
+            <p className="text-red-500 text-sm text-center font-medium">
+              {error}
+            </p>
+          )}
+
+        </Box>
+      </form>
+
+      {/* Footer */}
+      <footer className="mt-6 lg:mt-8 xl:mt-16 text-gray-400 text-base xl:text-lg italic">
+        POWERED BY{" "}
+        <span className="font-bold text-2xl text-purple-400">Nova</span>
       </footer>
     </div>
   );

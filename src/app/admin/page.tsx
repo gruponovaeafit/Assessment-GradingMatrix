@@ -1,61 +1,79 @@
 "use client";
 
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { Box } from "@/components/UI/Box";
+import { Button } from "@/components/UI/Button";
 
 export default function AdminHub() {
   const { logout } = useAdminAuth();
 
   return (
-    <div className="flex flex-col items-center min-h-screen py-6 px-4 bg-white">
+    // Fondo gris claro general
+    <div className="flex flex-col items-center min-h-screen py-6 px-4 bg-gray-100">
+
+      {/* Header */}
       <div className="w-full max-w-4xl flex justify-between items-center mb-6">
-        <h1 className="text-3xl drop-shadow-lg font-extrabold text-[color:var(--color-accent)]">Admin</h1>
-        <button
-          onClick={logout}
-          className="bg-error hover:bg-error-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-        >
+
+        {/* Título principal */}
+        <h1 className="text-3xl drop-shadow-[3px_4px_1.5px_rgba(0,0,0,0)] font-extrabold text-[color:var(--color-accent)]">
+          Admin
+        </h1>
+
+        {/* Botón cerrar sesión */}
+        <Button variant="error" onClick={logout} className="flex items-center gap-2">
           Cerrar Sesión
-        </button>
+          <img src="/LogoutIcon.svg" alt="logout" className="w-5 h-5" />
+        </Button>
+
       </div>
 
-      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white border border-gray-100 rounded-xl shadow p-5 flex flex-col gap-3">
+      {/* Grid de cards */}
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-10">
+
+        {/* Card */}
+        <Box className="flex flex-col gap-3">
           <h2 className="text-xl font-bold text-gray-900">Gestión del Assessment</h2>
           <p className="text-sm text-gray-600">
             Administra personas del assessment, revisa calificaciones y exporta resultados.
           </p>
-          <button
+          {/* Botón de navegación */}
+          <Button
+            variant="accent"
+            className="mt-2 w-full"
             onClick={() => (window.location.href = "/admin/management")}
-            className="mt-2 w-full bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Ir a Gestión
-          </button>
-        </div>
+          </Button>
+        </Box>
 
-        <div className="bg-white border border-gray-100 rounded-xl shadow p-5 flex flex-col gap-3">
-          <h2 className="text-xl font-bold text-gray-900 ">Configuración</h2>
+        <Box className="flex flex-col gap-3">
+          <h2 className="text-xl font-bold text-gray-900">Configuración</h2>
           <p className="text-sm text-gray-600">
             Crea assessments, activa/inactiva, registra calificadores y asigna grupos.
           </p>
-          <button
+          <Button
+            variant="accent"
+            className="mt-2 w-full"
             onClick={() => (window.location.href = "/admin/configuration")}
-            className="mt-2 w-full bg-[color:var(--color-accent)] hover:bg-success-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Ir a Configuración
-          </button>
-        </div>
+          </Button>
+        </Box>
 
-        <div className="bg-white border border-gray-100 rounded-xl shadow p-5 flex flex-col gap-3 md:col-span-2">
+        <Box className="flex flex-col gap-3 md:col-span-2">
           <h2 className="text-xl font-bold text-gray-900">Gestionar Bases</h2>
           <p className="text-sm text-gray-600">
-            Administra las bases del assessment: define criterios, rangos de clasificación y valores. 
+            Administra las bases del assessment: define criterios, rangos de clasificación y valores.
           </p>
-          <button
+          <Button
+            variant="accent"
+            className="mt-2 w-full"
             onClick={() => (window.location.href = "/admin/bases")}
-            className="mt-2 w-full bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Ir a Bases
-          </button>
-        </div>
+          </Button>
+        </Box>
+
       </div>
     </div>
   );
