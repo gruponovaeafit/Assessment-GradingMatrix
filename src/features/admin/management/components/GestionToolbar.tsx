@@ -20,7 +20,12 @@ interface GestionToolbarProps {
   setSortOrder: (val: "asc" | "desc") => void;
   itemsPerPage: number;
   setItemsPerPage: (val: number) => void;
+  onRefresh: () => void;
+  onExport: () => void;
+  onOpenRanges: () => void;
   grupos: string[];
+  loading: boolean;
+  exporting: boolean;
 }
 
 export const GestionToolbar: React.FC<GestionToolbarProps> = ({
@@ -41,7 +46,12 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
   setSortOrder,
   itemsPerPage,
   setItemsPerPage,
+  onRefresh,
+  onExport,
+  onOpenRanges,
   grupos,
+  loading,
+  exporting,
 }) => {
   const hasActiveFilters =
     !!searchTerm ||
