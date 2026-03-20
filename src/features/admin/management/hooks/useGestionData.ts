@@ -9,7 +9,7 @@ export function useGestionData(logout: () => void) {
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (assessmentId?: string) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -19,8 +19,12 @@ export function useGestionData(logout: () => void) {
     setLoading(true);
     setError(null);
     try {
+      const url = assessmentId
+        ? `/api/dashboard/gh?assessmentId=${assessmentId}`
+        : '/api/dashboard/gh';
+
       const response = await authFetch(
-        '/api/dashboard/gh',
+        url,
         { signal: controller.signal },
         () => logout()
       );
@@ -32,7 +36,6 @@ export function useGestionData(logout: () => void) {
         throw new Error(result?.error || "Error al cargar los datos");
       }
 
-      // Validation
       const parsed = z.array(ParticipantDashboardRowSchema).safeParse(result);
       if (!parsed.success) {
         console.error('❌ Validation Error:', parsed.error);
