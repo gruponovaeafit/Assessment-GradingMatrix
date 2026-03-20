@@ -13,7 +13,7 @@ Muchas de las vistas principales en `src/app/` (ej. `admin/gestion`, `register`)
 3. **Curva de Aprendizaje:** Los nuevos desarrolladores tardan demasiado en entender el flujo de datos dentro de la vista.
 
 ## Decisión
-Adoptar un patrón de **Composición de Componentes** y **Separación de Responsabilidades** para todas las vistas críticas.
+Adoptar un patrón de **Composición de Componentes** y **Separación de Responsabilidades** inspirado en **Feature Sliced Design (FSD)** para todas las vistas críticas.
 
 ### Patrón Estándar:
 1. **Container (Page):** Se encarga solo de la orquestación, fetching inicial y manejo de layouts.

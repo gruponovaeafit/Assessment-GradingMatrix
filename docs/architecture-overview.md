@@ -45,8 +45,8 @@ Cualquier operación que requiera seguridad sigue este camino:
 
 ## Patrones de Arquitectura Avanzados
 
-### 1. Composición por Features (ADR 0003)
-Para evitar componentes monolíticos, las vistas complejas se descomponen en:
+### 1. Composición por Features / Feature Sliced Design (FSD) (ADR 0003)
+Para evitar componentes monolíticos y mantener baja la dependencia cruzada aplicando conceptos de Feature Sliced Design (FSD), las vistas complejas se descomponen en:
 - **Container**: Orquestador en `src/features/[feature]/ConfigContainer.tsx`.
 - **Domain Hooks**: Lógica de estado y fetching en `hooks/`.
 - **Feature Components**: UI específica en `components/`.
