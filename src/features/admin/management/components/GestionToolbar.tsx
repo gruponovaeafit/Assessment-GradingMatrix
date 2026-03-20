@@ -1,6 +1,5 @@
 import React from 'react';
-import { RefreshCw, SlidersHorizontal, Download, Search, ArrowUp, ArrowDown, X } from 'lucide-react';
-import { Spinner } from '@/components/UI/Loading';
+import { ArrowUp, ArrowDown, Search, X } from 'lucide-react';
 import { type Assessment } from '../schemas/gestionSchemas';
 
 interface GestionToolbarProps {
@@ -54,59 +53,39 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
   loading,
   exporting,
 }) => {
+  const hasActiveFilters =
+    !!searchTerm ||
+    filterGrupo !== "todos" ||
+    filterEstado !== "todos" ||
+    filterRol !== "todos";
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterGrupo("todos");
+    setFilterEstado("todos");
+    setFilterRol("todos");
+  };
+
   return (
-    <div className="w-full max-w-7xl space-y-4 mb-6">
-      {/* Fila superior: Acciones Principales */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <select
-            value={selectedAssessment}
-            onChange={(e) => setSelectedAssessment(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none"
-          >
-            <option value="">Assessment: Por defecto</option>
-            {assessments.map((a) => (
-              <option key={a.id} value={String(a.id)}>
-                {a.nombre}
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={onRefresh}
-            disabled={loading}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 group"
-          >
-            {loading ? <Spinner size="sm" color="primary" /> : (
-              <RefreshCw className={`w-4 h-4 transition-transform ${loading ? 'animate-spin' : 'group-hover:rotate-180 duration-500'}`} />
-            )}
-            Actualizar
-          </button>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={onOpenRanges}
-            className="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 group"
-          >
-            <SlidersHorizontal className="w-4 h-4 transition-transform group-hover:scale-110" />
-            Rangos
-          </button>
-          <button
-            onClick={onExport}
-            disabled={exporting}
-            className="bg-success hover:bg-success-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 group"
-          >
-            {exporting ? <Spinner size="sm" color="white" /> : (
-              <Download className="w-4 h-4 transition-transform group-hover:-translate-y-1" />
-            )}
-            Exportar CSV
-          </button>
-        </div>
+    <div className="w-full space-y-3">
+      {/* Fila 1: Assessment selector */}
+      <div className="flex flex-wrap items-center gap-3">
+        <select
+          value={selectedAssessment}
+          onChange={(e) => setSelectedAssessment(e.target.value)}
+          className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none"
+        >
+          <option value="">Assessments (por defecto)</option>
+          {assessments.map((a) => (
+            <option key={a.id} value={String(a.id)}>
+              {a.nombre}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* Fila inferior: Filtros y Búsqueda */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+      {/* Fila 2: Búsqueda y filtros */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
         <div className="relative lg:col-span-2">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
             <Search className="w-4 h-4" />
@@ -153,59 +132,59 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
           <option value="aspirante">Aspirantes</option>
           <option value="infiltrado">Infiltrados</option>
         </select>
+      </div>
 
-        <div className="lg:col-span-5 flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-gray-50">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Ordenar:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="bg-transparent text-sm font-semibold text-gray-700 outline-none cursor-pointer"
-              >
-                <option value="nombre">Nombre</option>
-                <option value="promedio">Promedio</option>
-                <option value="grupo">Grupo</option>
-              </select>
-              <button
-                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-                className="p-1 hover:bg-gray-100 rounded transition"
-              >
-                {sortOrder === "asc" ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Mostrar:</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                className="bg-transparent text-sm font-semibold text-gray-700 outline-none cursor-pointer"
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
+      {/* Fila 3: Ordenar, mostrar, limpiar — altura siempre fija */}
+      <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-gray-100">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Ordenar:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-transparent text-sm font-semibold text-gray-700 outline-none cursor-pointer"
+            >
+              <option value="nombre">Nombre</option>
+              <option value="promedio">Promedio</option>
+              <option value="grupo">Grupo</option>
+            </select>
+            <button
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              className="p-1 hover:bg-gray-100 rounded transition"
+            >
+              {sortOrder === "asc"
+                ? <ArrowUp className="w-3.5 h-3.5" />
+                : <ArrowDown className="w-3.5 h-3.5" />}
+            </button>
           </div>
 
-          <div className="text-xs text-gray-400">
-            {searchTerm || filterGrupo !== "todos" || filterEstado !== "todos" || filterRol !== "todos" ? (
-              <button
-                onClick={() => {
-                  setSearchTerm("");
-                  setFilterGrupo("todos");
-                  setFilterEstado("todos");
-                  setFilterRol("todos");
-                }}
-                className="text-[color:var(--color-accent)] hover:underline flex items-center gap-1"
-              >
-                <X className="w-3 h-3" />
-                Limpiar filtros
-              </button>
-            ) : null}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Mostrar:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              className="bg-transparent text-sm font-semibold text-gray-700 outline-none cursor-pointer"
+            >
+              <option value={10}>10 por página</option>
+              <option value={20}>20 por página</option>
+              <option value={50}>50 por página</option>
+              <option value={100}>100 por página</option>
+            </select>
           </div>
+        </div>
+
+        {/* Siempre ocupa espacio — invisible cuando no hay filtros activos */}
+        <div className="ml-auto">
+          <button
+            onClick={clearFilters}
+            disabled={!hasActiveFilters}
+            className={`flex items-center gap-1 text-xs whitespace-nowrap font-medium px-3 py-1.5 rounded-lg transition
+              bg-[color:var(--color-accent)] text-white hover:bg-[#5B21B6]
+              ${hasActiveFilters ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+          >
+            <X className="w-3 h-3 shrink-0" />
+            Limpiar filtros
+          </button>
         </div>
       </div>
     </div>
