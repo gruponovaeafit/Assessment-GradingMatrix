@@ -59,12 +59,9 @@ export default function Login() {
   };
 
   return (
-    // py-8 en mobile, py-6 en laptops pequeñas para no generar scroll
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4 py-8 lg:py-6">
 
-      {/* HEADER
-          En mobile y laptops pequeñas (lg): título más pequeño y menos margen inferior
-          En desktop (1920x1080): se ve igual que antes */}
+      {/* Header */}
       <div className="text-center mb-4 lg:mb-6 xl:mb-10 w-full max-w-2xl">
         <h1 className="text-4xl sm:text-5xl xl:text-6xl font-extrabold text-purple-400 leading-tight drop-shadow-[3px_4px_1.5px_rgba(0,0,0,0.15)]">
           Assessment Grading Matrix
@@ -74,11 +71,9 @@ export default function Login() {
         </p>
       </div>
 
-      {/* Caja de texto — igual que antes, sin cambios visuales */}
       <form onSubmit={handleLogin} className="w-full max-w-[380px]">
         <Box className="flex flex-col gap-4 xl:gap-5">
 
-          {/* Título del card: ligeramente más pequeño en laptops */}
           <h2 className="text-xl xl:text-2xl font-bold text-gray-800 text-center">
             Ingresar Credenciales
           </h2>
@@ -119,7 +114,7 @@ export default function Login() {
         </Box>
       </form>
 
-      {/* FOOTER — menos margen superior en laptops para evitar scroll */}
+      {/* Footer */}
       <footer className="mt-6 lg:mt-8 xl:mt-16 text-gray-400 text-base xl:text-lg italic">
         POWERED BY{" "}
         <span className="font-bold text-2xl text-purple-400">Nova</span>
