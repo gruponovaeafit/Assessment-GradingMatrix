@@ -18,7 +18,6 @@ interface GestionToolbarProps {
   setItemsPerPage: (val: number) => void;
   onRefresh: () => void;
   onExport: () => void;
-  onOpenRanges: () => void;
   grupos: string[];
   loading: boolean;
   exporting: boolean;
@@ -41,7 +40,6 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
   setItemsPerPage,
   onRefresh,
   onExport,
-  onOpenRanges,
   grupos,
   loading,
   exporting,

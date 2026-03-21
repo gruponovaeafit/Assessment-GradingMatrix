@@ -23,7 +23,6 @@ import { ParticipantTable } from "./components/ParticipantTable";
 import { ParticipantCardList } from "./components/ParticipantCardList";
 import { EditParticipantModal } from "./components/EditParticipantModal";
 import { ParticipantDetailModal } from "./components/ParticipantDetailModal";
-import { ClassificationRangesModal } from "./components/ClassificationRangesModal";
 import { Pagination } from "./components/Pagination";
 
 // Utilities
@@ -34,9 +33,9 @@ import { showToast } from "@/components/UI/Toast";
 // ─── RangesInline — fuera del page para no perder foco ───────────────────────
 interface RangesInlineProps {
   localRanges: ClassificationRanges;
-  inputValues: { group: string; interview: string };
-  onChange: (key: "group" | "interview", value: string) => void;
-  onBlur: (key: "group" | "interview") => void;
+  inputValues: { group: string; interview: string; discussion: string };
+  onChange: (key: "group" | "interview" | "discussion", value: string) => void;
+  onBlur: (key: "group" | "interview" | "discussion") => void;
 }
 
 const RangesInline: React.FC<RangesInlineProps> = ({ localRanges, inputValues, onChange, onBlur }) => (
@@ -52,7 +51,7 @@ const RangesInline: React.FC<RangesInlineProps> = ({ localRanges, inputValues, o
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-black">Grupo</span>
           <input
-            type="number" step="0.01" min="0" max="5"
+            type="number" step="0.1" min="0" max="5"
             value={inputValues.group}
             onChange={(e) => onChange("group", e.target.value)}
             onBlur={() => onBlur("group")}
@@ -62,7 +61,7 @@ const RangesInline: React.FC<RangesInlineProps> = ({ localRanges, inputValues, o
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-black">Entrevista</span>
           <input
-            type="number" step="0.01" min="0" max="5"
+            type="number" step="0.1" min="0" max="5"
             value={inputValues.interview}
             onChange={(e) => onChange("interview", e.target.value)}
             onBlur={() => onBlur("interview")}
@@ -72,9 +71,11 @@ const RangesInline: React.FC<RangesInlineProps> = ({ localRanges, inputValues, o
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-black">Discusión</span>
           <input
-            type="number" value={localRanges.discussion}
-            readOnly tabIndex={-1}
-            className="w-16 px-2 py-1 text-sm text-center text-gray-500 rounded-lg border border-gray-300 bg-gray-300 cursor-not-allowed outline-none"
+            type="number" step="0.1" min="0" max="5"
+            value={inputValues.discussion}
+            onChange={(e) => onChange("discussion", e.target.value)}
+            onBlur={() => onBlur("discussion")}
+            className="w-16 px-2 py-1 text-sm text-center text-black rounded-lg border border-gray-300 focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none transition"
           />
         </div>
       </div>
@@ -136,6 +137,7 @@ export const GestionContainer = () => {
   const [inputValues, setInputValues] = useState({
     group: String(classificationRanges.group),
     interview: String(classificationRanges.interview),
+    discussion: String(classificationRanges.discussion),
   });
 
   // Sincroniza inputs cuando cambian los rangos (por cambio de assessment)
@@ -144,10 +146,11 @@ export const GestionContainer = () => {
     setInputValues({
       group: String(classificationRanges.group),
       interview: String(classificationRanges.interview),
+      discussion: String(classificationRanges.discussion),
     });
   }, [classificationRanges]);
 
-  const handleRangeChange = (key: "group" | "interview", value: string) => {
+  const handleRangeChange = (key: "group" | "interview" | "discussion", value: string) => {
     setInputValues((prev) => ({ ...prev, [key]: value }));
     const parsed = parseFloat(value);
     if (!isNaN(parsed)) {
@@ -158,7 +161,7 @@ export const GestionContainer = () => {
     }
   };
 
-  const handleRangeBlur = (key: "group" | "interview") => {
+  const handleRangeBlur = (key: "group" | "interview" | "discussion") => {
     const parsed = parseFloat(inputValues[key]);
     if (isNaN(parsed)) {
       setInputValues((prev) => ({ ...prev, [key]: String(localRanges[key]) }));
@@ -259,7 +262,6 @@ export const GestionContainer = () => {
             itemsPerPage={itemsPerPage} setItemsPerPage={setItemsPerPage}
             onRefresh={() => fetchData()}
             onExport={onExportCSV}
-            onOpenRanges={() => {}}
             grupos={grupos}
             loading={dataLoading}
             exporting={exporting}
