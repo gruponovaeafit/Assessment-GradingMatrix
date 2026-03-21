@@ -1,9 +1,7 @@
 import React from 'react';
-import { type Assessment, type Base } from '../schemas/configSchemas';
+import { type Base } from '../schemas/configSchemas';
 
 interface RegisterStaffFormProps {
-  staffAssessmentId: string;
-  setStaffAssessmentId: (val: string) => void;
   staffCorreo: string;
   setStaffCorreo: (val: string) => void;
   staffPassword: string;
@@ -12,15 +10,12 @@ interface RegisterStaffFormProps {
   setStaffRol: (val: string) => void;
   staffBaseId: string;
   setStaffBaseId: (val: string) => void;
-  visibleAssessments: Assessment[];
   basesList: Base[];
   creatingStaff: boolean;
   onSubmit: (e: React.FormEvent) => void;
 }
 
 export const RegisterStaffForm: React.FC<RegisterStaffFormProps> = ({
-  staffAssessmentId,
-  setStaffAssessmentId,
   staffCorreo,
   setStaffCorreo,
   staffPassword,
@@ -29,7 +24,6 @@ export const RegisterStaffForm: React.FC<RegisterStaffFormProps> = ({
   setStaffRol,
   staffBaseId,
   setStaffBaseId,
-  visibleAssessments,
   basesList,
   creatingStaff,
   onSubmit,
@@ -38,22 +32,7 @@ export const RegisterStaffForm: React.FC<RegisterStaffFormProps> = ({
     <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
       <div className="bg-white rounded-xl p-4 shadow border border-gray-100">
         <h2 className="text-lg font-bold text-gray-900 mb-3">Registrar Staff</h2>
-        <form onSubmit={onSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <select
-            value={staffAssessmentId}
-            onChange={(e) => setStaffAssessmentId(e.target.value)}
-            className={`px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm ${
-              staffAssessmentId === '' ? 'text-gray-400' : 'text-gray-900'
-            }`}
-          >
-            <option value="" style={{ color: '#9CA3AF' }}>Assessment</option>
-            {visibleAssessments.map((assessment) => (
-              <option key={assessment.id} value={assessment.id} style={{ color: '#111827' }}>
-                {assessment.nombre}
-              </option>
-            ))}
-          </select>
-
+        <form onSubmit={onSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input
             type="email"
             placeholder="Correo del staff"
@@ -107,7 +86,7 @@ export const RegisterStaffForm: React.FC<RegisterStaffFormProps> = ({
             </select>
           )}
           
-          <div className={`${staffRol === 'calificador' ? 'sm:col-span-3' : 'sm:col-span-2'} flex justify-end`}>
+          <div className={`${staffRol === 'calificador' ? 'sm:col-span-2' : 'sm:col-span-1'} flex justify-end`}>
             <button
               type="submit"
               disabled={creatingStaff}
