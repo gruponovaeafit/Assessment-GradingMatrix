@@ -1,5 +1,4 @@
 import React from 'react';
-import { Spinner } from '@/components/UI/Loading';
 import { Eye, Pencil, User } from 'lucide-react';
 import { type ParticipantDashboardRow } from '../schemas/gestionSchemas';
 
@@ -19,25 +18,25 @@ export const ParticipantTable: React.FC<ParticipantTableProps> = ({
   onDetail,
 }) => {
   return (
-    <div className="hidden lg:block w-full max-w-7xl bg-white shadow rounded-xl overflow-hidden border border-gray-100">
+    <div className="hidden lg:block w-full">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Participante</th>
-              <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Rol</th>
-              <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Grupo</th>
+            <tr className="bg-[color:var(--color-accent)]">
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider">Participante</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider">Rol</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider">Grupo</th>
               {baseNumbers.map((n) => (
-                <th key={n} className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                <th key={n} className="p-4 text-xs font-semibold text-white uppercase tracking-wider text-center">
                   Base {n}
                 </th>
               ))}
-              <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">Promedio</th>
-              <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Estado</th>
-              <th className="p-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Acciones</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider text-center">Promedio</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider">Estado</th>
+              <th className="p-4 text-xs font-semibold text-white uppercase tracking-wider text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-gray-100">
             {paginatedData.map((item) => {
               const { texto, color, Icon } = getEstadoInfo(item.Calificacion_Promedio);
               return (

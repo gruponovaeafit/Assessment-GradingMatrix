@@ -9,7 +9,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const user = requireRoles(req, res, ["admin"]);
     if (!user) return;
 
-    const assessmentId = user.assessmentId;
+    // Si viene assessmentId en el query param, usarlo; si no, usar el del token
+    const queryAssessmentId = req.query.assessmentId
+      ? Number(req.query.assessmentId)
+      : null;
+
+    const assessmentId = queryAssessmentId ?? user.assessmentId;
+
     if (!verifyAssessmentAccess(user, assessmentId as number, res)) {
       return;
     }
@@ -73,7 +79,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const basesArray = Object.entries(basesRecord)
         .map(([nombreBase, prom]) => {
-          // nombreBase is like "Base 1"
           const num = Number(nombreBase.replace("Base ", ""));
           return {
             numero: num,
