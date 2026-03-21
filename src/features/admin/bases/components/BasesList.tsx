@@ -5,7 +5,6 @@ import { type Base } from '../schemas/basesSchemas';
 interface BasesListProps {
   bases: Base[];
   loading: boolean;
-  selectedAssessment: string;
   onOpenEdit: (base: Base) => void;
   onDelete: (baseId: number) => void;
 }
@@ -13,7 +12,6 @@ interface BasesListProps {
 export const BasesList: React.FC<BasesListProps> = ({
   bases,
   loading,
-  selectedAssessment,
   onOpenEdit,
   onDelete,
 }) => {
@@ -23,10 +21,6 @@ export const BasesList: React.FC<BasesListProps> = ({
         <div className="flex items-center justify-center py-12">
           <Spinner size="lg" color="custom" customColor="var(--color-accent)" />
           <span className="ml-3 text-gray-600">Cargando bases...</span>
-        </div>
-      ) : !selectedAssessment ? (
-        <div className="text-center py-12 text-gray-500">
-          <p>Selecciona un assessment para ver sus bases</p>
         </div>
       ) : bases.length === 0 ? (
         <div className="text-center py-12 text-gray-500">

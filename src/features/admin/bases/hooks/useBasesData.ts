@@ -9,53 +9,17 @@ export const useBasesData = () => {
   const { isAdmin, isLoading: authLoading, logout } = useAdminAuth();
   const router = useRouter();
   
-  const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [bases, setBases] = useState<Base[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAssessment, setSelectedAssessment] = useState<string>('');
 
-  // Load assessments initially
   useEffect(() => {
     if (authLoading || !isAdmin) return;
-
-    const fetchAssessments = async () => {
-      try {
-        const response = await authFetch(
-          '/api/assessment/list?activo=true',
-          {},
-          () => logout()
-        );
-
-        if (response.status === 401) {
-          router.push('/auth/login');
-          return;
-        }
-
-        if (!response.ok) throw new Error('Error al cargar assessments');
-        const result = await response.json();
-        setAssessments(result || []);
-      } catch (err) {
-        console.error(err);
-        showToast.error('Error al cargar assessments');
-      }
-    };
-
-    fetchAssessments();
-  }, [authLoading, isAdmin, router, logout]);
-
-  // Load bases when selected assessment changes
-  useEffect(() => {
-    if (!selectedAssessment) {
-      setBases([]);
-      setLoading(false);
-      return;
-    }
 
     const fetchBases = async () => {
       setLoading(true);
       try {
         const response = await authFetch(
-          `/api/base/list?assessmentId=${selectedAssessment}`,
+          `/api/base/list`,
           {},
           () => logout()
         );
@@ -77,14 +41,11 @@ export const useBasesData = () => {
     };
 
     fetchBases();
-  }, [selectedAssessment, authLoading, isAdmin, router, logout]);
+  }, [authLoading, isAdmin, router, logout]);
 
   return {
-    assessments,
     bases,
     setBases,
-    loading,
-    selectedAssessment,
-    setSelectedAssessment
+    loading
   };
 };

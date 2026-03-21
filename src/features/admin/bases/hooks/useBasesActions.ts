@@ -7,10 +7,9 @@ import { type Base, type BaseFormData } from '../schemas/basesSchemas';
 interface UseBasesActionsProps {
   bases: Base[];
   setBases: React.Dispatch<React.SetStateAction<Base[]>>;
-  selectedAssessment: string;
 }
 
-export const useBasesActions = ({ bases, setBases, selectedAssessment }: UseBasesActionsProps) => {
+export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
   const { logout } = useAdminAuth();
 
   const [showModal, setShowModal] = useState(false);
@@ -33,10 +32,6 @@ export const useBasesActions = ({ bases, setBases, selectedAssessment }: UseBase
   };
 
   const handleOpenCreate = () => {
-    if (!selectedAssessment) {
-      showToast.error('Selecciona un assessment primero');
-      return;
-    }
     resetForm();
     setShowModal(true);
   };
@@ -57,11 +52,6 @@ export const useBasesActions = ({ bases, setBases, selectedAssessment }: UseBase
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!selectedAssessment) {
-      showToast.error('Selecciona un assessment');
-      return;
-    }
 
     try {
       if (editingBase) {
@@ -107,7 +97,6 @@ export const useBasesActions = ({ bases, setBases, selectedAssessment }: UseBase
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              assessmentId: Number(selectedAssessment),
               numeroBase: Number(formData.numeroBase),
               nombre: formData.nombre,
               competencia: formData.competencia,
@@ -130,7 +119,7 @@ export const useBasesActions = ({ bases, setBases, selectedAssessment }: UseBase
         
         // Refresh bases
         const refreshResponse = await authFetch(
-          `/api/base/list?assessmentId=${selectedAssessment}`,
+          `/api/base/list`,
           {},
           () => logout()
         );

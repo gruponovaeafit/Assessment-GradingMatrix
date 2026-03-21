@@ -31,10 +31,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(401).json({ error: 'Token inválido o expirado' });
   }
 
-  return res.status(200).json({
-    id: decoded.id,
-    email: decoded.email,
-    role: decoded.role,
-    isSuperAdmin: decoded.role === 'admin' && decoded.email === process.env.ADMIN_EMAIL,
-  });
+  if (decoded && typeof decoded === 'object') {
+    return res.status(200).json({
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      isSuperAdmin: decoded.role === 'admin' && decoded.email === process.env.ADMIN_EMAIL,
+      assessmentId: decoded.assessmentId || null,
+    });
+  }
+
+  return res.status(401).json({ error: 'Token inválido' });
 }
