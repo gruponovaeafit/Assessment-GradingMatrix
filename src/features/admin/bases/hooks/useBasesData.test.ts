@@ -74,7 +74,7 @@ describe('useBasesData', () => {
     });
 
     expect(authFetch).toHaveBeenCalledWith(
-      '/api/assessment/list',
+      '/api/assessment/list?activo=true',
       expect.any(Object),
       expect.any(Function)
     );

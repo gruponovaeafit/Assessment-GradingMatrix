@@ -3,16 +3,20 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { getAuthorizedAssessmentId } from '@/lib/assessment';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  if (!requireRoles(req, res, ['admin'])) return;
+  const user = requireRoles(req, res, ['admin']);
+  if (!user) return;
+
+  const assessmentId = getAuthorizedAssessmentId(user, res);
+  if (!assessmentId) return;
 
   const {
-    assessmentId,
     numeroBase,
     nombre,
     competencia,
@@ -24,7 +28,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Validaciones
   if (
-    !assessmentId ||
     !numeroBase ||
     !nombre ||
     !competencia ||

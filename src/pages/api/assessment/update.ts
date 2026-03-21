@@ -1,19 +1,26 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { getAuthorizedAssessmentId } from '@/lib/assessment';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'PUT') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  if (!requireRoles(req, res, ['admin'])) return;
+  const user = requireRoles(req, res, ['admin']);
+  if (!user) return;
 
-  const { assessmentId, descripcion, activo, grupoEstudiantilId } = req.body ?? {};
+  const { assessmentId: payloadAssessmentId, descripcion, activo, grupoEstudiantilId } = req.body ?? {};
+  
+  const authorizedAssessmentId = getAuthorizedAssessmentId(user, res);
+  if (!authorizedAssessmentId) return;
 
-  if (!assessmentId) {
-    return res.status(400).json({ error: 'assessmentId es obligatorio' });
+  if (payloadAssessmentId && Number(payloadAssessmentId) !== authorizedAssessmentId && user.id !== 0) {
+    return res.status(403).json({ error: 'Solo puedes actualizar tu propio assessment' });
   }
+
+  const assessmentId = payloadAssessmentId ? Number(payloadAssessmentId) : authorizedAssessmentId;
 
   const updatePayload: Record<string, string | number | boolean | null> = {};
 

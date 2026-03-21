@@ -41,7 +41,7 @@ describe('useAssessments', () => {
     expect(result.current.loading).toBe(false);
     expect(result.current.assessments).toEqual(mockData);
     expect(authFetch).toHaveBeenCalledWith(
-      '/api/assessment/list',
+      '/api/assessment/list?activo=true',
       {},
       expect.any(Function)
     );

@@ -41,6 +41,35 @@ export function verifyAssessmentAccess(
   return true;
 }
 
+/**
+ * Obtiene el ID del assessment de forma segura a partir del JWT del usuario.
+ * Retorna el ID validado o null si no se encuentra o no hay acceso (respondiendo con error HTTP).
+ * Las rutas deben usar esto en lugar de confiar en req.query.assessmentId o req.body.assessmentId.
+ */
+export function getAuthorizedAssessmentId(
+  user: TokenPayload,
+  res: NextApiResponse
+): number | null {
+  const assessmentId = user.assessmentId;
+
+  if (!assessmentId) {
+    if (user.id === SUPER_ADMIN_ID) {
+      console.warn(`[getAuthorizedAssessmentId] Super-admin ${user.id} intentó acceder sin assessmentId en el token. Debe usar /api/auth/switch-assessment`);
+    } else {
+      console.warn(`[getAuthorizedAssessmentId] Usuario ${user.id} no tiene assessmentId en su token`);
+    }
+    clearSessionCookie(res);
+    res.status(403).json({ error: 'No tienes un assessment asignado activo' });
+    return null;
+  }
+
+  if (!verifyAssessmentAccess(user, assessmentId, res)) {
+    return null;
+  }
+
+  return assessmentId;
+}
+
 // Función para resolver el ID del Assessment a partir de un string (por ejemplo, de una query)
 export async function resolveAssessmentId(data: string | string[] | undefined): Promise<{ id: number } | { error: string; status: number }> {
   if (!data || Array.isArray(data)) {

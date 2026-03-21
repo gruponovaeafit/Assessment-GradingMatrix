@@ -2,15 +2,24 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { hashPassword } from '@/lib/auth';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { getAuthorizedAssessmentId } from '@/lib/assessment';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'PUT') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  if (!requireRoles(req, res, ['admin'])) return;
+  const user = requireRoles(req, res, ['admin']);
+  if (!user) return;
 
-  const { staffId, correo, password, assessmentId } = req.body ?? {};
+  const { staffId, correo, password, assessmentId: payloadAssessmentId } = req.body ?? {};
+
+  const authorizedAssessmentId = getAuthorizedAssessmentId(user, res);
+  if (!authorizedAssessmentId) return;
+
+  if (payloadAssessmentId && Number(payloadAssessmentId) !== authorizedAssessmentId && user.id !== 0) {
+    return res.status(403).json({ error: 'Solo puedes asignar staff a tu propio assessment' });
+  }
 
   if (!staffId) {
     return res.status(400).json({ error: 'staffId es obligatorio' });
@@ -24,9 +33,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     updatePayload.Correo_Staff = correo;
   }
 
-  if (assessmentId) {
-    updatePayload.ID_Assessment = Number(assessmentId);
+  if (payloadAssessmentId) {
+    updatePayload.ID_Assessment = Number(payloadAssessmentId);
+  } else {
+      updatePayload.ID_Assessment = authorizedAssessmentId;
   }
+
 
   if (password) {
     updatePayload.Contrasena_Staff = await hashPassword(password);
