@@ -1,12 +1,8 @@
 import React from 'react';
 import { RefreshCw, SlidersHorizontal, Download, Search, ArrowUp, ArrowDown, X } from 'lucide-react';
 import { Spinner } from '@/components/UI/Loading';
-import { type Assessment } from '../schemas/gestionSchemas';
 
 interface GestionToolbarProps {
-  assessments: Assessment[];
-  selectedAssessment: string;
-  setSelectedAssessment: (val: string) => void;
   searchTerm: string;
   setSearchTerm: (val: string) => void;
   filterGrupo: string;
@@ -30,9 +26,6 @@ interface GestionToolbarProps {
 }
 
 export const GestionToolbar: React.FC<GestionToolbarProps> = ({
-  assessments,
-  selectedAssessment,
-  setSelectedAssessment,
   searchTerm,
   setSearchTerm,
   filterGrupo,
@@ -58,21 +51,7 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
     <div className="w-full max-w-7xl space-y-4 mb-6">
       {/* Fila superior: Acciones Principales */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <select
-            value={selectedAssessment}
-            onChange={(e) => setSelectedAssessment(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none"
-          >
-            <option value="">Assessment: Por defecto</option>
-            {assessments.map((a) => (
-              <option key={a.id} value={String(a.id)}>
-                {a.nombre}
-              </option>
-            ))}
-          </select>
-
-          <button
+        <div className="flex flex-wrap items-center gap-3">          <button
             onClick={onRefresh}
             disabled={loading}
             className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 disabled:opacity-50 group"
