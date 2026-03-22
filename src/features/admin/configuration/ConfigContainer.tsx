@@ -8,14 +8,11 @@ import { authFetch } from '@/lib/auth/authFetch';
 
 // Hooks de dominio
 import { useConfigData } from './hooks/useConfigData';
-import { useAssessments } from './hooks/useAssessments';
 import { useParticipantsAndGroups } from './hooks/useParticipantsAndGroups';
 import { useBases } from './hooks/useBases';
 import { type Calificacion } from './schemas/configSchemas';
 
 // Componentes de Feature
-import { CreateAssessmentForm } from './components/CreateAssessmentForm';
-import { AssessmentList } from './components/AssessmentList';
 import { RegisterStaffForm } from './components/RegisterStaffForm';
 import { AssignGroupForm } from './components/AssignGroupForm';
 import { AutoGroupForm } from './components/AutoGroupForm';
@@ -27,7 +24,6 @@ import { EditParticipantModal } from './components/EditParticipantModal';
 export const ConfigContainer = () => {
   const {
     isAdmin,
-    isSuperAdmin,
     isLoading: authLoading,
     logout,
   } = useAdminAuth();
@@ -35,7 +31,6 @@ export const ConfigContainer = () => {
 
   // Domain Hooks
   const { data, setData, loading: dataLoading, error: dataError, fetchData } = useConfigData(logout);
-  const { assessments, refreshAssessments } = useAssessments(logout);
   const { participants, groups, loadParticipantsAndGroups } = useParticipantsAndGroups(logout);
   const { basesList, loadBases } = useBases(logout);
 
@@ -43,28 +38,21 @@ export const ConfigContainer = () => {
   const [editModal, setEditModal] = useState<Calificacion | null>(null);
   const [originalData, setOriginalData] = useState<Calificacion | null>(null);
   
-  const [configAssessmentId, setConfigAssessmentId] = useState<string>("");
   const [selectedParticipant, setSelectedParticipant] = useState<string>("");
   const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [creatingStaff, setCreatingStaff] = useState(false);
   const [assigningGroup, setAssigningGroup] = useState(false);
   const [autoGroupCount, setAutoGroupCount] = useState("");
   const [autoGrouping, setAutoGrouping] = useState(false);
-  const [staffAssessmentId, setStaffAssessmentId] = useState<string>("");
   const [staffCorreo, setStaffCorreo] = useState("");
   const [staffPassword, setStaffPassword] = useState("");
   const [staffRol, setStaffRol] = useState("");
   const [staffBaseId, setStaffBaseId] = useState("");
-  const [assessmentNombre, setAssessmentNombre] = useState('');
-  const [assessmentDescripcion, setAssessmentDescripcion] = useState('');
-  const [grupoEstudiantilId, setGrupoEstudiantilId] = useState('');
-  const [creatingAssessment, setCreatingAssessment] = useState(false);
 
   // Estados para búsqueda, filtros, orden y paginación
   const [searchTerm, setSearchTerm] = useState("");
   const [filterGrupo, setFilterGrupo] = useState<string>("todos");
   const [filterRol, setFilterRol] = useState<string>("todos");
-  const [filterAssessment, setFilterAssessment] = useState<string>("default");
   const [sortBy, setSortBy] = useState<"nombre" | "promedio" | "grupo">("nombre");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -72,26 +60,8 @@ export const ConfigContainer = () => {
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
-    fetchData(); 
-    refreshAssessments();
-  }, [authLoading, isAdmin, fetchData, refreshAssessments]);
-
-  const visibleAssessments = useMemo(() => {
-    if (isSuperAdmin) return assessments;
-    return assessments.filter((assessment) => assessment.activo);
-  }, [assessments, isSuperAdmin]);
-
-  useEffect(() => {
-    if (isSuperAdmin) return;
-    if (visibleAssessments.length === 0) return;
-    const fallbackId = String(visibleAssessments[0].id);
-    if (!configAssessmentId || !visibleAssessments.some((item) => String(item.id) === configAssessmentId)) {
-      setConfigAssessmentId(fallbackId);
-    }
-    if (!staffAssessmentId || !visibleAssessments.some((item) => String(item.id) === staffAssessmentId)) {
-      setStaffAssessmentId(fallbackId);
-    }
-  }, [visibleAssessments, isSuperAdmin, configAssessmentId, staffAssessmentId]);
+    fetchData();
+  }, [authLoading, isAdmin, fetchData]);
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
@@ -187,38 +157,9 @@ export const ConfigContainer = () => {
     }
   };
 
-  const handleToggleAssessment = async (assessmentId: number, activo: boolean) => {
-    if (!isSuperAdmin) {
-      showToast.error('No tienes permisos para cambiar el estado de assessments');
-      return;
-    }
-    try {
-      const response = await authFetch(
-        '/api/assessment/toggle-active',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ assessmentId, activo: !activo }),
-        },
-        () => logout()
-      );
-
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Error al actualizar assessment');
-      }
-
-      showToast.success(`Assessment ${!activo ? 'activado' : 'desactivado'}`);
-      refreshAssessments();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al actualizar assessment';
-      showToast.error(message);
-    }
-  };
-
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!staffAssessmentId || !staffCorreo || !staffPassword || !staffRol) {
+    if (!staffCorreo || !staffPassword || !staffRol) {
       showToast.error('Todos los campos obligatorios deben completarse');
       return;
     }
@@ -235,7 +176,6 @@ export const ConfigContainer = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            assessmentId: Number(staffAssessmentId),
             correo: staffCorreo.trim(),
             password: staffPassword,
             rol: staffRol,
@@ -262,8 +202,8 @@ export const ConfigContainer = () => {
 
   const handleAssignGroup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!configAssessmentId || !selectedParticipant || !selectedGroup) {
-      showToast.error('Selecciona assessment, participante y grupo');
+    if (!selectedParticipant || !selectedGroup) {
+      showToast.error('Selecciona participante y grupo');
       return;
     }
 
@@ -275,7 +215,6 @@ export const ConfigContainer = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            assessmentId: Number(configAssessmentId),
             participanteId: Number(selectedParticipant),
             grupoAssessmentId: Number(selectedGroup),
           }),
@@ -298,10 +237,6 @@ export const ConfigContainer = () => {
 
   const handleAutoGroup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!configAssessmentId) {
-      showToast.error('Selecciona un assessment');
-      return;
-    }
     const numGroups = Number(autoGroupCount);
     if (!autoGroupCount || Number.isNaN(numGroups) || numGroups <= 0) {
       showToast.error('Ingresa una cantidad válida de grupos');
@@ -316,7 +251,6 @@ export const ConfigContainer = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            assessmentId: Number(configAssessmentId),
             numGroups,
           }),
         },
@@ -334,44 +268,6 @@ export const ConfigContainer = () => {
       showToast.error(err instanceof Error ? err.message : 'Error al sortear grupos');
     } finally {
       setAutoGrouping(false);
-    }
-  };
-
-  const handleCreateAssessment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!grupoEstudiantilId || !assessmentNombre.trim()) {
-      showToast.error('GrupoEstudiantil ID y nombre son obligatorios');
-      return;
-    }
-
-    try {
-      setCreatingAssessment(true);
-      const response = await authFetch(
-        '/api/assessment/create',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            grupoEstudiantilId: Number(grupoEstudiantilId),
-            nombre: assessmentNombre.trim(),
-            descripcion: assessmentDescripcion.trim() || null,
-          }),
-        },
-        () => logout()
-      );
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Error al crear assessment');
-
-      showToast.success(`Assessment creado`);
-      setAssessmentNombre('');
-      setAssessmentDescripcion('');
-      setGrupoEstudiantilId('');
-      refreshAssessments();
-    } catch (err: unknown) {
-      showToast.error(err instanceof Error ? err.message : 'Error al crear assessment');
-    } finally {
-      setCreatingAssessment(false);
     }
   };
 
@@ -417,28 +313,7 @@ export const ConfigContainer = () => {
         </div>
       </div>
 
-      <CreateAssessmentForm
-        grupoEstudiantilId={grupoEstudiantilId}
-        setGrupoEstudiantilId={setGrupoEstudiantilId}
-        assessmentNombre={assessmentNombre}
-        setAssessmentNombre={setAssessmentNombre}
-        assessmentDescripcion={assessmentDescripcion}
-        setAssessmentDescripcion={setAssessmentDescripcion}
-        creatingAssessment={creatingAssessment}
-        onSubmit={handleCreateAssessment}
-      />
-
-      <AssessmentList
-        visibleAssessments={visibleAssessments}
-        allAssessmentsCount={assessments.length}
-        onRefresh={refreshAssessments}
-        onToggle={handleToggleAssessment}
-        isSuperAdmin={isSuperAdmin}
-      />
-
       <RegisterStaffForm
-        staffAssessmentId={staffAssessmentId}
-        setStaffAssessmentId={setStaffAssessmentId}
         staffCorreo={staffCorreo}
         setStaffCorreo={setStaffCorreo}
         staffPassword={staffPassword}
@@ -447,20 +322,16 @@ export const ConfigContainer = () => {
         setStaffRol={setStaffRol}
         staffBaseId={staffBaseId}
         setStaffBaseId={setStaffBaseId}
-        visibleAssessments={visibleAssessments}
         basesList={basesList}
         creatingStaff={creatingStaff}
         onSubmit={handleCreateStaff}
       />
 
       <AssignGroupForm
-        assessmentId={configAssessmentId}
-        setAssessmentId={setConfigAssessmentId}
         selectedParticipant={selectedParticipant}
         setSelectedParticipant={setSelectedParticipant}
         selectedGroup={selectedGroup}
         setSelectedGroup={setSelectedGroup}
-        visibleAssessments={visibleAssessments}
         participants={participants}
         groups={groups}
         assigningGroup={assigningGroup}
@@ -468,11 +339,8 @@ export const ConfigContainer = () => {
       />
 
       <AutoGroupForm
-        assessmentId={configAssessmentId}
-        setAssessmentId={setConfigAssessmentId}
         autoGroupCount={autoGroupCount}
         setAutoGroupCount={setAutoGroupCount}
-        visibleAssessments={visibleAssessments}
         autoGrouping={autoGrouping}
         onSubmit={handleAutoGroup}
       />
@@ -480,8 +348,6 @@ export const ConfigContainer = () => {
       <ParticipantFiltersBar
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        filterAssessment={filterAssessment}
-        setFilterAssessment={setFilterAssessment}
         filterGrupo={filterGrupo}
         setFilterGrupo={setFilterGrupo}
         filterRol={filterRol}
@@ -490,9 +356,7 @@ export const ConfigContainer = () => {
         setSortBy={setSortBy}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
-        visibleAssessments={visibleAssessments}
         grupos={grupos}
-        onFetchData={fetchData}
         setCurrentPage={setCurrentPage}
       />
 

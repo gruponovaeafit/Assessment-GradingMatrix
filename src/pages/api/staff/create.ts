@@ -2,18 +2,23 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { hashPassword } from '@/lib/auth';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { getAuthorizedAssessmentId } from '@/lib/assessment';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  if (!requireRoles(req, res, ['admin'])) return;
+  const user = requireRoles(req, res, ['admin']);
+  if (!user) return;
 
-  const { assessmentId, correo, password, rol, idBase } = req.body;
+  const { correo, password, rol, idBase } = req.body;
 
-  if (!assessmentId || !correo || !password || !rol) {
-    return res.status(400).json({ error: 'assessmentId, correo, password y rol son obligatorios' });
+  const assessmentId = getAuthorizedAssessmentId(user, res);
+  if (!assessmentId) return; // La función ya responde con 403 y destruye la cookie si no hay acceso
+
+  if (!correo || !password || !rol) {
+    return res.status(400).json({ error: 'correo, password y rol son obligatorios' });
   }
   
   try {

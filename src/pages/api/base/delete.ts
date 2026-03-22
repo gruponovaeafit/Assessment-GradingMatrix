@@ -3,13 +3,18 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { getAuthorizedAssessmentId } from '@/lib/assessment';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'DELETE') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  if (!requireRoles(req, res, ['admin'])) return;
+  const user = requireRoles(req, res, ['admin']);
+  if (!user) return;
+
+  const assessmentId = getAuthorizedAssessmentId(user, res);
+  if (!assessmentId) return;
 
   const { idBase } = req.body;
 
@@ -18,6 +23,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Verificar que la base pertenece al assessment del admin
+    const { data: baseToCheck, error: checkBaseError } = await supabase
+      .from('Bases')
+      .select('ID_Assessment')
+      .eq('ID_Base', Number(idBase))
+      .single();
+
+    if (checkBaseError || !baseToCheck) {
+      return res.status(404).json({ error: 'Base no encontrada' });
+    }
+
+    if (baseToCheck.ID_Assessment !== assessmentId) {
+      return res.status(403).json({ error: 'Solo puedes eliminar bases de tu propio assessment' });
+    }
     // Verificar si la base tiene calificaciones asociadas
     const { data: calificaciones, error: checkError } = await supabase
       .from('CalificacionesPorPersona')

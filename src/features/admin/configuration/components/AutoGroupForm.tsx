@@ -1,22 +1,15 @@
 import React from 'react';
-import { type Assessment } from '../schemas/configSchemas';
 
 interface AutoGroupFormProps {
-  assessmentId: string;
-  setAssessmentId: (val: string) => void;
   autoGroupCount: string;
   setAutoGroupCount: (val: string) => void;
-  visibleAssessments: Assessment[];
   autoGrouping: boolean;
   onSubmit: (e: React.FormEvent) => void;
 }
 
 export const AutoGroupForm: React.FC<AutoGroupFormProps> = ({
-  assessmentId,
-  setAssessmentId,
   autoGroupCount,
   setAutoGroupCount,
-  visibleAssessments,
   autoGrouping,
   onSubmit,
 }) => {
@@ -24,19 +17,7 @@ export const AutoGroupForm: React.FC<AutoGroupFormProps> = ({
     <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
       <div className="bg-white rounded-xl p-4 shadow border border-gray-100">
         <h2 className="text-lg font-bold text-gray-900 mb-3">Crear y Sortear Grupos</h2>
-        <form onSubmit={onSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <select
-            value={assessmentId}
-            onChange={(e) => setAssessmentId(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
-          >
-            <option value="">Assessment</option>
-            {visibleAssessments.map((assessment) => (
-              <option key={assessment.id} value={assessment.id}>
-                {assessment.nombre}
-              </option>
-            ))}
-          </select>
+        <form onSubmit={onSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input
             type="number"
             min={1}

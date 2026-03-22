@@ -1,11 +1,8 @@
 import React from 'react';
-import { type Assessment } from '../schemas/configSchemas';
 
 interface ParticipantFiltersBarProps {
   searchTerm: string;
   setSearchTerm: (val: string) => void;
-  filterAssessment: string;
-  setFilterAssessment: (val: string) => void;
   filterGrupo: string;
   setFilterGrupo: (val: string) => void;
   filterRol: string;
@@ -14,17 +11,13 @@ interface ParticipantFiltersBarProps {
   setSortBy: (val: "nombre" | "promedio" | "grupo") => void;
   sortOrder: "asc" | "desc";
   setSortOrder: (val: "asc" | "desc") => void;
-  visibleAssessments: Assessment[];
   grupos: string[];
-  onFetchData: (assessmentId?: string) => void;
   setCurrentPage: (val: number) => void;
 }
 
 export const ParticipantFiltersBar: React.FC<ParticipantFiltersBarProps> = ({
   searchTerm,
   setSearchTerm,
-  filterAssessment,
-  setFilterAssessment,
   filterGrupo,
   setFilterGrupo,
   filterRol,
@@ -33,9 +26,7 @@ export const ParticipantFiltersBar: React.FC<ParticipantFiltersBarProps> = ({
   setSortBy,
   sortOrder,
   setSortOrder,
-  visibleAssessments,
   grupos,
-  onFetchData,
   setCurrentPage,
 }) => {
   return (
@@ -54,32 +45,10 @@ export const ParticipantFiltersBar: React.FC<ParticipantFiltersBarProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
-          <select
-            value={filterAssessment}
-            onChange={(e) => {
-              const value = e.target.value;
-              setFilterAssessment(value);
-              setCurrentPage(1);
-              if (value === "default") {
-                onFetchData(undefined);
-              } else {
-                onFetchData(value);
-              }
-            }}
-            className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-base"
-          >
-            <option value="default">Assessment por defecto</option>
-            {visibleAssessments.map((assessment) => (
-              <option key={assessment.id} value={assessment.id}>
-                {assessment.nombre}
-              </option>
-            ))}
-          </select>
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           <select
             value={filterGrupo}
-            onChange={(e) => setFilterGrupo(e.target.value)}
+            onChange={(e) => { setFilterGrupo(e.target.value); setCurrentPage(1); }}
             className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-base"
           >
             <option value="todos">Todos los grupos</option>
@@ -90,7 +59,7 @@ export const ParticipantFiltersBar: React.FC<ParticipantFiltersBarProps> = ({
 
           <select
             value={filterRol}
-            onChange={(e) => setFilterRol(e.target.value)}
+            onChange={(e) => { setFilterRol(e.target.value); setCurrentPage(1); }}
             className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-base"
           >
             <option value="todos">Todos los roles</option>
@@ -101,7 +70,7 @@ export const ParticipantFiltersBar: React.FC<ParticipantFiltersBarProps> = ({
           <div className="flex gap-1">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as "nombre" | "promedio" | "grupo")}
               className="flex-1 px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
             >
               <option value="nombre">Por Nombre</option>

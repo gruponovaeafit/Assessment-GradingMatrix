@@ -1,18 +1,29 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { getAuthorizedAssessmentId } from '@/lib/assessment';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  if (!requireRoles(req, res, ['admin'])) return;
+  const user = requireRoles(req, res, ['admin']);
+  if (!user) return;
 
-  const { assessmentId, activo } = req.body;
+  const { assessmentId: payloadAssessmentId, activo } = req.body;
 
-  if (assessmentId === undefined || activo === undefined) {
-    return res.status(400).json({ error: 'assessmentId y activo son obligatorios' });
+  const authorizedAssessmentId = getAuthorizedAssessmentId(user, res);
+  if (!authorizedAssessmentId) return;
+
+  if (payloadAssessmentId && Number(payloadAssessmentId) !== authorizedAssessmentId && user.id !== 0) {
+    return res.status(403).json({ error: 'Solo puedes activar/desactivar tu propio assessment' });
+  }
+
+  const assessmentId = payloadAssessmentId ? Number(payloadAssessmentId) : authorizedAssessmentId;
+
+  if (activo === undefined) {
+    return res.status(400).json({ error: 'activo es obligatorio' });
   }
 
   try {

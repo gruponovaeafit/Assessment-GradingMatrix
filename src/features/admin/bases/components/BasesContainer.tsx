@@ -4,7 +4,6 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useBasesData } from '../hooks/useBasesData';
 import { useBasesActions } from '../hooks/useBasesActions';
 import { BasesHeader } from './BasesHeader';
-import { AssessmentSelector } from './AssessmentSelector';
 import { BasesList } from './BasesList';
 import { BaseModal } from './BaseModal';
 
@@ -13,12 +12,9 @@ export const BasesContainer: React.FC = () => {
   const { logout } = useAdminAuth();
   
   const {
-    assessments,
     bases,
     setBases,
     loading,
-    selectedAssessment,
-    setSelectedAssessment,
   } = useBasesData();
 
   const {
@@ -35,7 +31,6 @@ export const BasesContainer: React.FC = () => {
   } = useBasesActions({
     bases,
     setBases,
-    selectedAssessment,
   });
 
   return (
@@ -44,16 +39,17 @@ export const BasesContainer: React.FC = () => {
         onBack={() => router.push('/admin/configuration')} 
         onLogout={logout} 
       />
-      <AssessmentSelector
-        assessments={assessments}
-        selectedAssessment={selectedAssessment}
-        onAssessmentChange={setSelectedAssessment}
-        onOpenCreate={handleOpenCreate}
-      />
+      <div className="w-full max-w-[1200px] mb-6 flex justify-end">
+        <button
+          onClick={handleOpenCreate}
+          className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-6 py-2 rounded-lg font-medium transition shadow-md"
+        >
+          Nueva Base
+        </button>
+      </div>
       <BasesList
         bases={bases}
         loading={loading}
-        selectedAssessment={selectedAssessment}
         onOpenEdit={handleOpenEdit}
         onDelete={handleDelete}
       />

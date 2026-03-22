@@ -1,14 +1,11 @@
 import React from 'react';
-import { type Assessment, type Participant, type Group } from '../schemas/configSchemas';
+import { type Participant, type Group } from '../schemas/configSchemas';
 
 interface AssignGroupFormProps {
-  assessmentId: string;
-  setAssessmentId: (val: string) => void;
   selectedParticipant: string;
   setSelectedParticipant: (val: string) => void;
   selectedGroup: string;
   setSelectedGroup: (val: string) => void;
-  visibleAssessments: Assessment[];
   participants: Participant[];
   groups: Group[];
   assigningGroup: boolean;
@@ -16,13 +13,10 @@ interface AssignGroupFormProps {
 }
 
 export const AssignGroupForm: React.FC<AssignGroupFormProps> = ({
-  assessmentId,
-  setAssessmentId,
   selectedParticipant,
   setSelectedParticipant,
   selectedGroup,
   setSelectedGroup,
-  visibleAssessments,
   participants,
   groups,
   assigningGroup,
@@ -33,18 +27,6 @@ export const AssignGroupForm: React.FC<AssignGroupFormProps> = ({
       <div className="bg-white rounded-xl p-4 shadow border border-gray-100">
         <h2 className="text-lg font-bold text-gray-900 mb-3">Asignar Participante a Grupo</h2>
         <form onSubmit={onSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <select
-            value={assessmentId}
-            onChange={(e) => setAssessmentId(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
-          >
-            <option value="">Assessment</option>
-            {visibleAssessments.map((assessment) => (
-              <option key={assessment.id} value={assessment.id}>
-                {assessment.nombre}
-              </option>
-            ))}
-          </select>
           <select
             value={selectedParticipant}
             onChange={(e) => setSelectedParticipant(e.target.value)}
@@ -69,11 +51,11 @@ export const AssignGroupForm: React.FC<AssignGroupFormProps> = ({
               </option>
             ))}
           </select>
-          <div className="sm:col-span-3 flex justify-end">
+          <div className="sm:col-span-1 flex justify-end">
             <button
               type="submit"
               disabled={assigningGroup}
-              className="px-4 py-2 rounded-lg bg-success hover:bg-success-dark text-white text-sm font-medium transition disabled:opacity-60"
+              className="w-full px-4 py-2 rounded-lg bg-success hover:bg-success-dark text-white text-sm font-medium transition disabled:opacity-60"
             >
               {assigningGroup ? "Asignando..." : "Asignar a Grupo"}
             </button>

@@ -59,28 +59,30 @@ describe('useBasesData', () => {
     expect(authFetch).not.toHaveBeenCalled();
   });
 
-  it('should fetch assessments on mount if auth is ready and user is admin', async () => {
-    const mockAssessments = [{ id: 1, nombre: 'A1', activo: true }];
+  it('should fetch bases on mount if auth is ready and user is admin', async () => {
+    const mockBases = [{ ID_Base: 10, Nombre_Base: 'Base 1' }];
     (authFetch as any).mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => mockAssessments
+      json: async () => mockBases
     });
 
     const { result } = setupHook();
 
     await waitFor(() => {
-      expect(result.current.assessments).toEqual(mockAssessments);
+      expect(result.current.loading).toBe(false);
+      expect(result.current.bases).toEqual(mockBases);
     });
 
+    expect(authFetch).toHaveBeenCalledTimes(1);
     expect(authFetch).toHaveBeenCalledWith(
-      '/api/assessment/list',
+      '/api/base/list',
       expect.any(Object),
       expect.any(Function)
     );
   });
 
-  it('should handle assessment fetch errors gracefully', async () => {
+  it('should handle bases fetch errors gracefully', async () => {
     (authFetch as any).mockResolvedValueOnce({
       ok: false,
       status: 500,
@@ -90,10 +92,11 @@ describe('useBasesData', () => {
     const { result } = setupHook();
 
     await waitFor(() => {
-      expect(showToast.error).toHaveBeenCalledWith('Error al cargar assessments');
+      expect(result.current.loading).toBe(false);
+      expect(showToast.error).toHaveBeenCalledWith('Error al cargar bases');
     });
 
-    expect(result.current.assessments).toEqual([]);
+    expect(result.current.bases).toEqual([]);
   });
 
   it('should redirect to login if authFetch returns 401', async () => {
@@ -108,45 +111,5 @@ describe('useBasesData', () => {
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/auth/login');
     });
-  });
-
-  it('should fetch bases when an assessment is selected', async () => {
-    // Initial fetch for assessments
-    (authFetch as any).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => [{ id: 1, nombre: 'A1', activo: true }]
-    });
-
-    const { result } = setupHook();
-
-    // Wait for assessments
-    await waitFor(() => {
-      expect(result.current.assessments.length).toBe(1);
-    });
-
-    const mockBases = [{ ID_Base: 10, Nombre_Base: 'Base 1' }];
-    (authFetch as any).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => mockBases
-    });
-
-    // Select the assessment
-    act(() => {
-      result.current.setSelectedAssessment('1');
-    });
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-      expect(result.current.bases).toEqual(mockBases);
-    });
-
-    expect(authFetch).toHaveBeenCalledTimes(2);
-    expect(authFetch).toHaveBeenLastCalledWith(
-      '/api/base/list?assessmentId=1',
-      expect.any(Object),
-      expect.any(Function)
-    );
   });
 });

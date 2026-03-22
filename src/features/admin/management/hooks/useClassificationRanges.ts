@@ -33,7 +33,7 @@ export function useClassificationRanges(assessmentId: string) {
   const normalizeRanges = useCallback((next: ClassificationRanges): ClassificationRanges => {
     const group = Math.max(0, Math.min(5, next.group));
     const interview = Math.max(0, Math.min(5, Math.min(next.interview, group)));
-    const discussion = Math.max(3.6, Math.min(5, Math.min(next.discussion, interview)));
+    const discussion = Math.max(0, Math.min(5, Math.min(next.discussion, interview)));
     return { group, interview, discussion };
   }, []);
 
@@ -41,7 +41,7 @@ export function useClassificationRanges(assessmentId: string) {
     () => loadRanges(assessmentId, (r) => {
       const group = Math.max(0, Math.min(5, r.group));
       const interview = Math.max(0, Math.min(5, Math.min(r.interview, group)));
-      const discussion = Math.max(3.6, Math.min(5, Math.min(r.discussion, interview)));
+      const discussion = Math.max(0, Math.min(5, Math.min(r.discussion, interview)));
       return { group, interview, discussion };
     })
   );

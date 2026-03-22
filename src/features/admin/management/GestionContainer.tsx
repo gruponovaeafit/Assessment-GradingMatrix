@@ -13,7 +13,6 @@ import { Button } from "@/components/UI/Button";
 
 // Feature Hooks
 import { useGestionData } from "./hooks/useGestionData";
-import { useAssessments } from "./hooks/useAssessments";
 import { useClassificationRanges } from "./hooks/useClassificationRanges";
 import { useGestionFilters } from "./hooks/useGestionFilters";
 import { useGestionActions } from "./hooks/useGestionActions";
@@ -24,7 +23,6 @@ import { ParticipantTable } from "./components/ParticipantTable";
 import { ParticipantCardList } from "./components/ParticipantCardList";
 import { EditParticipantModal } from "./components/EditParticipantModal";
 import { ParticipantDetailModal } from "./components/ParticipantDetailModal";
-import { ClassificationRangesModal } from "./components/ClassificationRangesModal";
 import { Pagination } from "./components/Pagination";
 
 // Utilities
@@ -35,9 +33,9 @@ import { showToast } from "@/components/UI/Toast";
 // ─── RangesInline — fuera del page para no perder foco ───────────────────────
 interface RangesInlineProps {
   localRanges: ClassificationRanges;
-  inputValues: { group: string; interview: string };
-  onChange: (key: "group" | "interview", value: string) => void;
-  onBlur: (key: "group" | "interview") => void;
+  inputValues: { group: string; interview: string; discussion: string };
+  onChange: (key: "group" | "interview" | "discussion", value: string) => void;
+  onBlur: (key: "group" | "interview" | "discussion") => void;
 }
 
 const RangesInline: React.FC<RangesInlineProps> = ({ localRanges, inputValues, onChange, onBlur }) => (
@@ -53,7 +51,7 @@ const RangesInline: React.FC<RangesInlineProps> = ({ localRanges, inputValues, o
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-black">Grupo</span>
           <input
-            type="number" step="0.01" min="0" max="5"
+            type="number" step="0.1" min="0" max="5"
             value={inputValues.group}
             onChange={(e) => onChange("group", e.target.value)}
             onBlur={() => onBlur("group")}
@@ -63,7 +61,7 @@ const RangesInline: React.FC<RangesInlineProps> = ({ localRanges, inputValues, o
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-black">Entrevista</span>
           <input
-            type="number" step="0.01" min="0" max="5"
+            type="number" step="0.1" min="0" max="5"
             value={inputValues.interview}
             onChange={(e) => onChange("interview", e.target.value)}
             onBlur={() => onBlur("interview")}
@@ -73,9 +71,11 @@ const RangesInline: React.FC<RangesInlineProps> = ({ localRanges, inputValues, o
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-black">Discusión</span>
           <input
-            type="number" value={localRanges.discussion}
-            readOnly tabIndex={-1}
-            className="w-16 px-2 py-1 text-sm text-center text-gray-500 rounded-lg border border-gray-300 bg-gray-300 cursor-not-allowed outline-none"
+            type="number" step="0.1" min="0" max="5"
+            value={inputValues.discussion}
+            onChange={(e) => onChange("discussion", e.target.value)}
+            onBlur={() => onBlur("discussion")}
+            className="w-16 px-2 py-1 text-sm text-center text-black rounded-lg border border-gray-300 focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none transition"
           />
         </div>
       </div>
@@ -87,7 +87,6 @@ const RangesInline: React.FC<RangesInlineProps> = ({ localRanges, inputValues, o
 interface HeaderButtonsProps {
   dataLoading: boolean;
   exporting: boolean;
-  selectedAssessment: string;
   onRefresh: () => void;
   onExport: () => void;
   onAdmin: () => void;
@@ -95,7 +94,7 @@ interface HeaderButtonsProps {
 }
 
 const HeaderButtons: React.FC<HeaderButtonsProps> = ({
-  dataLoading, exporting, selectedAssessment, onRefresh, onExport, onAdmin, onLogout,
+  dataLoading, exporting, onRefresh, onExport, onAdmin, onLogout,
 }) => (
   <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
     <Button
@@ -111,7 +110,7 @@ const HeaderButtons: React.FC<HeaderButtonsProps> = ({
       <Image src="/HomeIcon.svg" alt="" width={18} height={18} className="mr-2" />
       Menú principal
     </Button>
-    <Button variant="success" loading={exporting} onClick={onExport} disabled={!selectedAssessment}>
+    <Button variant="success" loading={exporting} onClick={onExport}>
       <Image src="/ExportCSVIcon.svg" alt="" width={18} height={18} className="mr-2" />
       Exportar CSV
     </Button>
@@ -127,12 +126,8 @@ export const GestionContainer = () => {
   const { isAdmin, isLoading: authLoading, logout } = useAdminAuth();
   const router = useRouter();
 
-  const [selectedAssessment, setSelectedAssessment] = useState<string>("");
-
-  // Rangos por assessment
-  const { classificationRanges, updateRanges } = useClassificationRanges(selectedAssessment);
-
-  const { assessments, refreshAssessments } = useAssessments(logout);
+  // Rangos de clasificación (el assessmentId lo infiere el backend del JWT)
+  const { classificationRanges, updateRanges } = useClassificationRanges("");
   const { data, setData, loading: dataLoading, error: dataError, fetchData } = useGestionData(logout);
 
   const [detailModal, setDetailModal] = useState<ParticipantDashboardRow | null>(null);
@@ -142,6 +137,7 @@ export const GestionContainer = () => {
   const [inputValues, setInputValues] = useState({
     group: String(classificationRanges.group),
     interview: String(classificationRanges.interview),
+    discussion: String(classificationRanges.discussion),
   });
 
   // Sincroniza inputs cuando cambian los rangos (por cambio de assessment)
@@ -150,10 +146,11 @@ export const GestionContainer = () => {
     setInputValues({
       group: String(classificationRanges.group),
       interview: String(classificationRanges.interview),
+      discussion: String(classificationRanges.discussion),
     });
   }, [classificationRanges]);
 
-  const handleRangeChange = (key: "group" | "interview", value: string) => {
+  const handleRangeChange = (key: "group" | "interview" | "discussion", value: string) => {
     setInputValues((prev) => ({ ...prev, [key]: value }));
     const parsed = parseFloat(value);
     if (!isNaN(parsed)) {
@@ -164,7 +161,7 @@ export const GestionContainer = () => {
     }
   };
 
-  const handleRangeBlur = (key: "group" | "interview") => {
+  const handleRangeBlur = (key: "group" | "interview" | "discussion") => {
     const parsed = parseFloat(inputValues[key]);
     if (isNaN(parsed)) {
       setInputValues((prev) => ({ ...prev, [key]: String(localRanges[key]) }));
@@ -194,14 +191,8 @@ export const GestionContainer = () => {
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
-    refreshAssessments();
-  }, [authLoading, isAdmin, refreshAssessments]);
-
-  // Cuando cambia el assessment, recarga la tabla con el nuevo ID
-  useEffect(() => {
-    if (authLoading || !isAdmin) return;
-    fetchData(selectedAssessment || undefined);
-  }, [authLoading, isAdmin, selectedAssessment, fetchData]);
+    fetchData();
+  }, [authLoading, isAdmin, fetchData]);
 
   const onExportCSV = () => {
     setExporting(true);
@@ -245,53 +236,6 @@ export const GestionContainer = () => {
     );
   }
 
-  if (!selectedAssessment) {
-    return (
-      <div className="flex flex-col items-center min-h-screen py-4 sm:py-8 px-3 sm:px-4 bg-white">
-        <div className="w-full max-w-7xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 px-1 sm:px-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[color:var(--color-accent)]">
-            Gestión del Assessment
-          </h1>
-          <HeaderButtons
-            dataLoading={dataLoading} exporting={exporting}
-            selectedAssessment={selectedAssessment}
-            onRefresh={() => fetchData(undefined)} onExport={onExportCSV}
-            onAdmin={() => router.push("/admin")} onLogout={logout}
-          />
-        </div>
-        <div className="w-full max-w-7xl">
-          <Box>
-            <GestionToolbar
-              assessments={assessments}
-              selectedAssessment={selectedAssessment}
-              setSelectedAssessment={setSelectedAssessment}
-              searchTerm="" setSearchTerm={() => {}}
-              filterGrupo="todos" setFilterGrupo={() => {}}
-              filterEstado="todos" setFilterEstado={() => {}}
-              filterRol="todos" setFilterRol={() => {}}
-              sortBy="nombre" setSortBy={() => {}}
-              sortOrder="asc" setSortOrder={() => {}}
-              itemsPerPage={10} setItemsPerPage={() => {}}
-              onRefresh={() => fetchData(selectedAssessment || undefined)}
-              onExport={onExportCSV}
-              onOpenRanges={() => {}}
-              grupos={[]}
-              loading={dataLoading}
-              exporting={exporting}
-            />
-            <RangesInline
-              localRanges={localRanges} inputValues={inputValues}
-              onChange={handleRangeChange} onBlur={handleRangeBlur}
-            />
-            <div className="flex flex-col items-center justify-center py-12">
-              <p className="text-lg text-gray-500">Selecciona un assessment para ver los resultados.</p>
-            </div>
-          </Box>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col items-center min-h-screen py-4 sm:py-8 px-3 sm:px-4 bg-white">
 
@@ -301,8 +245,7 @@ export const GestionContainer = () => {
         </h1>
         <HeaderButtons
           dataLoading={dataLoading} exporting={exporting}
-          selectedAssessment={selectedAssessment}
-          onRefresh={() => fetchData(selectedAssessment)} onExport={onExportCSV}
+          onRefresh={() => fetchData()} onExport={onExportCSV}
           onAdmin={() => router.push("/admin")} onLogout={logout}
         />
       </div>
@@ -310,9 +253,6 @@ export const GestionContainer = () => {
       <div className="w-full max-w-7xl mb-3">
         <Box>
           <GestionToolbar
-            assessments={assessments}
-            selectedAssessment={selectedAssessment}
-            setSelectedAssessment={setSelectedAssessment}
             searchTerm={searchTerm} setSearchTerm={setSearchTerm}
             filterGrupo={filterGrupo} setFilterGrupo={setFilterGrupo}
             filterEstado={filterEstado} setFilterEstado={setFilterEstado}
@@ -320,9 +260,8 @@ export const GestionContainer = () => {
             sortBy={sortBy} setSortBy={setSortBy}
             sortOrder={sortOrder} setSortOrder={setSortOrder}
             itemsPerPage={itemsPerPage} setItemsPerPage={setItemsPerPage}
-            onRefresh={() => fetchData(selectedAssessment)}
+            onRefresh={() => fetchData()}
             onExport={onExportCSV}
-            onOpenRanges={() => {}}
             grupos={grupos}
             loading={dataLoading}
             exporting={exporting}

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 export const useAdminAuth = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [assessmentId, setAssessmentId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -17,18 +18,22 @@ export const useAdminAuth = () => {
           if (mounted && data.role === "admin") {
             setIsAdmin(true);
             setIsSuperAdmin(Boolean(data.isSuperAdmin));
+            setAssessmentId(data.assessmentId || null);
           } else if (mounted) {
             setIsAdmin(false);
             setIsSuperAdmin(false);
+            setAssessmentId(null);
           }
         } else if (mounted) {
           setIsAdmin(false);
           setIsSuperAdmin(false);
+          setAssessmentId(null);
         }
       } catch {
         if (mounted) {
           setIsAdmin(false);
           setIsSuperAdmin(false);
+          setAssessmentId(null);
         }
       }
       if (mounted) setIsLoading(false);
@@ -38,9 +43,10 @@ export const useAdminAuth = () => {
     return () => { mounted = false; };
   }, []);
 
-  const loginAsAdmin = useCallback((superAdmin = false) => {
+  const loginAsAdmin = useCallback((superAdmin = false, assId: number | null = null) => {
     setIsAdmin(true);
     setIsSuperAdmin(superAdmin);
+    setAssessmentId(assId);
   }, []);
 
   const logout = useCallback(async () => {
@@ -50,8 +56,9 @@ export const useAdminAuth = () => {
     });
     setIsAdmin(false);
     setIsSuperAdmin(false);
+    setAssessmentId(null);
     router.push("/auth/login");
   }, [router]);
 
-  return { isAdmin, isSuperAdmin, isLoading, loginAsAdmin, logout };
+  return { isAdmin, isSuperAdmin, assessmentId, isLoading, loginAsAdmin, logout };
 };
