@@ -10,6 +10,7 @@ import Image from "next/image";
 // UI Components
 import { Box } from "@/components/UI/Box";
 import { Button } from "@/components/UI/Button";
+import { notify, NotificationProvider } from "@/components/UI/Notification";
 
 // Feature Hooks
 import { useGestionData } from "./hooks/useGestionData";
@@ -189,6 +190,11 @@ export const GestionContainer = () => {
 
   const { ConfirmModalComponent } = useConfirmModal();
 
+  const hasActiveFilters =
+    !!searchTerm ||
+    filterGrupo !== "todos" ||
+    filterEstado !== "todos" ||
+    filterRol !== "todos";  
   useEffect(() => {
     if (authLoading || !isAdmin) return;
     fetchData();
@@ -196,10 +202,34 @@ export const GestionContainer = () => {
 
   const onExportCSV = () => {
     setExporting(true);
-    handleExportCSV(filteredAndSortedData, baseNumbers, getEstadoInfo);
+    const total = handleExportCSV(
+      filteredAndSortedData,
+      baseNumbers,
+      getEstadoInfo,
+      () => notify({                        // ← onError
+        title: "Error al exportar",
+        titleColor: "var(--error)",
+        subtitle: "No se pudo exportar el archivo CSV",
+        subtitleColor: "var(--color-muted)",
+        borderColor: "var(--error)",
+        duration: 3000,
+      })
+    );
     setExporting(false);
+    if (total > 0) {
+      notify({
+        title: "Exportación Exitosa",
+        titleColor: "var(--success)",
+        subtitle: "El archivo CSV fue exportado correctamente",
+        subtitleColor: "var(--color-muted)",
+        borderColor: "var(--success)",
+        idLabel: "Se exportaron",
+        idValue: `${total} registros`,
+        idColor: "var(--success)",
+        duration: 3000,
+      });
+    }
   };
-
   if (authLoading || !isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
@@ -245,8 +275,30 @@ export const GestionContainer = () => {
         </h1>
         <HeaderButtons
           dataLoading={dataLoading} exporting={exporting}
-          onRefresh={() => fetchData()} onExport={onExportCSV}
-          onAdmin={() => router.push("/admin")} onLogout={logout}
+          onRefresh={() => {
+            fetchData();
+            notify({
+              title: "Tabla Actualizada",
+              titleColor: "var(--color-accent)",
+              subtitle: "Los datos fueron recargados correctamente",
+              subtitleColor: "var(--color-muted)",
+              borderColor: "var(--color-accent)",
+              duration: 3000,
+            });
+          }} 
+          onExport={onExportCSV}
+          onAdmin={() => router.push("/admin")} 
+          onLogout={() => {
+            notify({
+              title: "Sesión Cerrada",
+              titleColor: "var(--error)",
+              subtitle: "Has cerrado sesión correctamente",
+              subtitleColor: "var(--color-muted)",
+              borderColor: "var(--error)",
+              duration: 2500,
+            });
+            setTimeout(() => logout(), 800); // Pequeño delay para que se vea la noti
+          }}
         />
       </div>
 
@@ -265,6 +317,31 @@ export const GestionContainer = () => {
             grupos={grupos}
             loading={dataLoading}
             exporting={exporting}
+            onClearFilters={() => {
+              if (hasActiveFilters) {   // necesitas pasar hasActiveFilters o calcularlo aquí
+                setSearchTerm("");
+                setFilterGrupo("todos");
+                setFilterEstado("todos");
+                setFilterRol("todos");
+                notify({
+                  title: "Filtros Limpiados",
+                  titleColor: "var(--color-accent)",
+                  subtitle: "Se eliminaron todos los filtros activos",
+                  subtitleColor: "var(--color-muted)",
+                  borderColor: "var(--color-accent)",
+                  duration: 3000,
+                });
+              } else {
+                notify({
+                  title: "Sin filtros activos",
+                  titleColor: "var(--warning)",
+                  subtitle: "No hay filtros aplicados para limpiar",
+                  subtitleColor: "var(--color-muted)",
+                  borderColor: "var(--warning)",
+                  duration: 2500,
+                });
+              }
+  }}
           />
           <RangesInline
             localRanges={localRanges} inputValues={inputValues}
@@ -324,6 +401,8 @@ export const GestionContainer = () => {
       )}
 
       <ConfirmModalComponent />
+      <NotificationProvider />
     </div>
+
   );
 };

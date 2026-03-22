@@ -21,6 +21,7 @@ interface GestionToolbarProps {
   grupos: string[];
   loading: boolean;
   exporting: boolean;
+  onClearFilters: () => void;
 }
 
 export const GestionToolbar: React.FC<GestionToolbarProps> = ({
@@ -43,6 +44,7 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
   grupos,
   loading,
   exporting,
+  onClearFilters,
 }) => {
   const hasActiveFilters =
     !!searchTerm ||
@@ -151,15 +153,17 @@ export const GestionToolbar: React.FC<GestionToolbarProps> = ({
         {/* Siempre ocupa espacio — invisible cuando no hay filtros activos */}
         <div className="ml-auto">
           <button
-            onClick={clearFilters}
-            disabled={!hasActiveFilters}
+            onClick={onClearFilters}
             className={`flex items-center gap-1 text-xs whitespace-nowrap font-medium px-3 py-1.5 rounded-lg transition
-              bg-[color:var(--color-accent)] text-white hover:bg-[#5B21B6]
-              ${hasActiveFilters ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+              ${hasActiveFilters
+                ? "bg-[color:var(--color-accent)] text-white hover:bg-[#5B21B6]"
+                : "bg-gray-300 text-gray-500 cursor-pointer hover:bg-gray-400"
+              }`}
           >
             <X className="w-3 h-3 shrink-0" />
             Limpiar filtros
           </button>
+          
         </div>
       </div>
     </div>
