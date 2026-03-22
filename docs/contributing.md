@@ -16,6 +16,17 @@ Gracias por ayudar a mejorar Assessment Grading Matrix! Para mantener la calidad
     - fix: ... para correcciones de errores.
     - docs: ... para cambios en documentación.
     - refactor: ... para cambios de código que no corrigen bugs ni añaden funciones.
+    - chore: ... para tareas de mantenimiento o infraestructura (ej. estandarización de versiones).
+
+---
+
+## Requisitos de Entorno
+
+Para evitar inconsistencias en las dependencias y el runtime, es obligatorio usar las versiones de Node y npm definidas en el proyecto:
+
+1. **Versiones**: Node `v20.19.5` y npm `10.8.2` (ver `package.json > engines`).
+2. **Uso de `.nvmrc`**: Ejecuta `nvm use` al entrar al directorio del proyecto para cambiar automáticamente a la versión de Node correcta.
+3. **Validación**: El archivo `.npmrc` tiene activado `engine-strict=true`. Si intentas ejecutar `npm install` con una versión incorrecta, la instalación fallará.
 
 ---
 
