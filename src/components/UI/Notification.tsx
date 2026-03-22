@@ -165,7 +165,7 @@ export function NotificationProvider() {
   };
 
   return (
-    <div className="fixed top-5 right-5 z-50 flex flex-col gap-3 items-end">
+    <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3 items-center">
       {notifications.map(({ id, ...props }) => (
         <Notification key={id} {...props} onClose={() => remove(id)} />
       ))}
