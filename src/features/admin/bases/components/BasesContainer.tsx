@@ -30,6 +30,7 @@ export const BasesContainer: React.FC = () => {
     handleSubmit,
     handleDelete,
     setShowModal,
+    ConfirmModalComponent,
   } = useBasesActions({
     bases,
     setBases,
@@ -77,7 +78,8 @@ export const BasesContainer: React.FC = () => {
         onSubmit={handleSubmit}
       />
 
+      <ConfirmModalComponent />
       <NotificationProvider />
-    </div>
-  );
-};
+      </div>
+      );
+      };

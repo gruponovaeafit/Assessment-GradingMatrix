@@ -2,28 +2,32 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useBasesActions } from './useBasesActions';
 import { authFetch } from '@/lib/auth/authFetch';
-import { showToast } from '@/components/UI/Toast';
+import { notify } from '@/components/UI/Notification';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useConfirmModal } from '@/components/UI/ConfirmModal';
 import { type Base } from '../schemas/basesSchemas';
 
 vi.mock('@/lib/auth/authFetch', () => ({
   authFetch: vi.fn()
 }));
 
-vi.mock('@/components/UI/Toast', () => ({
-  showToast: {
-    error: vi.fn(),
-    success: vi.fn(),
-  }
+vi.mock('@/components/UI/Notification', () => ({
+  notify: vi.fn(),
 }));
 
 vi.mock('@/hooks/useAdminAuth', () => ({
   useAdminAuth: vi.fn(),
 }));
 
+vi.mock('@/components/UI/ConfirmModal', () => ({
+  useConfirmModal: vi.fn(),
+}));
+
 describe('useBasesActions', () => {
   const mockLogout = vi.fn();
   const mockSetBases = vi.fn();
+  const mockConfirm = vi.fn();
+  const mockSetIsLoading = vi.fn();
 
   const mockBases: Base[] = [
     {
@@ -45,8 +49,11 @@ describe('useBasesActions', () => {
       logout: mockLogout,
     });
     
-    // Auto-mock window.confirm
-    vi.spyOn(window, 'confirm').mockImplementation(() => true);
+    (useConfirmModal as vi.Mock).mockReturnValue({
+      confirm: mockConfirm,
+      setIsLoading: mockSetIsLoading,
+      ConfirmModalComponent: () => null,
+    });
   });
 
   afterEach(() => {
@@ -60,8 +67,8 @@ describe('useBasesActions', () => {
     }));
   };
 
-  it('handleOpenCreate should open modal and reset form if assessment is selected', () => {
-    const { result } = setupHook('1');
+  it('handleOpenCreate should open modal and reset form', () => {
+    const { result } = setupHook();
 
     act(() => {
       // Set some dirty data first
@@ -77,20 +84,8 @@ describe('useBasesActions', () => {
     expect(result.current.editingBase).toBeNull();
   });
 
-  it('handleOpenCreate should open modal with empty form regardless of assessment', () => {
-    const { result } = setupHook();
-
-    act(() => {
-      result.current.handleOpenCreate();
-    });
-
-    expect(result.current.showModal).toBe(true);
-    expect(result.current.formData.nombre).toBe('');
-    expect(result.current.editingBase).toBeNull();
-  });
-
   it('handleOpenEdit should set form data correctly and open modal', () => {
-    const { result } = setupHook('1');
+    const { result } = setupHook();
 
     act(() => {
       result.current.handleOpenEdit(mockBases[0]);
@@ -100,21 +95,6 @@ describe('useBasesActions', () => {
     expect(result.current.showModal).toBe(true);
     expect(result.current.formData.nombre).toBe('Base 1');
     expect(result.current.formData.numeroBase).toBe('1');
-  });
-
-  it('handleSubmit with empty form should show validation error from the server or complete silently', async () => {
-    const { result } = setupHook();
-    
-    (authFetch as vi.Mock).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ error: 'Datos inválidos' })
-    });
-
-    await act(async () => {
-      await result.current.handleSubmit({ preventDefault: vi.fn() } as any);
-    });
-
-    expect(showToast.error).toHaveBeenCalled();
   });
 
   it('handleSubmit should successfully call update API when editingBase is set', async () => {
@@ -145,7 +125,9 @@ describe('useBasesActions', () => {
       }),
       expect.any(Function)
     );
-    expect(showToast.success).toHaveBeenCalledWith('Base actualizada exitosamente');
+    expect(notify).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Base actualizada'
+    }));
     expect(mockSetBases).toHaveBeenCalled();
     expect(result.current.showModal).toBe(false);
   });
@@ -166,11 +148,14 @@ describe('useBasesActions', () => {
       await result.current.handleSubmit({ preventDefault: vi.fn() } as any);
     });
 
-    expect(showToast.error).toHaveBeenCalledWith('Error del servidor');
+    expect(notify).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Error',
+      subtitle: 'Error del servidor'
+    }));
   });
 
   it('handleDelete should not delete if confirm is false', async () => {
-    vi.spyOn(window, 'confirm').mockImplementation(() => false);
+    mockConfirm.mockResolvedValueOnce(false);
     const { result } = setupHook();
 
     await act(async () => {
@@ -181,6 +166,7 @@ describe('useBasesActions', () => {
   });
 
   it('handleDelete should successfully call delete API', async () => {
+    mockConfirm.mockResolvedValueOnce(true);
     const { result } = setupHook();
 
     (authFetch as vi.Mock).mockResolvedValueOnce({
@@ -200,7 +186,9 @@ describe('useBasesActions', () => {
       }),
       expect.any(Function)
     );
-    expect(showToast.success).toHaveBeenCalledWith('Base eliminada exitosamente');
+    expect(notify).toHaveBeenCalledWith(expect.objectContaining({
+      title: 'Base eliminada'
+    }));
     expect(mockSetBases).toHaveBeenCalled();
   });
 });

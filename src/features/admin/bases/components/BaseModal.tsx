@@ -27,20 +27,10 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   const isEditing = !!editingBase;
 
   const handleCancel = () => {
-    notify({
-      title: isEditing ? 'Edicion cancelada' : 'Creacion cancelada',
-      titleColor: 'var(--error)',
-      subtitle: isEditing
-        ? 'Se cancelo la edicion de la base'
-        : 'Se cancelo la creacion de la base',
-      subtitleColor: 'var(--color-muted)',
-      borderColor: 'var(--error)',
-      duration: 3000,
-    });
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const camposObligatorios = [
@@ -65,17 +55,19 @@ export const BaseModal: React.FC<BaseModalProps> = ({
       return;
     }
 
-    onSubmit(e);
-    notify({
-      title: isEditing ? 'Base editada' : 'Base creada',
-      titleColor: 'var(--color-accent)',
-      subtitle: isEditing
-        ? 'Se confirmo la edicion de la base correctamente'
-        : 'Se confirmo la creacion de la base correctamente',
-      subtitleColor: 'var(--color-muted)',
-      borderColor: 'var(--color-accent)',
-      duration: 3000,
-    });
+    if (!isEditing && Number(formData.numeroBase) <= 0) {
+      notify({
+        title: 'Número inválido',
+        titleColor: 'var(--error)',
+        subtitle: 'El número de base debe ser mayor a 0',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 3000,
+      });
+      return;
+    }
+
+    await onSubmit(e);
   };
 
   return (
@@ -104,6 +96,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
               }}
               placeholder="Ej: 1"
               maxLength={2}
+              min="1"
             />
           )}
 

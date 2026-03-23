@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { authFetch } from '@/lib/auth/authFetch';
-import { showToast } from '@/components/UI/Toast';
+import { notify } from '@/components/UI/Notification';
+import { useConfirmModal } from '@/components/UI/ConfirmModal';
 import { type Base, type BaseFormData } from '../schemas/basesSchemas';
 
 interface UseBasesActionsProps {
@@ -11,6 +12,7 @@ interface UseBasesActionsProps {
 
 export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
   const { logout } = useAdminAuth();
+  const { confirm, setIsLoading: setConfirmLoading, ConfirmModalComponent } = useConfirmModal();
 
   const [showModal, setShowModal] = useState(false);
   const [editingBase, setEditingBase] = useState<Base | null>(null);
@@ -79,7 +81,14 @@ export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
           throw new Error(error.error || 'Error al actualizar base');
         }
 
-        showToast.success('Base actualizada exitosamente');
+        notify({
+          title: 'Base actualizada',
+          titleColor: 'var(--color-accent)',
+          subtitle: 'La base se ha actualizado exitosamente',
+          subtitleColor: 'var(--color-muted)',
+          borderColor: 'var(--color-accent)',
+          duration: 3000,
+        });
         
         // Update local list
         setBases((prevBases) => 
@@ -115,7 +124,16 @@ export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
         }
 
         const result = await response.json();
-        showToast.success(`Base creada con ID: ${result.ID_Base}`);
+        notify({
+          title: 'Base creada',
+          titleColor: 'var(--color-accent)',
+          subtitle: 'La base se ha creado exitosamente',
+          idLabel: 'ID Asignado:',
+          idValue: result.ID_Base,
+          idColor: 'var(--color-accent)',
+          borderColor: 'var(--color-accent)',
+          duration: 3000,
+        });
         
         // Refresh bases
         const refreshResponse = await authFetch(
@@ -133,15 +151,29 @@ export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
       resetForm();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error en la operación';
-      showToast.error(message);
+      notify({
+        title: 'Error',
+        titleColor: 'var(--error)',
+        subtitle: message,
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 4000,
+      });
     }
   };
 
   const handleDelete = async (baseId: number) => {
-    if (!window.confirm('¿Estás seguro de eliminar esta base? Esta acción no se puede deshacer.')) {
-      return;
-    }
+    const isConfirmed = await confirm({
+      title: 'Eliminar Base',
+      message: '¿Estás seguro de eliminar esta base? Esta acción no se puede deshacer y eliminará las calificaciones asociadas.',
+      confirmText: 'Sí, Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+    });
 
+    if (!isConfirmed) return;
+
+    setConfirmLoading(true);
     try {
       const response = await authFetch(
         '/api/base/delete',
@@ -158,11 +190,27 @@ export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
         throw new Error(error.error || 'Error al eliminar base');
       }
 
-      showToast.success('Base eliminada exitosamente');
+      notify({
+        title: 'Base eliminada',
+        titleColor: 'var(--color-accent)',
+        subtitle: 'La base se ha eliminado exitosamente',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--color-accent)',
+        duration: 3000,
+      });
       setBases((prevBases) => prevBases.filter((b) => b.ID_Base !== baseId));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Error al eliminar base';
-      showToast.error(message);
+      notify({
+        title: 'Error al eliminar',
+        titleColor: 'var(--error)',
+        subtitle: message,
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 4000,
+      });
+    } finally {
+      setConfirmLoading(false);
     }
   };
 
@@ -176,6 +224,7 @@ export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
     handleOpenCreate,
     handleOpenEdit,
     handleSubmit,
-    handleDelete
+    handleDelete,
+    ConfirmModalComponent
   };
 };
