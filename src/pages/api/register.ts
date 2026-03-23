@@ -108,11 +108,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       tmpPath = file.filepath;
 
-      // Guardar en buena calidad para que no se vean pixeladas al mostrarlas (512px, quality 82)
-      optimizedBuffer = await sharp(tmpPath)
-        .resize(512, 512, { fit: 'cover' })
-        .webp({ quality: 82 })
-        .toBuffer();
+      // 🚀 Optimización: Si la imagen ya es WebP y tiene un tamaño razonable (< 600KB),
+      // la usamos directamente. Si no, usamos sharp para normalizarla.
+      const isAlreadyOptimized = 
+        file.mimetype === 'image/webp' && 
+        file.size < 600 * 1024;
+
+      if (isAlreadyOptimized) {
+        optimizedBuffer = await fs.readFile(tmpPath);
+      } else {
+        optimizedBuffer = await sharp(tmpPath)
+          .resize(512, 512, { fit: 'cover' })
+          .webp({ quality: 82 })
+          .toBuffer();
+      }
 
       // 🗂️ Subir a Supabase Storage
       const fileName = `participantes/${uuidv4()}.webp`;
