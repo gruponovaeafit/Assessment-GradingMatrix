@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { authFetch } from '@/lib/auth/authFetch';
-import { showToast } from '@/components/UI/Toast';
+import { notify } from '@/components/UI/Notification';
 import { 
   type Assessment, 
   type AdminUser, 
@@ -49,11 +49,25 @@ export function useSuperAdminActions(
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Error al crear assessments masivos");
       
-      showToast.success(result.message || "Assessments creados correctamente");
+      notify({
+        title: 'Assessments creados',
+        titleColor: 'var(--color-accent)',
+        subtitle: result.message || "Assessments creados correctamente",
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--color-accent)',
+        duration: 3000,
+      });
       // In a real scenario, we might want to refetch everything, but for now we follow the original logic
       // which implies a reload or manual refetch is needed to see changes if not optimized
     } catch (error: any) {
-      showToast.error(error.message);
+      notify({
+        title: 'Error',
+        titleColor: 'var(--error)',
+        subtitle: error.message,
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 4000,
+      });
     } finally {
       setLoading(false);
     }
@@ -61,7 +75,14 @@ export function useSuperAdminActions(
 
   const openBulkAssessmentPreview = (assessmentActivo: boolean) => {
     if (gruposEstudiantiles.length === 0) {
-      showToast.error("No hay grupos estudiantiles disponibles.");
+      notify({
+        title: 'Error',
+        titleColor: 'var(--error)',
+        subtitle: "No hay grupos estudiantiles disponibles.",
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 4000,
+      });
       return;
     }
     const payloads = getBulkAssessmentPayloads(gruposEstudiantiles, assessments);
@@ -101,9 +122,23 @@ export function useSuperAdminActions(
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Error al crear admins masivos");
       
-      showToast.success(result.message || "Admins creados correctamente");
+      notify({
+        title: 'Admins creados',
+        titleColor: 'var(--color-accent)',
+        subtitle: result.message || "Admins creados correctamente",
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--color-accent)',
+        duration: 3000,
+      });
     } catch (error: any) {
-      showToast.error(error.message);
+      notify({
+        title: 'Error',
+        titleColor: 'var(--error)',
+        subtitle: error.message,
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 4000,
+      });
     } finally {
       setLoading(false);
     }
@@ -112,7 +147,14 @@ export function useSuperAdminActions(
   const openBulkAdminPreview = () => {
     const activeAssessments = assessments.filter(a => a.activo);
     if (activeAssessments.length === 0) {
-      showToast.error("No hay assessments activos.");
+      notify({
+        title: 'Error',
+        titleColor: 'var(--error)',
+        subtitle: "No hay assessments activos.",
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 4000,
+      });
       return;
     }
     const payloads = getBulkAdminPayloads(activeAssessments, admins);
@@ -158,7 +200,14 @@ export function useSuperAdminActions(
         const result = await response.json();
         throw new Error(result.error || "Error al actualizar assessment");
       }
-      showToast.success("Assessment actualizado");
+      notify({
+        title: 'Assessment actualizado',
+        titleColor: 'var(--color-accent)',
+        subtitle: "Se ha actualizado el assessment correctamente",
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--color-accent)',
+        duration: 3000,
+      });
       setAssessments(prev => prev.map(a => a.id === assessmentId ? { 
         ...a, 
         descripcion: edit.descripcion, 
@@ -167,7 +216,14 @@ export function useSuperAdminActions(
         grupoNombre: gruposEstudiantiles.find(g => g.id === Number(edit.grupoId))?.nombre || null
       } : a));
     } catch (error: any) {
-      showToast.error(error.message);
+      notify({
+        title: 'Error',
+        titleColor: 'var(--error)',
+        subtitle: error.message,
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 4000,
+      });
     } finally {
       setLoading(false);
     }
@@ -195,10 +251,24 @@ export function useSuperAdminActions(
         const result = await response.json();
         throw new Error(result.error || "Error al actualizar admin");
       }
-      showToast.success("Admin actualizado");
+      notify({
+        title: 'Admin actualizado',
+        titleColor: 'var(--color-accent)',
+        subtitle: "Se ha actualizado el administrador correctamente",
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--color-accent)',
+        duration: 3000,
+      });
       setAdmins(prev => prev.map(a => a.id === adminId ? { ...a, correo: edit.correo } : a));
     } catch (error: any) {
-      showToast.error(error.message);
+      notify({
+        title: 'Error',
+        titleColor: 'var(--error)',
+        subtitle: error.message,
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 4000,
+      });
     } finally {
       setLoading(false);
     }

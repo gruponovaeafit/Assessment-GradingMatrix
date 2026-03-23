@@ -23,6 +23,8 @@ export interface NotificationProps {
   duration?: number;
   /** Callback cuando se cierra la notificación */
   onClose?: () => void;
+  /** Posición en la pila (0 es la más reciente/arriba) */
+  index?: number;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -38,6 +40,7 @@ export default function Notification({
   idColor = "#a78bfa",
   duration = 4000,
   onClose,
+  index = 0,
 }: NotificationProps) {
   const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -65,19 +68,29 @@ export default function Notification({
 
   if (!visible && leaving) return null;
 
+  // Stacking logic
+  const translateY = index * 12; // 12px offset per level
+  const scale = Math.max(1 - index * 0.05, 0.8); 
+  const opacity = Math.max(1 - index * 0.2, 0); 
+  const zIndex = 50 - index;
+
   return (
     <div
       style={{
         borderColor,
-        // Transition via inline style because borderColor is dynamic
+        transform: `translateY(${translateY}px) scale(${scale})`,
+        opacity: visible && !leaving ? opacity : 0,
+        zIndex,
+        position: 'absolute',
+        top: 0,
       }}
       className={`
-        relative w-[320px] rounded-xl border-2 bg-[#FFFFFF] px-6 py-5
-        shadow-[0_0_24px_rgba(0,0,0,0.6)]
-        transition-all duration-350 ease-out
+        w-[320px] rounded-xl border-2 bg-[#FFFFFF] px-6 py-5
+        shadow-[0_0_24px_rgba(0,0,0,0.3)]
+        transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
         ${visible && !leaving
-          ? "opacity-100 translate-y-0 scale-100"
-          : "opacity-0 -translate-y-3 scale-95"
+          ? ""
+          : "-translate-y-8 scale-95 !opacity-0"
         }
       `}
     >
@@ -153,7 +166,8 @@ export function NotificationProvider() {
   useEffect(() => {
     _addNotification = (item) => {
       const id = Math.random().toString(36).slice(2);
-      setNotifications((prev) => [...prev, { ...item, id }]);
+      // Newest on top (index 0)
+      setNotifications((prev) => [{ ...item, id }, ...prev]);
     };
     return () => {
       _addNotification = null;
@@ -165,9 +179,14 @@ export function NotificationProvider() {
   };
 
   return (
-    <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3 items-center">
-      {notifications.map(({ id, ...props }) => (
-        <Notification key={id} {...props} onClose={() => remove(id)} />
+    <div className="fixed top-8 left-1/2 -translate-x-1/2 z-50 w-[320px] h-0 flex flex-col items-center">
+      {notifications.map((notif, idx) => (
+        <Notification 
+          key={notif.id} 
+          {...notif} 
+          index={idx} 
+          onClose={() => remove(notif.id)} 
+        />
       ))}
     </div>
   );

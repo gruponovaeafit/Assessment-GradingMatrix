@@ -6,11 +6,13 @@ import { useBasesActions } from '../hooks/useBasesActions';
 import { BasesHeader } from './BasesHeader';
 import { BasesList } from './BasesList';
 import { BaseModal } from './BaseModal';
+import { Button } from '@/components/UI/Button';
+import { notify, NotificationProvider } from '@/components/UI/Notification';
 
 export const BasesContainer: React.FC = () => {
   const router = useRouter();
   const { logout } = useAdminAuth();
-  
+
   const {
     bases,
     setBases,
@@ -28,6 +30,8 @@ export const BasesContainer: React.FC = () => {
     handleSubmit,
     handleDelete,
     setShowModal,
+    ConfirmModalComponent,
+    isSubmitting,
   } = useBasesActions({
     bases,
     setBases,
@@ -35,24 +39,34 @@ export const BasesContainer: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center min-h-screen py-4 sm:py-8 px-3 sm:px-4 bg-white">
-      <BasesHeader 
-        onBack={() => router.push('/admin/configuration')} 
-        onLogout={logout} 
+      <BasesHeader
+        onAdmin={() => router.push('/admin')}
+        onLogout={() => {
+          notify({
+            title: 'Sesión Cerrada',
+            titleColor: 'var(--error)',
+            subtitle: 'Has cerrado sesión correctamente',
+            subtitleColor: 'var(--color-muted)',
+            borderColor: 'var(--error)',
+            duration: 2500,
+          });
+          setTimeout(() => logout(), 800);
+        }}
       />
-      <div className="w-full max-w-[1200px] mb-6 flex justify-end">
-        <button
-          onClick={handleOpenCreate}
-          className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-6 py-2 rounded-lg font-medium transition shadow-md"
-        >
-          Nueva Base
-        </button>
+
+      <div className="w-full max-w-[1200px] mb-6 flex justify-start">
+        <Button variant="accent" onClick={handleOpenCreate}>
+          + Crear Nueva Base
+        </Button>
       </div>
+
       <BasesList
         bases={bases}
         loading={loading}
         onOpenEdit={handleOpenEdit}
         onDelete={handleDelete}
       />
+
       <BaseModal
         showModal={showModal}
         editingBase={editingBase}
@@ -63,7 +77,11 @@ export const BasesContainer: React.FC = () => {
           resetForm();
         }}
         onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
       />
-    </div>
-  );
-};
+
+      <ConfirmModalComponent />
+      <NotificationProvider />
+      </div>
+      );
+      };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface AuthUser {
@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [router]);
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     isAdmin: user?.role === 'admin',
     isSuperAdmin: !!user?.isSuperAdmin,
@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     refreshAuth,
-  };
+  }), [user, isLoading, login, logout, refreshAuth]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

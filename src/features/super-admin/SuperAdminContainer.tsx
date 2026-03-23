@@ -6,7 +6,7 @@ import { Button } from "@/components/UI/Button";
 import { LogOut, LayoutDashboard, AlertCircle, RefreshCw, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { showToast } from "@/components/UI/Toast";
+import { notify, NotificationProvider } from "@/components/UI/Notification";
 
 // Feature Hooks
 import { useSuperAdminData } from "./hooks/useSuperAdminData";
@@ -123,14 +123,37 @@ export const SuperAdminContainer = () => {
         }
         
         if (response.ok) {
-            showToast.success(isUpdate ? 'Assessment actualizado' : 'Assessment creado');
+            notify({
+                title: isUpdate ? 'Assessment actualizado' : 'Assessment creado',
+                titleColor: 'var(--color-accent)',
+                subtitle: isUpdate 
+                    ? 'El assessment se ha actualizado correctamente' 
+                    : 'El assessment se ha creado correctamente',
+                subtitleColor: 'var(--color-muted)',
+                borderColor: 'var(--color-accent)',
+                duration: 3000,
+            });
             fetchData();
         } else {
             const err = await response.json();
-            showToast.error(err.error || 'Error al guardar assessment');
+            notify({
+                title: 'Error',
+                titleColor: 'var(--error)',
+                subtitle: err.error || 'Error al guardar assessment',
+                subtitleColor: 'var(--color-muted)',
+                borderColor: 'var(--error)',
+                duration: 4000,
+            });
         }
     } catch (e) {
-        showToast.error('Error de red al guardar');
+        notify({
+            title: 'Error de red',
+            titleColor: 'var(--error)',
+            subtitle: 'No se pudo conectar con el servidor',
+            subtitleColor: 'var(--color-muted)',
+            borderColor: 'var(--error)',
+            duration: 4000,
+        });
     }
   };
 
@@ -144,10 +167,24 @@ export const SuperAdminContainer = () => {
 
       const result = await resp.json();
       if (resp.ok) {
-        showToast.success('Assessment eliminado correctamente');
+        notify({
+            title: 'Assessment eliminado',
+            titleColor: 'var(--color-accent)',
+            subtitle: 'El assessment ha sido eliminado permanentemente',
+            subtitleColor: 'var(--color-muted)',
+            borderColor: 'var(--color-accent)',
+            duration: 3000,
+        });
         fetchData();
       } else {
-        showToast.error(result.error || 'Error al eliminar assessment');
+        notify({
+            title: 'Error al eliminar',
+            titleColor: 'var(--error)',
+            subtitle: result.error || 'No se pudo eliminar el assessment',
+            subtitleColor: 'var(--color-muted)',
+            borderColor: 'var(--error)',
+            duration: 4000,
+        });
         throw new Error(result.error); // Re-throw to keep the modal open if failed
       }
     } catch (err: any) {
@@ -283,10 +320,27 @@ export const SuperAdminContainer = () => {
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ assessmentId: id }),
                     });
-                    if (response.ok) router.push('/admin');
-                    else showToast.error('Error al cambiar de assessment');
+                    if (response.ok) {
+                      router.push('/admin');
+                    } else {
+                      notify({
+                        title: 'Error',
+                        titleColor: 'var(--error)',
+                        subtitle: 'Error al cambiar de assessment',
+                        subtitleColor: 'var(--color-muted)',
+                        borderColor: 'var(--error)',
+                        duration: 3000,
+                      });
+                    }
                   } catch {
-                    showToast.error('Error al cambiar de assessment');
+                    notify({
+                      title: 'Error',
+                      titleColor: 'var(--error)',
+                      subtitle: 'Error al cambiar de assessment',
+                      subtitleColor: 'var(--color-muted)',
+                      borderColor: 'var(--error)',
+                      duration: 3000,
+                    });
                   }
                 }}
               />
@@ -325,6 +379,7 @@ export const SuperAdminContainer = () => {
          onSave={handleSaveModal}
          onDelete={handleDeleteModal}
       />
+      <NotificationProvider />
     </div>
   );
 };

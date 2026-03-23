@@ -99,7 +99,9 @@ export function withAuth(handler: AuthenticatedHandler, allowedRoles?: ('admin' 
         .eq('Token', token)
         .maybeSingle();
 
-      if (revokedError || revoked) {
+      if (revokedError) {
+        console.error('[withAuth] Error verificando blacklist:', revokedError);
+      } else if (revoked) {
         console.warn('[withAuth] Acceso denegado: Token revocado');
         return res.status(401).json({ error: 'Sesión terminada' });
       }

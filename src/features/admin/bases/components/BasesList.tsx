@@ -1,5 +1,7 @@
 import React from 'react';
 import { Spinner } from '@/components/UI/Loading';
+import { Box } from '@/components/UI/Box';
+import { Button } from '@/components/UI/Button';
 import { type Base } from '../schemas/basesSchemas';
 
 interface BasesListProps {
@@ -30,10 +32,7 @@ export const BasesList: React.FC<BasesListProps> = ({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {bases.map((base) => (
-            <div
-              key={base.ID_Base}
-              className="bg-white border border-gray-200 rounded-xl p-5 shadow hover:shadow-lg transition"
-            >
+            <Box key={base.ID_Base}>
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <span className="inline-block bg-[color:var(--color-accent)] text-white text-xs font-bold px-2 py-1 rounded">
@@ -63,20 +62,22 @@ export const BasesList: React.FC<BasesListProps> = ({
               </div>
 
               <div className="flex gap-2 mt-4 pt-3 border-t border-gray-200">
-                <button
+                <Button
+                  variant="accent"
+                  className="flex-1"
                   onClick={() => onOpenEdit(base)}
-                  className="flex-1 bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition"
                 >
                   Editar
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="error"
+                  className="flex-1"
                   onClick={() => onDelete(base.ID_Base)}
-                  className="flex-1 bg-error hover:bg-error-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition"
                 >
                   Eliminar
-                </button>
+                </Button>
               </div>
-            </div>
+            </Box>
           ))}
         </div>
       )}
