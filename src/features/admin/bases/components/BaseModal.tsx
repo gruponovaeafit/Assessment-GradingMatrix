@@ -12,6 +12,7 @@ interface BaseModalProps {
   setFormData: React.Dispatch<React.SetStateAction<BaseFormData>>;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
+  isSubmitting?: boolean;
 }
 
 export const BaseModal: React.FC<BaseModalProps> = ({
@@ -21,6 +22,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   setFormData,
   onClose,
   onSubmit,
+  isSubmitting = false,
 }) => {
   if (!showModal) return null;
 
@@ -97,6 +99,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
               placeholder="Ej: 1"
               maxLength={2}
               min="1"
+              disabled={isSubmitting}
             />
           )}
 
@@ -107,6 +110,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
             placeholder="Inserte el nombre de la base"
             maxLength={100}
+            disabled={isSubmitting}
           />
 
           <InputBox
@@ -117,6 +121,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
             placeholder="Inserte pequeña descripcion de la base (Visible para calificadores)"
             maxLength={500}
+            disabled={isSubmitting}
           />
 
           <InputBox
@@ -126,6 +131,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             onChange={(e) => setFormData({ ...formData, competencia: e.target.value })}
             placeholder="Competencia general a evaluar"
             maxLength={500}
+            disabled={isSubmitting}
           />
 
           <InputBox
@@ -136,6 +142,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             onChange={(e) => setFormData({ ...formData, comportamiento1: e.target.value })}
             placeholder="Primer comportamiento a evaluar"
             maxLength={500}
+            disabled={isSubmitting}
           />
 
           <InputBox
@@ -146,6 +153,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             onChange={(e) => setFormData({ ...formData, comportamiento2: e.target.value })}
             placeholder="Segundo comportamiento a evaluar"
             maxLength={500}
+            disabled={isSubmitting}
           />
 
           <InputBox
@@ -156,14 +164,15 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             onChange={(e) => setFormData({ ...formData, comportamiento3: e.target.value })}
             placeholder="Tercer comportamiento a evaluar"
             maxLength={500}
+            disabled={isSubmitting}
           />
 
           <div className="flex gap-3 pt-4">
-            <Button variant="error" type="button" onClick={handleCancel} className="flex-1">
+            <Button variant="error" type="button" onClick={handleCancel} className="flex-1" disabled={isSubmitting}>
               Cancelar
             </Button>
-            <Button variant="accent" type="submit" className="flex-1">
-              {isEditing ? 'Editar Base' : 'Crear Base'}
+            <Button variant="accent" type="submit" className="flex-1" loading={isSubmitting}>
+              Confirmar
             </Button>
           </div>
         </form>

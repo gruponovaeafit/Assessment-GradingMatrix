@@ -16,6 +16,7 @@ export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
 
   const [showModal, setShowModal] = useState(false);
   const [editingBase, setEditingBase] = useState<Base | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const initialFormData: BaseFormData = {
     numeroBase: '',
@@ -54,6 +55,7 @@ export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       if (editingBase) {
@@ -167,6 +169,8 @@ export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
         borderColor: 'var(--error)',
         duration: 4000,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -233,6 +237,7 @@ export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
     handleOpenEdit,
     handleSubmit,
     handleDelete,
-    ConfirmModalComponent
+    ConfirmModalComponent,
+    isSubmitting
   };
 };

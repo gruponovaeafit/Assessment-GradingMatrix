@@ -143,6 +143,7 @@ describe('useBasesActions', () => {
     }));
     
     expect(result.current.showModal).toBe(false);
+    expect(result.current.isSubmitting).toBe(false);
   });
 
   it('handleSubmit should handle API errors gracefully', async () => {

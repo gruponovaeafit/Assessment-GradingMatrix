@@ -31,6 +31,7 @@ export const BasesContainer: React.FC = () => {
     handleDelete,
     setShowModal,
     ConfirmModalComponent,
+    isSubmitting,
   } = useBasesActions({
     bases,
     setBases,
@@ -76,6 +77,7 @@ export const BasesContainer: React.FC = () => {
           resetForm();
         }}
         onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
       />
 
       <ConfirmModalComponent />
