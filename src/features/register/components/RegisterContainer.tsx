@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRegisterForm } from '../hooks/useRegisterForm';
 import { useRegisterAuth } from '../hooks/useRegisterAuth';
 import { RegisterForm } from './RegisterForm';
-import { SuccessModal } from './SuccessModal';
 import { ConfirmRegisterModal } from './ConfirmRegisterModal';
 import { notify } from '@/components/UI/Notification';
 
@@ -19,8 +18,6 @@ export const RegisterContainer: React.FC = () => {
     setCorreo,
     photo,
     fileName,
-    mensaje,
-    isError,
     enviando,
     successModalId,
     fileInputRef,
@@ -47,7 +44,6 @@ export const RegisterContainer: React.FC = () => {
 
   const handleConfirm = () => {
     setShowConfirm(false);
-    // Crear un evento sintético para llamar handleSubmit
     handleSubmit(
       { preventDefault: () => {} } as React.FormEvent,
       (msg) => notify({
@@ -77,16 +73,22 @@ export const RegisterContainer: React.FC = () => {
     notify({
       title: "¡Participante inscrito!",
       titleColor: "var(--success)",
-      subtitle: "El participante fue inscrito con éxito",
+      subtitle: "El participante fue asignado con éxito",
       subtitleColor: "var(--color-muted)",
       borderColor: "var(--success)",
-      idLabel: "El participante con ID:",
+      idLabel: "El participante fue asignado con ID:",
       idValue: id,
       idColor: "var(--success)",
       duration: 5000,
     });
     resetForm();
   };
+
+  useEffect(() => {
+    if (successModalId !== null && successModalId !== undefined) {
+      handleSuccess(successModalId);
+    }
+  }, [successModalId]);
 
   return (
     <>
@@ -113,13 +115,6 @@ export const RegisterContainer: React.FC = () => {
           onCancel={handleCancel}
         />
       )}
-
-      <SuccessModal
-        successId={successModalId}
-        onDismiss={() => {
-          if (successModalId !== null) handleSuccess(successModalId);
-        }}
-      />
     </>
   );
 };
