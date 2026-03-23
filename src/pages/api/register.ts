@@ -59,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // 🔐 Roles
-    const decoded = requireRoles(req, res, ['admin', 'registrador']);
+    const decoded = await requireRoles(req, res, ['admin', 'registrador']);
     if (!decoded) return;
     console.log(decoded);
 

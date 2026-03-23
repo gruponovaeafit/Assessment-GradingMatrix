@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Método no permitido. Usa POST.' });
   }
 
-  if (!requireRoles(req, res, ['admin', 'calificador'])) return;
+  if (!await requireRoles(req, res, ['admin', 'calificador'])) return;
 
   try {
     const { idCalificador, idBase } = req.body;

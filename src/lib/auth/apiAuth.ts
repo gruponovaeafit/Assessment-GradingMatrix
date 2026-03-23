@@ -1,14 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { verifyToken, type TokenPayload } from '@/lib/auth';
 import { COOKIE_NAME } from '@/lib/auth/cookie';
+import { supabase } from '@/lib/supabase/server';
 
 type Role = TokenPayload['role'];
 
-export function requireRoles(
+export async function requireRoles(
   req: NextApiRequest,
   res: NextApiResponse,
   allowed: Role[]
-): TokenPayload | null {
+): Promise<TokenPayload | null> {
   // Read token from cookie first, fall back to Authorization header
   let token: string | null = req.cookies?.[COOKIE_NAME] ?? null;
 
@@ -19,8 +20,21 @@ export function requireRoles(
 
   const decoded = token ? verifyToken(token) : null;
 
-  if (!decoded || !allowed.includes(decoded.role)) {
+  if (!decoded || !token || !allowed.includes(decoded.role)) {
     res.status(401).json({ error: 'No autorizado' });
+    return null;
+  }
+
+  // 🛡️ Verificar Blacklist (RevokedTokens)
+  const { data: revoked, error: revokedError } = await supabase
+    .from('RevokedTokens')
+    .select('Token')
+    .eq('Token', token)
+    .maybeSingle();
+
+  if (revokedError || revoked) {
+    console.warn('[requireRoles] Acceso denegado: Token revocado');
+    res.status(401).json({ error: 'Sesión terminada' });
     return null;
   }
 

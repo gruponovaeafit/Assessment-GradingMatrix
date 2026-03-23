@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const user = requireRoles(req, res, ['admin']);
+  const user = await requireRoles(req, res, ['admin']);
   if (!user) return;
 
   const assessmentId = getAuthorizedAssessmentId(user, res);

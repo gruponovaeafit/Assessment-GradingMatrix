@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { supabase } from '@/lib/supabase/server';
+import { COOKIE_NAME } from './cookie';
 
 // Constantes de configuración
 const JWT_SECRET = process.env.JWT_SECRET ?? '';
@@ -73,14 +75,11 @@ export function withAuth(handler: AuthenticatedHandler, allowedRoles?: ('admin' 
   return async (req: NextApiRequest, res: NextApiResponse) => {
     try {
       // Obtener token del header Authorization o cookies
-      let token = req.headers.authorization?.replace('Bearer ', '');
+      let token: string | null = req.cookies?.[COOKIE_NAME] ?? null;
 
       if (!token) {
-        // Intentar obtener de cookies
-        const cookieToken = req.cookies?.session;
-        if (cookieToken) {
-          token = cookieToken;
-        }
+        const authHeader = req.headers.authorization;
+        token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
       }
 
       if (!token) {
@@ -91,6 +90,18 @@ export function withAuth(handler: AuthenticatedHandler, allowedRoles?: ('admin' 
 
       if (!decoded) {
         return res.status(401).json({ error: 'No autorizado: Token inválido o expirado' });
+      }
+
+      // 🛡️ Verificar Blacklist (RevokedTokens)
+      const { data: revoked, error: revokedError } = await supabase
+        .from('RevokedTokens')
+        .select('Token')
+        .eq('Token', token)
+        .maybeSingle();
+
+      if (revokedError || revoked) {
+        console.warn('[withAuth] Acceso denegado: Token revocado');
+        return res.status(401).json({ error: 'Sesión terminada' });
       }
 
       // Verificar roles permitidos si se especifican
@@ -106,6 +117,7 @@ export function withAuth(handler: AuthenticatedHandler, allowedRoles?: ('admin' 
     }
   };
 }
+
 
 /**
  * Middleware solo para administradores

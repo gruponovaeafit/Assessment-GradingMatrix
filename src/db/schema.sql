@@ -220,3 +220,15 @@ create index if not exists "IX_Calif_Participante"
 create unique index if not exists "UX_Calif_NoDuplicado"
   on public."CalificacionesPorPersona"
   ("ID_Assessment", "ID_Base", "ID_Staff", "ID_Participante");
+
+-- -------------------------
+-- RevokedTokens (Blacklist para Logout Seguro)
+-- -------------------------
+create table if not exists public."RevokedTokens" (
+  "Token" text primary key,
+  "ExpiresAt" timestamptz not null,
+  "CreatedAt" timestamptz not null default now()
+);
+
+create index if not exists "IX_RevokedTokens_ExpiresAt"
+  on public."RevokedTokens" ("ExpiresAt");

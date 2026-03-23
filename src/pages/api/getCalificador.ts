@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Solo se permite POST' });
   }
 
-  if (!requireRoles(req, res, ['admin', 'calificador'])) return;
+  if (!await requireRoles(req, res, ['admin', 'calificador'])) return;
 
   const { id_calificador } = req.body;
 

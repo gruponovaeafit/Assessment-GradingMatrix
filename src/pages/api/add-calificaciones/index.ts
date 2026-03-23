@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: "Método no permitido" });
   }
 
-  if (!requireRoles(req, res, ["admin", "calificador"])) return;
+  if (!await requireRoles(req, res, ["admin", "calificador"])) return;
 
   const { calificaciones: calificacionesArray, idGrupo: idGrupoBody } = typeof req.body?.calificaciones === 'undefined'
     ? { calificaciones: req.body, idGrupo: undefined }

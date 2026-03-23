@@ -51,6 +51,26 @@ export function buildSupabaseChain(result: { data: unknown; error: unknown }) {
     eq: vi.fn().mockReturnThis(),
     neq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue(result),
+    maybeSingle: vi.fn().mockResolvedValue(result),
   };
   return chain;
+}
+
+/** 
+ * Helper to setup a default non-revoked token mock for requireRoles.
+ * Call this in beforeEach for API tests that use requireRoles.
+ */
+export function setupRevokedTokenMock(supabase: any) {
+  // Por defecto, el token NO está revocado
+  supabase.from.mockImplementation((table: string) => {
+    if (table === 'RevokedTokens') {
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+      };
+    }
+    // Para otras tablas, retornar el mock por defecto o dejar que el test lo defina
+    return buildSupabaseChain({ data: null, error: null });
+  });
 }

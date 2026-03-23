@@ -6,7 +6,7 @@ import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const user = requireRoles(req, res, ["admin"]);
+    const user = await requireRoles(req, res, ["admin"]);
     if (!user) return;
 
     // Si viene assessmentId en el query param, usarlo; si no, usar el del token

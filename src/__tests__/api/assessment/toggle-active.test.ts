@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken } from '@/__tests__/helpers/mockApiContext';
+import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken, setupRevokedTokenMock } from '@/__tests__/helpers/mockApiContext';
 
 vi.mock('@/lib/supabase/server', () => ({
   supabase: { from: vi.fn() },
@@ -25,6 +25,7 @@ const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
 describe('POST /api/assessment/toggle-active', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setupRevokedTokenMock(supabase);
   });
 
   it('returns 405 for non-POST requests', async () => {
@@ -71,7 +72,14 @@ describe('POST /api/assessment/toggle-active', () => {
   it('activates assessment and calls deactivation of siblings', async () => {
     mockVerifyToken.mockReturnValue(mockAdminToken(5));
     let callIndex = 0;
-    mockFrom.mockImplementation(() => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'RevokedTokens') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+        };
+      }
       callIndex++;
       if (callIndex === 1) {
         // First call: update + select + single → returns the updated assessment
@@ -101,21 +109,30 @@ describe('POST /api/assessment/toggle-active', () => {
     const res = createMockRes();
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    // Two from() calls: one for update, one for sibling deactivation
-    expect(mockFrom).toHaveBeenCalledTimes(2);
+    // Three from() calls: one for RevokedTokens, one for update, one for sibling deactivation
+    expect(mockFrom).toHaveBeenCalledTimes(3);
   });
 
   it('deactivating does NOT trigger sibling deactivation', async () => {
     mockVerifyToken.mockReturnValue(mockAdminToken(5));
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { ID_Assessment: 5, Activo_Assessment: false, ID_GrupoEstudiantil: 2 },
-        error: null,
-      }),
-    }));
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'RevokedTokens') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+        };
+      }
+      return {
+        update: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: { ID_Assessment: 5, Activo_Assessment: false, ID_GrupoEstudiantil: 2 },
+          error: null,
+        }),
+      };
+    });
 
     const req = createMockReq({
       method: 'POST',
@@ -125,18 +142,27 @@ describe('POST /api/assessment/toggle-active', () => {
     const res = createMockRes();
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
-    // Only ONE from() call: no sibling deactivation when setting activo=false
-    expect(mockFrom).toHaveBeenCalledTimes(1);
+    // Two from() calls: one for RevokedTokens, one for update (no sibling deactivation)
+    expect(mockFrom).toHaveBeenCalledTimes(2);
   });
 
   it('returns 500 when Supabase update fails', async () => {
     mockVerifyToken.mockReturnValue(mockAdminToken(5));
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null, error: { message: 'fail' } }),
-    }));
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'RevokedTokens') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+        };
+      }
+      return {
+        update: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: null, error: { message: 'fail' } }),
+      };
+    });
     const req = createMockReq({
       method: 'POST',
       cookies: { session: 'tok' },
@@ -149,15 +175,24 @@ describe('POST /api/assessment/toggle-active', () => {
 
   it('super-admin can toggle any assessment without assessmentId in their token', async () => {
     mockVerifyToken.mockReturnValue(mockSuperAdminToken()); // No assessmentId in token
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { ID_Assessment: 7, Activo_Assessment: true, ID_GrupoEstudiantil: 3 },
-        error: null,
-      }),
-    }));
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'RevokedTokens') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+        };
+      }
+      return {
+        update: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: { ID_Assessment: 7, Activo_Assessment: true, ID_GrupoEstudiantil: 3 },
+          error: null,
+        }),
+      };
+    });
     const req = createMockReq({
       method: 'POST',
       cookies: { session: 'tok' },

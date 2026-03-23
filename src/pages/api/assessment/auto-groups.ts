@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  if (!requireRoles(req, res, ['admin'])) return;
+  if (!await requireRoles(req, res, ['admin'])) return;
 
   const { assessmentId, numGroups } = req.body ?? {};
   const assessmentIdNum = Number(assessmentId);

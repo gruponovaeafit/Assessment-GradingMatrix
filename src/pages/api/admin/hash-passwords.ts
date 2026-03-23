@@ -11,7 +11,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    if (!requireRoles(req, res, ['admin'])) return;
+    if (!await requireRoles(req, res, ['admin'])) return;
     const { data: staffList, error } = await supabase
       .from('Staff')
       .select('ID_Staff, Contrasena_Staff')
