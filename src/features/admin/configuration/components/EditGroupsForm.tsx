@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { type Group, type Participant } from '../schemas/configSchemas';
 import { authFetch } from '@/lib/auth/authFetch';
-import { showToast } from '@/components/UI/Toast';
+import { notify } from '@/components/UI/Notification';
+import { useConfirmModal } from '@/components/UI/ConfirmModal';
 import { Spinner } from '@/components/UI/Loading';
-import { Trash2, UserMinus, UserPlus, MoveHorizontal, Ghost } from 'lucide-react';
+import { Trash2, UserPlus, Ghost } from 'lucide-react';
 
 interface EditGroupsFormProps {
   groups: Group[];
@@ -21,13 +22,21 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
   logout,
 }) => {
   const [processingId, setProcessingId] = useState<string | number | null>(null);
+  const { confirm, setIsLoading: setConfirmLoading, ConfirmModalComponent } = useConfirmModal();
 
   const handleDeleteGroup = async (id: number) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este grupo? Los participantes quedarán sin grupo.')) {
-      return;
-    }
+    const isConfirmed = await confirm({
+      title: 'Eliminar Grupo',
+      message: '¿Estás seguro de que deseas eliminar este grupo? Los participantes quedarán sin grupo.',
+      confirmText: 'Sí, Eliminar',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+    });
+
+    if (!isConfirmed) return;
 
     setProcessingId(`group-${id}`);
+    setConfirmLoading(true);
     try {
       const response = await authFetch(
         '/api/assessment/delete-group',
@@ -40,16 +49,38 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
       );
 
       if (response.ok) {
-        showToast.success('Grupo eliminado');
+        notify({
+          title: 'Grupo eliminado',
+          titleColor: 'var(--color-accent)',
+          subtitle: 'El grupo se ha eliminado exitosamente',
+          subtitleColor: 'var(--color-muted)',
+          borderColor: 'var(--color-accent)',
+          duration: 3000,
+        });
         onRefresh();
       } else {
         const result = await response.json();
-        showToast.error(result.error || 'Error al eliminar grupo');
+        notify({
+          title: 'Error',
+          titleColor: 'var(--error)',
+          subtitle: result.error || 'Error al eliminar grupo',
+          subtitleColor: 'var(--color-muted)',
+          borderColor: 'var(--error)',
+          duration: 4000,
+        });
       }
     } catch (err) {
-      showToast.error('Error de red al eliminar grupo');
+      notify({
+        title: 'Error de red',
+        titleColor: 'var(--error)',
+        subtitle: 'Error al conectar con el servidor',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 4000,
+      });
     } finally {
       setProcessingId(null);
+      setConfirmLoading(false);
     }
   };
 
@@ -71,14 +102,35 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
       );
 
       if (response.ok) {
-        showToast.success('Cambio realizado');
+        notify({
+          title: 'Cambio realizado',
+          titleColor: 'var(--color-accent)',
+          subtitle: 'Se ha movido al participante correctamente',
+          subtitleColor: 'var(--color-muted)',
+          borderColor: 'var(--color-accent)',
+          duration: 2500,
+        });
         onRefresh();
       } else {
         const result = await response.json();
-        showToast.error(result.error || 'Error al mover participante');
+        notify({
+          title: 'Error',
+          titleColor: 'var(--error)',
+          subtitle: result.error || 'Error al mover participante',
+          subtitleColor: 'var(--color-muted)',
+          borderColor: 'var(--error)',
+          duration: 4000,
+        });
       }
     } catch (err) {
-      showToast.error('Error de red al mover participante');
+      notify({
+        title: 'Error de red',
+        titleColor: 'var(--error)',
+        subtitle: 'Error al conectar con el servidor',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 4000,
+      });
     } finally {
       setProcessingId(null);
     }
@@ -206,6 +258,8 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
           </div>
         )}
       </div>
+
+      <ConfirmModalComponent />
     </div>
   );
 };
