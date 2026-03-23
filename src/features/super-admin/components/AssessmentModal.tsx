@@ -18,7 +18,7 @@ interface AssessmentModalProps {
   initialAssessment?: Assessment | null;
   // Handlers
   onSave: (data: any) => Promise<void>;
-  onDelete?: (id: number) => Promise<void>;
+  onDelete?: (id: number, password?: string) => Promise<void>;
 }
 
 export const AssessmentModal: React.FC<AssessmentModalProps> = ({
@@ -44,6 +44,8 @@ export const AssessmentModal: React.FC<AssessmentModalProps> = ({
   
   // Validation / Warning State
   const [warning, setWarning] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Global Confirm Modal for Deletion
@@ -83,10 +85,27 @@ export const AssessmentModal: React.FC<AssessmentModalProps> = ({
       setAdminEmail('');
       setAdminPassword('');
       setWarning(null);
+      setEmailError(null);
+      setPasswordError(null);
     }
   }, [isOpen, initialAssessment, allAdmins, gruposEstudiantiles]);
 
   if (!isOpen) return null;
+
+  /** Validates an email — returns an error string or null if valid. */
+  const validateEmail = (email: string): string | null => {
+    const trimmed = email.trim();
+    if (!trimmed) return 'El correo es obligatorio';
+    // Reject non-ASCII characters (emojis, accented letters, etc.)
+    // eslint-disable-next-line no-control-regex
+    if (/[^\x00-\x7F]/.test(trimmed)) return 'El correo contiene caracteres no permitidos (emojis o caracteres especiales)';
+    // Reject embedded whitespace
+    if (/\s/.test(trimmed)) return 'El correo no puede contener espacios';
+    // Standard email regex: requires something@something.tld
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(trimmed)) return 'El correo debe seguir el formato usuario@dominio.com';
+    return null;
+  };
 
   const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value ? Number(e.target.value) : '';
@@ -105,16 +124,24 @@ export const AssessmentModal: React.FC<AssessmentModalProps> = ({
     if (!nombre.trim()) return;
     if (!grupoId) return;
 
+    // Validate admin fields only when creating a new admin
+    if (!isEdit && !reassignAdminId) {
+      const emailErr = validateEmail(adminEmail);
+      const pwdErr = !adminPassword.trim() ? 'La contraseña es obligatoria' : null;
+      setEmailError(emailErr);
+      setPasswordError(pwdErr);
+      if (emailErr || pwdErr) return;
+    }
+
     setIsSubmitting(true);
     try {
-      // Build payload. If reassignAdminId is set, discard email/password.
       const payload = {
         id: initialAssessment?.id,
-        nombre,
-        descripcion,
+        nombre: nombre.trim(),
+        descripcion: descripcion.trim(),
         grupoId,
         activo: activoStatus,
-        admin: reassignAdminId ? { id: reassignAdminId } : { correo: adminEmail, password: adminPassword }
+        admin: reassignAdminId ? { id: reassignAdminId } : { correo: adminEmail.trim().toLowerCase(), password: adminPassword }
       };
       await onSave(payload);
       onClose();
@@ -126,19 +153,45 @@ export const AssessmentModal: React.FC<AssessmentModalProps> = ({
   const handleDelete = async () => {
     if (!onDelete || !initialAssessment) return;
     
-    const isConfirmed = await confirm({
+    const assessmentName = initialAssessment.nombre;
+    const deleteMessage = (
+      <div className="space-y-4 text-[color:var(--color-text)]">
+        <p>
+          Estás a punto de eliminar permanentemente el assessment{' '}
+          <span className="font-bold text-white">"{assessmentName}"</span>.
+        </p>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 space-y-1">
+          <p className="font-semibold text-red-400 text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
+            ⚠️ Se eliminará de forma permanente:
+          </p>
+          <ul className="space-y-2 text-red-300 text-sm">
+            <li className="flex items-center gap-2"><span className="text-red-500 font-bold">✕</span> Todos los grupos del assessment</li>
+            <li className="flex items-center gap-2"><span className="text-red-500 font-bold">✕</span> Todos los participantes</li>
+            <li className="flex items-center gap-2"><span className="text-red-500 font-bold">✕</span> Todo el staff (admin/calificadores)</li>
+            <li className="flex items-center gap-2"><span className="text-red-500 font-bold">✕</span> Todas las bases de calificación</li>
+            <li className="flex items-center gap-2"><span className="text-red-500 font-bold">✕</span> <strong className="text-red-200">Todas las calificaciones registradas</strong></li>
+          </ul>
+        </div>
+        <p className="text-[color:var(--color-muted)] text-sm mt-4">Por seguridad, ingresa la contraseña de borrado para confirmar.</p>
+      </div>
+    );
+
+    const result = await confirm({
       title: 'Eliminar Assessment',
-      message: `¿Estás seguro de que deseas eliminar permanentemente el assessment "${initialAssessment.nombre}"? Esta acción no se puede deshacer y fallará si el assessment ya tiene registros vinculados.`,
+      message: deleteMessage,
       confirmText: 'Sí, Eliminar',
       cancelText: 'Cancelar',
       variant: 'danger',
+      showInput: true,
+      inputPlaceholder: 'Contraseña de seguridad',
+      inputType: 'password'
     });
 
-    if (!isConfirmed) return;
+    if (result === false) return;
 
     setConfirmLoading(true);
     try {
-      await onDelete(initialAssessment.id);
+      await onDelete(initialAssessment.id, typeof result === 'string' ? result : undefined);
       onClose();
     } finally {
       setConfirmLoading(false);
@@ -178,7 +231,7 @@ export const AssessmentModal: React.FC<AssessmentModalProps> = ({
               <textarea 
                 value={descripcion}
                 onChange={e => setDescripcion(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none min-h-[80px]"
+                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none min-h-[80px] text-gray-900"
                 placeholder="Breve descripción..."
               />
             </div>
@@ -236,21 +289,41 @@ export const AssessmentModal: React.FC<AssessmentModalProps> = ({
 
               {!reassignAdminId && (
                 <div className="grid grid-cols-1 gap-4 animate-fadeIn">
-                  <InputBox
-                    label="Correo Electrónico"
-                    type="email"
-                    placeholder="ejemplo@correo.com"
-                    value={adminEmail}
-                    onChange={(e) => setAdminEmail(e.target.value)}
-                  />
+                  <div className="space-y-1">
+                    <InputBox
+                      label="Correo Electrónico"
+                      type="email"
+                      placeholder="ejemplo@correo.com"
+                      value={adminEmail}
+                      onChange={(e) => {
+                        setAdminEmail(e.target.value);
+                        if (emailError) setEmailError(null);
+                      }}
+                    />
+                    {emailError && (
+                      <p className="flex items-center gap-1.5 text-xs text-red-500 mt-1">
+                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        {emailError}
+                      </p>
+                    )}
+                  </div>
                   <div className="space-y-1">
                     <InputBox
                       label="Contraseña"
                       type="password"
                       placeholder="••••••••"
                       value={adminPassword}
-                      onChange={(e) => setAdminPassword(e.target.value)}
+                      onChange={(e) => {
+                        setAdminPassword(e.target.value);
+                        if (passwordError) setPasswordError(null);
+                      }}
                     />
+                    {passwordError && (
+                      <p className="flex items-center gap-1.5 text-xs text-red-500 mt-1">
+                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        {passwordError}
+                      </p>
+                    )}
                     <div className="flex items-start gap-2 p-3 bg-blue-50/50 rounded-xl border border-blue-100">
                       <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5" />
                       <p className="text-[11px] leading-relaxed text-blue-700">
