@@ -25,12 +25,12 @@ export const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, o
       style={{
         width: '100%',
         maxWidth: '320px',
-        minHeight: '260px',
+        minHeight: '220px',
       }}
     >
       <div className="w-full flex justify-center mb-2">
-        <h2 className="text-lg font-bold text-[color:var(--color-accent)] text-center w-full leading-tight flex items-center justify-center gap-2">
-          <User className="w-5 h-5" />
+        <h2 className="text-lg font-bold text-[color:var(--color-accent)] text-center w-full leading-tight flex items-center justify-center gap-2 truncate" title={participant.Correo}>
+          <User className="w-5 h-5 flex-shrink-0" />
           {participant.Participante}
         </h2>
       </div>
@@ -43,9 +43,6 @@ export const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, o
         <p className="flex items-center gap-2">
           <span className={labelClass}><Activity className={iconClass} /> ID:</span> {participant.ID}
         </p>
-        <p className="flex items-center gap-2">
-          <span className={labelClass}><Users className={iconClass} /> Grupo:</span> {participant.Grupo}
-        </p>
         <p className="truncate flex items-center gap-2" title={participant.Correo}>
           <span className={labelClass}><Mail className={iconClass} /> Correo:</span> {participant.Correo}
         </p>
@@ -53,17 +50,9 @@ export const ParticipantCard: React.FC<ParticipantCardProps> = ({ participant, o
           <span className={labelClass}><GraduationCap className={iconClass} /> Rol:</span> {participant.role}
         </p>
         <p className="flex items-center gap-2">
-          <span className={labelClass}><Activity className={iconClass} /> Promedio:</span>{" "}
-          <span className="font-mono bg-gray-50 px-1.5 py-0.5 rounded text-sm">
-            {participant.Calificacion_Promedio != null
-              ? participant.Calificacion_Promedio.toFixed(2)
-              : "Sin calificación"}
-          </span>
-        </p>
-        <p className="flex items-center gap-2">
           <span className={labelClass}><Activity className={iconClass} /> Estado:</span>{' '}
-          <span className={`font-bold ${participant.Estado === "Completado" ? 'text-success' : 'text-yellow-500'}`}>
-            {participant.Estado}
+          <span className={`font-bold ${participant.Active ? 'text-success' : 'text-yellow-500'}`}>
+            {participant.Active ? "Activo" : "Inactivo"}
           </span>
         </p>
       </div>

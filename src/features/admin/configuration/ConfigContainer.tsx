@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useRouter } from 'next/navigation';
-import { Spinner } from '@/components/UI/Loading';
+import Image from 'next/image';
 import { showToast } from '@/components/UI/Toast';
 import { authFetch } from '@/lib/auth/authFetch';
 
@@ -14,16 +14,22 @@ import { type Calificacion } from './schemas/configSchemas';
 
 // Componentes de Feature
 import { RegisterStaffForm } from './components/RegisterStaffForm';
-import { AssignGroupForm } from './components/AssignGroupForm';
-import { AutoGroupForm } from './components/AutoGroupForm';
 import { ParticipantFiltersBar } from './components/ParticipantFiltersBar';
 import { ParticipantGrid } from './components/ParticipantGrid';
 import { ParticipantPagination } from './components/ParticipantPagination';
 import { EditParticipantModal } from './components/EditParticipantModal';
+import { DropdownOverlay } from './components/DropdownOverlay';
+import { EditGroupsForm } from './components/EditGroupsForm';
+
+// UI Components
+import { Box } from '@/components/UI/Box';
+import { Button } from '@/components/UI/Button';
+import { Spinner, BrandedLoading } from '@/components/UI/Loading';
 
 export const ConfigContainer = () => {
   const {
     isAdmin,
+    assessmentId,
     isLoading: authLoading,
     logout,
   } = useAdminAuth();
@@ -38,10 +44,7 @@ export const ConfigContainer = () => {
   const [editModal, setEditModal] = useState<Calificacion | null>(null);
   const [originalData, setOriginalData] = useState<Calificacion | null>(null);
   
-  const [selectedParticipant, setSelectedParticipant] = useState<string>("");
-  const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [creatingStaff, setCreatingStaff] = useState(false);
-  const [assigningGroup, setAssigningGroup] = useState(false);
   const [autoGroupCount, setAutoGroupCount] = useState("");
   const [autoGrouping, setAutoGrouping] = useState(false);
   const [staffCorreo, setStaffCorreo] = useState("");
@@ -49,14 +52,22 @@ export const ConfigContainer = () => {
   const [staffRol, setStaffRol] = useState("");
   const [staffBaseId, setStaffBaseId] = useState("");
 
+  const [showAutoGroupDropdown, setShowAutoGroupDropdown] = useState(false);
+  const [showEditGroupsDropdown, setShowEditGroupsDropdown] = useState(false);
+
   // Estados para búsqueda, filtros, orden y paginación
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterGrupo, setFilterGrupo] = useState<string>("todos");
   const [filterRol, setFilterRol] = useState<string>("todos");
-  const [sortBy, setSortBy] = useState<"nombre" | "promedio" | "grupo">("nombre");
+  const [sortBy, setSortBy] = useState<"nombre" | "rol">("nombre");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+
+  useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.push("/auth/login");
+    }
+  }, [authLoading, isAdmin, router]);
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
@@ -69,39 +80,29 @@ export const ConfigContainer = () => {
     loadBases();
   }, [authLoading, isAdmin, loadParticipantsAndGroups, loadBases]);
 
-  const grupos = useMemo(() => {
-    const uniqueGrupos = [...new Set(data.map((item) => item.Grupo))];
-    return uniqueGrupos.sort();
-  }, [data]);
-
   const filteredAndSortedData = useMemo(() => {
     const filtered = data.filter((item) => {
       const matchSearch =
-        item.Participante.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.Correo.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchGrupo = filterGrupo === "todos" || item.Grupo === filterGrupo;
       const matchRol = filterRol === "todos" || item.role === filterRol;
-      return matchSearch && matchGrupo && matchRol;
+      return matchSearch && matchRol;
     });
 
     filtered.sort((a, b) => {
       let comparison = 0;
       switch (sortBy) {
         case "nombre":
-          comparison = a.Participante.localeCompare(b.Participante);
+          comparison = a.Correo.localeCompare(b.Correo);
           break;
-        case "promedio":
-          comparison = (a.Calificacion_Promedio ?? -1) - (b.Calificacion_Promedio ?? -1);
-          break;
-        case "grupo":
-          comparison = a.Grupo.localeCompare(b.Grupo);
+        case "rol":
+          comparison = a.role.localeCompare(b.role);
           break;
       }
       return sortOrder === "asc" ? comparison : -comparison;
     });
 
     return filtered;
-  }, [data, searchTerm, filterGrupo, filterRol, sortBy, sortOrder]);
+  }, [data, searchTerm, filterRol, sortBy, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(filteredAndSortedData.length / itemsPerPage));
   
@@ -118,16 +119,16 @@ export const ConfigContainer = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterGrupo, filterRol]);
+  }, [searchTerm, filterRol]);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editModal || !originalData) return;
 
-    const updates: Record<string, string | number> = { id: editModal.ID };
-    if (editModal.Participante !== originalData.Participante) updates.nombre = editModal.Participante;
+    const updates: Record<string, any> = { id: editModal.ID };
     if (editModal.Correo !== originalData.Correo) updates.correo = editModal.Correo;
     if (editModal.role !== originalData.role) updates.role = editModal.role;
+    if (editModal.Active !== originalData.Active) updates.active = editModal.Active;
 
     if (Object.keys(updates).length === 1) {
       showToast.error("Debe modificarse al menos un campo");
@@ -135,7 +136,7 @@ export const ConfigContainer = () => {
     }
 
     const res = await authFetch(
-      '/api/update-person',
+      '/api/staff/update-active',
       {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -146,7 +147,7 @@ export const ConfigContainer = () => {
 
     const result = await res.json();
     if (res.ok) {
-      showToast.success("Participante actualizado correctamente");
+      showToast.success("Staff actualizado correctamente");
       setData((prev) =>
         prev.map((p) => (p.ID === editModal.ID ? editModal : p))
       );
@@ -200,41 +201,6 @@ export const ConfigContainer = () => {
     }
   };
 
-  const handleAssignGroup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedParticipant || !selectedGroup) {
-      showToast.error('Selecciona participante y grupo');
-      return;
-    }
-
-    try {
-      setAssigningGroup(true);
-      const response = await authFetch(
-        '/api/participante/assign-group',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            participanteId: Number(selectedParticipant),
-            grupoAssessmentId: Number(selectedGroup),
-          }),
-        },
-        () => logout()
-      );
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Error al asignar participante');
-
-      showToast.success('Participante asignado al grupo');
-      setSelectedParticipant('');
-      setSelectedGroup('');
-    } catch (err: unknown) {
-      showToast.error(err instanceof Error ? err.message : 'Error al asignar participante');
-    } finally {
-      setAssigningGroup(false);
-    }
-  };
-
   const handleAutoGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     const numGroups = Number(autoGroupCount);
@@ -262,6 +228,7 @@ export const ConfigContainer = () => {
 
       showToast.success('Grupos creados y sorteados correctamente');
       setAutoGroupCount('');
+      setShowAutoGroupDropdown(false);
       await fetchData();
       await loadParticipantsAndGroups();
     } catch (err: unknown) {
@@ -271,22 +238,8 @@ export const ConfigContainer = () => {
     }
   };
 
-  if (authLoading || !isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-        <Spinner size="xl" color="custom" customColor="var(--color-accent)" />
-        <p className="text-gray-600 text-xl mt-4">Verificando acceso...</p>
-      </div>
-    );
-  }
-
-  if (dataLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-4 bg-white">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-[color:var(--color-accent)] mb-6">Configuración del Assessment</h1>
-        <Spinner size="lg" color="custom" customColor="var(--color-accent)" />
-      </div>
-    );
+  if (authLoading || dataLoading) {
+    return <BrandedLoading message="Preparando configuración del panel..." />;
   }
   
   if (dataError) {
@@ -308,8 +261,14 @@ export const ConfigContainer = () => {
       <div className="w-full max-w-[900px] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 px-1 sm:px-2">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center sm:text-left">Configuración del Assessment</h1>
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
-          <button onClick={() => router.push("/admin")} className="bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white px-4 py-2 rounded-lg text-sm font-medium transition">Admin</button>
-          <button onClick={logout} className="bg-error hover:bg-error-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition">Cerrar Sesión</button>
+          <Button variant="accent" onClick={() => router.push("/admin")}>
+            <Image src="/HomeIcon.svg" alt="" width={18} height={18} className="mr-2" />
+            Menú principal
+          </Button>
+          <Button variant="error" onClick={logout}>
+            <Image src="/LogoutIcon.svg" alt="" width={18} height={18} className="mr-2" />
+            Cerrar Sesión
+          </Button>
         </div>
       </div>
 
@@ -327,44 +286,94 @@ export const ConfigContainer = () => {
         onSubmit={handleCreateStaff}
       />
 
-      <AssignGroupForm
-        selectedParticipant={selectedParticipant}
-        setSelectedParticipant={setSelectedParticipant}
-        selectedGroup={selectedGroup}
-        setSelectedGroup={setSelectedGroup}
-        participants={participants}
-        groups={groups}
-        assigningGroup={assigningGroup}
-        onSubmit={handleAssignGroup}
-      />
+      {/* Ajustes de grupo Section */}
+      <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
+        <Box className="p-4">
+          <h2 className="text-lg font-bold text-gray-900 mb-4 text-center sm:text-left">Ajustes de grupo</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Button
+              onClick={() => setShowEditGroupsDropdown(true)}
+              className="w-full py-3 h-auto text-base font-bold"
+              variant="accent"
+            >
+              Editar grupos
+            </Button>
+            <Button
+              onClick={() => setShowAutoGroupDropdown(true)}
+              className="w-full py-3 h-auto text-base font-bold"
+              variant="accent"
+            >
+              Crear y sortear grupos
+            </Button>
+          </div>
+        </Box>
+      </div>
 
-      <AutoGroupForm
-        autoGroupCount={autoGroupCount}
-        setAutoGroupCount={setAutoGroupCount}
-        autoGrouping={autoGrouping}
-        onSubmit={handleAutoGroup}
-      />
+      <DropdownOverlay
+        isOpen={showAutoGroupDropdown}
+        onClose={() => setShowAutoGroupDropdown(false)}
+        title="Crear y Sortear Grupos"
+        confirmLabel={autoGrouping ? "Sorteando..." : "Crear y sortear"}
+        confirmDisabled={autoGrouping}
+        onConfirm={() => {
+          const form = document.getElementById('auto-group-form') as HTMLFormElement;
+          form?.requestSubmit();
+        }}
+      >
+        <form id="auto-group-form" onSubmit={handleAutoGroup}>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">
+              Distribuye participantes de forma equitativa. Si hay impostores (rol=1), se reparte 1 por grupo hasta que se acaben.
+            </p>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700">Cantidad de grupos</label>
+              <input
+                type="number"
+                min={1}
+                placeholder="Ej. 5"
+                value={autoGroupCount}
+                onChange={(e) => setAutoGroupCount(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 border border-gray-200 text-sm focus:ring-2 focus:ring-purple-200 outline-none transition"
+              />
+            </div>
+          </div>
+        </form>
+      </DropdownOverlay>
+
+      <DropdownOverlay
+        isOpen={showEditGroupsDropdown}
+        onClose={() => setShowEditGroupsDropdown(false)}
+        title="Editar Grupos"
+      >
+        <EditGroupsForm
+          groups={groups}
+          participants={participants}
+          assessmentId={assessmentId || 0}
+          onRefresh={async () => {
+            await fetchData(true); // Silent refresh
+            await loadParticipantsAndGroups(true); // Silent refresh
+          }}
+          logout={logout}
+        />
+      </DropdownOverlay>
 
       <ParticipantFiltersBar
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        filterGrupo={filterGrupo}
-        setFilterGrupo={setFilterGrupo}
         filterRol={filterRol}
         setFilterRol={setFilterRol}
         sortBy={sortBy}
         setSortBy={setSortBy}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
-        grupos={grupos}
         setCurrentPage={setCurrentPage}
       />
 
       <div className="w-full max-w-[900px] flex flex-col items-center">
         <div className="w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-gray-500 text-xs mb-2 px-4">
           <span>Mostrando {paginatedData.length} de {filteredAndSortedData.length} resultados</span>
-          {(searchTerm || filterGrupo !== "todos" || filterRol !== "todos") && (
-            <button onClick={() => { setSearchTerm(""); setFilterGrupo("todos"); setFilterRol("todos"); }} className="text-[color:var(--color-accent)] hover:text-gray-500 underline">Limpiar filtros</button>
+          {(searchTerm || filterRol !== "todos") && (
+            <button onClick={() => { setSearchTerm(""); setFilterRol("todos"); }} className="text-[color:var(--color-accent)] hover:text-gray-500 underline">Limpiar filtros</button>
           )}
         </div>
         

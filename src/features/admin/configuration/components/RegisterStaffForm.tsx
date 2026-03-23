@@ -1,5 +1,8 @@
 import React from 'react';
 import { type Base } from '../schemas/configSchemas';
+import { Box } from '@/components/UI/Box';
+import { Button } from '@/components/UI/Button';
+import { InputBox } from '@/components/UI/InputBox';
 
 interface RegisterStaffFormProps {
   staffCorreo: string;
@@ -30,73 +33,79 @@ export const RegisterStaffForm: React.FC<RegisterStaffFormProps> = ({
 }) => {
   return (
     <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
-      <div className="bg-white rounded-xl p-4 shadow border border-gray-100">
-        <h2 className="text-lg font-bold text-gray-900 mb-3">Registrar Staff</h2>
-        <form onSubmit={onSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input
-            type="email"
-            placeholder="Correo del staff"
-            value={staffCorreo}
-            onChange={(e) => setStaffCorreo(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
-          />
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={staffPassword}
-            onChange={(e) => setStaffPassword(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
-          />
+      <Box className="p-4 sm:p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Registrar Staff</h2>
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <InputBox
+              label="Correo"
+              type="email"
+              placeholder="Correo del staff"
+              value={staffCorreo}
+              onChange={(e) => setStaffCorreo(e.target.value)}
+            />
+            <InputBox
+              label="Contraseña"
+              type="password"
+              placeholder="Contraseña"
+              value={staffPassword}
+              onChange={(e) => setStaffPassword(e.target.value)}
+            />
+          </div>
 
-          <select
-            value={staffRol}
-            onChange={(e) => {
-              setStaffRol(e.target.value);
-              if (e.target.value === 'registrador') {
-                setStaffBaseId('');
-              }
-            }}
-            className={`px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm ${
-              staffRol === '' ? 'text-gray-400' : 'text-gray-900'
-            }`}
-          >
-            <option value="" style={{ color: '#9CA3AF' }}>Seleccionar rol</option>
-            <option value="calificador" style={{ color: '#111827' }}>Calificador</option>
-            <option value="registrador" style={{ color: '#111827' }}>Registrador</option>
-          </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-base font-semibold text-gray-700">Rol</label>
+              <select
+                value={staffRol}
+                onChange={(e) => {
+                  setStaffRol(e.target.value);
+                  if (e.target.value === 'registrador') {
+                    setStaffBaseId('');
+                  }
+                }}
+                className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+              >
+                <option value="">Seleccionar rol</option>
+                <option value="calificador">Calificador</option>
+                <option value="registrador">Registrador</option>
+              </select>
+            </div>
 
-          {staffRol === 'calificador' && (
-            <select
-              value={staffBaseId}
-              onChange={(e) => setStaffBaseId(e.target.value)}
-              className={`px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm ${
-                staffBaseId === '' ? 'text-gray-400' : 'text-gray-900'
-              }`}
-            >
-              <option value="" style={{ color: '#9CA3AF' }}>Seleccionar Base</option>
-              {basesList.length === 0 ? (
-                <option value="" disabled style={{ color: '#9CA3AF' }}>No hay bases para este assessment</option>
-              ) : (
-                basesList.map((b) => (
-                  <option key={b.ID_Base} value={String(b.ID_Base)} style={{ color: '#111827' }}>
-                    {`Base ${b.Numero_Base} - ${b.Nombre_Base}`}
-                  </option>
-                ))
-              )}
-            </select>
-          )}
+            {staffRol === 'calificador' && (
+              <div className="flex flex-col gap-1">
+                <label className="text-base font-semibold text-gray-700">Base</label>
+                <select
+                  value={staffBaseId}
+                  onChange={(e) => setStaffBaseId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg bg-white border border-gray-300 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
+                >
+                  <option value="">Seleccionar Base</option>
+                  {basesList.length === 0 ? (
+                    <option value="" disabled>No hay bases para este assessment</option>
+                  ) : (
+                    basesList.map((b) => (
+                      <option key={b.ID_Base} value={String(b.ID_Base)}>
+                        {`Base ${b.Numero_Base} - ${b.Nombre_Base}`}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+            )}
+          </div>
           
-          <div className={`${staffRol === 'calificador' ? 'sm:col-span-2' : 'sm:col-span-1'} flex justify-end`}>
-            <button
+          <div className="flex justify-end mt-2">
+            <Button
               type="submit"
-              disabled={creatingStaff}
-              className="px-4 py-2 rounded-lg bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white text-sm font-medium transition disabled:opacity-60"
+              loading={creatingStaff}
+              className="px-8 py-3"
             >
-              {creatingStaff ? 'Registrando...' : `Registrar ${staffRol === 'calificador' ? 'Calificador' : 'Registrador'}`}
-            </button>
+              Registrar {staffRol === 'calificador' ? 'Calificador' : staffRol === 'registrador' ? 'Registrador' : 'Staff'}
+            </Button>
           </div>
         </form>
-      </div>
+      </Box>
     </div>
   );
 };
