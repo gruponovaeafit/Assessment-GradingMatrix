@@ -10,6 +10,8 @@ type InputBoxProps = {
   disabled?: boolean;
   rows?: number;
   maxLength?: number;
+  min?: string | number;
+  max?: string | number;
 };
 
 const EyeOpenIcon = () => (
@@ -48,6 +50,8 @@ export const InputBox = ({
   disabled = false,
   rows,
   maxLength,
+  min,
+  max,
 }: InputBoxProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
@@ -93,6 +97,8 @@ export const InputBox = ({
             onChange={onChange as React.ChangeEventHandler<HTMLInputElement>}
             disabled={disabled}
             maxLength={maxLength}
+            min={min}
+            max={max}
             className={`${sharedInputClasses} ${isPassword ? "pr-12" : ""}`}
           />
         )}

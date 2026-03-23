@@ -320,26 +320,28 @@ export const SuperAdminContainer = () => {
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ assessmentId: id }),
                     });
-                    if (response.ok) router.push('/admin');
-                    notify({
+                    if (response.ok) {
+                      router.push('/admin');
+                    } else {
+                      notify({
                         title: 'Error',
                         titleColor: 'var(--error)',
                         subtitle: 'Error al cambiar de assessment',
                         subtitleColor: 'var(--color-muted)',
                         borderColor: 'var(--error)',
                         duration: 3000,
+                      });
+                    }
+                  } catch {
+                    notify({
+                      title: 'Error',
+                      titleColor: 'var(--error)',
+                      subtitle: 'Error al cambiar de assessment',
+                      subtitleColor: 'var(--color-muted)',
+                      borderColor: 'var(--error)',
+                      duration: 3000,
                     });
-                }
-              } catch {
-                notify({
-                    title: 'Error',
-                    titleColor: 'var(--error)',
-                    subtitle: 'Error al cambiar de assessment',
-                    subtitleColor: 'var(--color-muted)',
-                    borderColor: 'var(--error)',
-                    duration: 3000,
-                });
-              }
+                  }
                 }}
               />
               <div className="mt-8 flex justify-center">
