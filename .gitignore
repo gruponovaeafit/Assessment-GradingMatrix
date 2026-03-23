@@ -52,3 +52,6 @@ specs/
 
 .ignore
 skills-lock.json
+
+# Local build log produced during debugging/builds
+build_output.log
