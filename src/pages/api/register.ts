@@ -55,6 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   let tmpPath: string | null = null;
+  let photoStoragePath: string | null = null;
 
   try {
     // 🔐 Roles
@@ -66,7 +67,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const file = Array.isArray(files.image) ? files.image[0] : files.image;
 
     const nombre = fields.nombre?.toString().trim();
-    const correo = fields.correo?.toString().trim();
+    const correo = fields.correo?.toString().trim().toLowerCase();
+    const isImpostor = fields.isImpostor === 'true';
 
     if (!nombre || !correo) {
       return res.status(400).json({ error: 'Nombre y correo son obligatorios' });
@@ -79,7 +81,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if ('error' in result) return res.status(result.status).json({ error: result.error });
       assessmentId = result.id;
     } else {
-      const result = await resolveAssessmentId(fields.assessmentId);
+      // Si es admin, intentamos obtener de fields.assessmentId, 
+      // si no viene, usamos el assessmentId del token decodificado (decoded.assessmentId).
+      const rawId = fields.assessmentId || decoded.assessmentId;
+      const result = await resolveAssessmentId(rawId);
+      
       if ('error' in result) return res.status(result.status).json({ error: result.error });
       assessmentId = result.id;
 
@@ -89,7 +95,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Procesar imagen solo si fue enviada
-    let photoStoragePath: string | null = null;
     let optimizedBuffer: Buffer | null = null;
 
     if (file?.filepath) {
@@ -137,13 +142,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ID_Assessment: assessmentId,
         Nombre_Participante: nombre,
         Correo_Participante: correo,
-        Rol_Participante: '0',
+        Rol_Participante: isImpostor ? '1' : '0',
         FotoUrl_Participante: photoStoragePath, // null si no hay foto
       })
       .select('ID_Participante')
       .single();
 
     if (dbError) {
+      // 🗑️ Si falló la DB, borrar la foto de Storage si se subió
+      if (photoStoragePath) {
+        await supabase.storage.from('imagenes_participantes').remove([photoStoragePath]);
+      }
+
       if (dbError.code === '23505') {
         return res.status(400).json({ error: 'El correo ya está registrado' });
       }
@@ -158,6 +168,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   } catch (error) {
     console.error('❌ Error en el registro:', error);
+    // 🗑️ Limpiar storage si se alcanzó a subir algo antes del error
+    if (photoStoragePath) {
+      await supabase.storage.from('imagenes_participantes').remove([photoStoragePath]);
+    }
     return res.status(500).json({ error: 'Error al registrar la persona' });
   } finally {
     if (tmpPath) {

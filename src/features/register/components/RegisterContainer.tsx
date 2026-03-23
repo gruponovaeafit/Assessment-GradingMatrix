@@ -45,11 +45,12 @@ export const RegisterContainer: React.FC = () => {
     setShowConfirm(true);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = (isImpostor: boolean) => {
     setShowConfirm(false);
     // Crear un evento sintético para llamar handleSubmit
     handleSubmit(
       { preventDefault: () => {} } as React.FormEvent,
+      isImpostor,
       (msg) => notify({
         title: "Error al registrar participante",
         titleColor: "var(--error)",
@@ -109,6 +110,7 @@ export const RegisterContainer: React.FC = () => {
           nombre={nombre}
           correo={correo}
           photo={photo}
+          loading={enviando}
           onConfirm={handleConfirm}
           onCancel={handleCancel}
         />

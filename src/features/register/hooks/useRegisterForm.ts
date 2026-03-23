@@ -15,7 +15,7 @@ export interface UseRegisterFormReturn {
   successModalId: number | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleImageSelect: (file: File) => Promise<void>;
-  handleSubmit: (e: React.FormEvent, onError?: (msg: string) => void) => Promise<void>;
+  handleSubmit: (e: React.FormEvent, isImpostor?: boolean, onError?: (msg: string) => void) => Promise<void>;
   resetForm: () => void;
 }
 
@@ -47,6 +47,9 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
   }, [photo]);
 
   const handleImageSelect = async (file: File) => {
+    // 🧹 Liberar la URL anterior si existe para evitar fugas de memoria
+    if (photo) URL.revokeObjectURL(photo);
+
     const tempUrl = URL.createObjectURL(file);
     setFileName(file.name);
     setPhoto(tempUrl);
@@ -67,7 +70,7 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
     setIsError(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent, onError?: (msg: string) => void) => {
+  const handleSubmit = async (e: React.FormEvent, isImpostor = false, onError?: (msg: string) => void) => {
     e.preventDefault();
 
     if (!nombre || !correo) {
@@ -87,6 +90,7 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
       const formData = new FormData();
       formData.append('nombre', nombre);
       formData.append('correo', correo);
+      formData.append('isImpostor', isImpostor ? 'true' : 'false');
       if (imagen) {
         formData.append('image', imagen);
       }
