@@ -246,7 +246,7 @@ Lista assessments incluyendo grupo estudiantil asociado.
 ### POST /api/assessment/create
 Crea un assessment bajo un grupo estudiantil.
 
-- Auth: admin
+- Auth: **Superadmin (id:0)**
 - Payload
   ```json
   {
@@ -262,6 +262,11 @@ Crea un assessment bajo un grupo estudiantil.
     "message": "Assessment creado",
     "ID_Assessment": 12
   }
+  ```
+- Errores
+  - 403: Si el usuario no es superadmin (id:0).
+  ```json
+  { "error": "Solo el super-admin puede crear assessments" }
   ```
 
 ### POST /api/assessment/bulk-create
@@ -310,8 +315,10 @@ Actualiza un assessment existente.
   }
   ```
 - Notas
-  - assessmentId es obligatorio.
-  - Si activo es true, el sistema desactiva otros assessments del mismo grupo estudiantil.
+  - `assessmentId` es obligatorio (en body o query).
+  - Si el usuario es **Superadmin (id:0)**, puede actualizar cualquier assessment.
+  - Si el usuario es un administrador regular, solo puede actualizar el assessment asociado a su JWT.
+  - Si `activo` es true, el sistema desactiva otros assessments del mismo grupo estudiantil.
 - Respuesta (200 OK)
   ```json
   {
@@ -324,8 +331,65 @@ Actualiza un assessment existente.
 Activa o desactiva un assessment. Si se activa, desactiva automáticamente otros assessments del mismo grupo.
 
 - Auth: admin
-- Payload: contrato observado en código de negocio para alternar estado del assessment.
-- Respuesta (200 OK): objeto JSON con confirmación de actualización.
+- Payload
+  ```json
+  {
+    "assessmentId": 12,
+    "activo": boolean
+  }
+  ```
+- Notas
+  - Si el usuario es **Superadmin (id:0)**, puede actuar sobre cualquier assessment.
+  - Si el usuario es regular, solo puede actuar sobre su propio assessment.
+- Respuesta (200 OK)
+  ```json
+  {
+    "message": "Estado actualizado",
+    "active": boolean
+  }
+  ```
+
+### DELETE /api/assessment/delete
+Elimina un assessment y todas sus dependencias (calificaciones, participantes, staff, bases, grupos).
+
+- Auth: **Superadmin (id:0)**
+- Payload
+  ```json
+  {
+    "id": 12,
+    "password": "string"
+  }
+  ```
+- Notas
+  - Requiere que la contraseña coincida con la variable de entorno `ADMIN_DELETE_PASSWORD`.
+  - La eliminación es en cascada y definitiva.
+- Respuesta (200 OK)
+  ```json
+  {
+    "message": "Assessment eliminado con éxito"
+  }
+  ```
+
+### POST /api/super-admin/staff-create
+Crea un administrador para un assessment específico. Esta ruta bypassa la validación de contexto del JWT para permitir al super-admin crear staff sin perder su sesión global.
+
+- Auth: **Superadmin (id:0)**
+- Payload
+  ```json
+  {
+    "assessmentId": 12,
+    "correo": "string",
+    "password": "string"
+  }
+  ```
+- Notas
+  - Valida formato de correo y previene espacios/emojis.
+- Respuesta (200 OK)
+  ```json
+  {
+    "message": "Staff creado exitosamente"
+  }
+  ```
 
 ### GET /api/grupo-estudiantil/list
 Lista grupos estudiantiles disponibles.
@@ -665,12 +729,21 @@ Asigna un participante a un GrupoAssessment.
 Lista los grupos de evaluación creados para un assessment.
 
 - Auth: admin
+- Query params
+  - assessmentId: obligatorio.
+- Notas
+  - Si el usuario es **Superadmin (id:0)**, utiliza el ID del query.
+  - Si es regular, ignora el query y utiliza el ID de su JWT.
 
 ### GET /api/assessment/groups-active?assessmentId=6
 Lista únicamente los grupos que tienen participantes asignados en un assessment.
 
 - Tipo: productivo
 - Auth: admin
+- Query params
+  - assessmentId: obligatorio.
+- Notas
+  - Aplica la misma resolución que `/api/assessment/groups`.
 - Respuesta (200 OK)
   ```json
   [
