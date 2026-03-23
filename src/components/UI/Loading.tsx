@@ -173,6 +173,53 @@ export const PageLoading: React.FC<PageLoadingProps> = ({
   </div>
 );
 
+/**
+ * BrandedLoading - A more creative and visually appealing loading screen
+ * for critical auth checks and initial data fetching.
+ */
+export const BrandedLoading: React.FC<{ message?: string }> = ({ 
+  message = "Asegurando tu sesión..." 
+}) => (
+  <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white overflow-hidden">
+    {/* Fondo decorativo con gradientes suaves */}
+    <div className="absolute top-[-10%] -left-[10%] w-[40%] h-[40%] bg-purple-100 rounded-full blur-[120px] opacity-60 animate-pulse" />
+    <div className="absolute bottom-[-10%] -right-[10%] w-[40%] h-[40%] bg-purple-50 rounded-full blur-[120px] opacity-60 animate-pulse" style={{ animationDelay: '1s' }} />
+
+    <div className="relative flex flex-col items-center">
+      {/* Animación central creativa */}
+      <div className="relative w-24 h-24 mb-8">
+        <div className="absolute inset-0 border-4 border-purple-100 rounded-full" />
+        <div className="absolute inset-0 border-4 border-t-purple-600 rounded-full animate-spin" />
+        <div className="absolute inset-4 border-4 border-t-purple-400 rounded-full animate-spin-slow opacity-60" style={{ animationDuration: '3s' }} />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-2 h-2 bg-purple-600 rounded-full animate-ping" />
+        </div>
+      </div>
+
+      {/* Texto con mejor contraste y tipografía */}
+      <h2 className="text-2xl font-bold text-gray-900 mb-2 tracking-tight">
+        {message}
+      </h2>
+      <div className="flex gap-1">
+        <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+        <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+      </div>
+    </div>
+
+    {/* Estilo CSS in-line para la animación lenta si no existe en tailwind */}
+    <style jsx global>{`
+      @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .animate-spin-slow {
+        animation: spin-slow linear infinite;
+      }
+    `}</style>
+  </div>
+);
+
 interface LoadingButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;

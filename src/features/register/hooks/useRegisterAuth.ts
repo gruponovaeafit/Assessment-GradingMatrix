@@ -1,39 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 /**
  * Auth guard for the register page.
- * Validates session via /api/auth/me cookie-based endpoint.
- * Redirects to /auth/login if not authorized.
+ * Refactored to use centralized AuthContext.
  */
 export const useRegisterAuth = () => {
   const router = useRouter();
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const { isRegistrar, isAdmin, isLoading, logout } = useAuth();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.role === 'registrador' || data.role === 'admin') {
-            setCheckingAuth(false);
-            return;
-          }
-        }
-      } catch {
-        // Auth check failed
-      }
+    if (!isLoading && !isRegistrar && !isAdmin) {
       router.push('/auth/login');
-    };
+    }
+  }, [isLoading, isRegistrar, isAdmin, router]);
 
-    checkAuth();
-  }, [router]);
-
-  const logout = useCallback(async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-    router.push('/auth/login');
-  }, [router]);
-
-  return { checkingAuth, logout };
+  return { checkingAuth: isLoading, logout };
 };

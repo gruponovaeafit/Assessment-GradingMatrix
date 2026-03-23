@@ -68,7 +68,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const nombre = fields.nombre?.toString().trim();
     const correo = fields.correo?.toString().trim().toLowerCase();
-    const isImpostor = fields.isImpostor === 'true';
+    
+    // Formidable puede devolver strings o arreglos de un solo elemento
+    const rawIsImpostor = Array.isArray(fields.isImpostor) ? fields.isImpostor[0] : fields.isImpostor;
+    const isImpostor = rawIsImpostor === 'true';
 
     if (!nombre || !correo) {
       return res.status(400).json({ error: 'Nombre y correo son obligatorios' });

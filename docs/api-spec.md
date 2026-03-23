@@ -195,7 +195,7 @@ Autentica a un usuario admin, registrador o calificador.
   - 500: configuración de admin incompleta o error interno.
 
 ### POST /api/auth/logout
-Cierra la sesión del usuario autenticado.
+Cierra la sesión del usuario autenticado e invalida el token en el servidor.
 
 - Auth: cualquier usuario autenticado.
 - Respuesta (200 OK)
@@ -204,6 +204,23 @@ Cierra la sesión del usuario autenticado.
     "message": "Logout ok"
   }
   ```
+
+### GET /api/auth/me
+Valida la sesión actual a través de la cookie `session` y devuelve la información del perfil.
+
+- Auth: cualquier usuario con sesión activa.
+- Respuesta (200 OK)
+  ```json
+  {
+    "id": 14,
+    "email": "user@example.com",
+    "role": "admin" | "calificador" | "registrador",
+    "isSuperAdmin": boolean,
+    "assessmentId": 6 | null
+  }
+  ```
+- Errores
+  - 401: Token inválido, expirado o presente en la blacklist de `RevokedTokens`.
 
 ---
 
@@ -395,6 +412,23 @@ Crea un administrador para un assessment específico. Esta ruta bypassa la valid
   }
   ```
 
+### DELETE /api/assessment/delete-group
+Elimina un grupo específico. Desvincula a todos los participantes y staff asociados (set null) antes de borrar el registro del grupo.
+
+- Auth: admin
+- Payload
+  ```json
+  {
+    "id": 7
+  }
+  ```
+- Respuesta (200 OK)
+  ```json
+  {
+    "message": "Grupo eliminado con éxito"
+  }
+  ```
+
 ### GET /api/grupo-estudiantil/list
 Lista grupos estudiantiles disponibles.
 
@@ -526,6 +560,12 @@ Obtiene el detalle de una base por ID.
 
 ## Staff y Usuarios
 
+### GET /api/staff/list
+Lista todo el personal (admins, calificadores, registradores) asociado al assessment del usuario autenticado.
+
+- Auth: admin
+- Respuesta (200 OK): Arreglo de objetos con datos de staff normalizados (ID, Correo, rol, Active, etc).
+
 ### GET /api/staff/admins
 Lista administradores registrados.
 
@@ -538,23 +578,30 @@ Registra un miembro del staff.
 - Payload
   ```json
   {
-    "assessmentId": 6,
     "correo": "staff@example.com",
     "password": "string",
-    "rol": "admin",
-    "idBase": 2
+    "rol": "admin" | "calificador" | "registrador",
+    "idBase": 2 (opcional, solo para calificador)
   }
   ```
 
-### PUT /api/staff/update
-Actualiza datos de un miembro del staff.
+### PUT /api/staff/update-active
+Actualiza datos de un miembro del staff, incluyendo su estado activo y rol.
 
 - Auth: admin
 - Payload
   ```json
   {
-    "staffId": 14,
-    "correo": "nuevo@example.com"
+    "id": 14,
+    "correo": "nuevo@example.com",
+    "role": "admin",
+    "active": true
+  }
+  ```
+- Respuesta (200 OK)
+  ```json
+  {
+    "message": "Staff actualizado correctamente"
   }
   ```
 

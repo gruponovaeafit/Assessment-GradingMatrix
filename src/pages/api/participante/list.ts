@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { data, error } = await supabase
       .from('Participante')
-      .select('ID_Participante, Nombre_Participante, Correo_Participante')
+      .select('ID_Participante, Nombre_Participante, Correo_Participante, ID_GrupoAssessment, Rol_Participante')
       .eq('ID_Assessment', assessmentId)
       .order('ID_Participante', { ascending: true });
 
@@ -32,6 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         id: item.ID_Participante,
         nombre: item.Nombre_Participante,
         correo: item.Correo_Participante,
+        grupoId: item.ID_GrupoAssessment,
+        isImpostor: item.Rol_Participante === "1" || item.Rol_Participante === "Impostor",
       }))
     );
   } catch (error) {

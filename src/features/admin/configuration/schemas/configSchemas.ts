@@ -8,6 +8,7 @@ export const CalificacionSchema = z.object({
   role: z.string(),
   Calificacion_Promedio: z.number().nullable(),
   Estado: z.string(),
+  Active: z.boolean().optional(),
 });
 
 export const AssessmentSchema = z.object({
@@ -20,6 +21,8 @@ export const ParticipantSchema = z.object({
   id: z.number(),
   nombre: z.string(),
   correo: z.string().email(),
+  grupoId: z.number().nullable().optional(),
+  isImpostor: z.boolean().optional(),
 });
 
 export const GroupSchema = z.object({
