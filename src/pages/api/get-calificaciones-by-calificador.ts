@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Verificar autenticación
-  if (!requireRoles(req, res, ['admin', 'calificador'])) return;
+  if (!await requireRoles(req, res, ['admin', 'calificador'])) return;
 
   try {
     const { idCalificador, idBase } = req.body;

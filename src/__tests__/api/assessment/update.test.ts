@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken } from '@/__tests__/helpers/mockApiContext';
+import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken, setupRevokedTokenMock } from '@/__tests__/helpers/mockApiContext';
 
 vi.mock('@/lib/supabase/server', () => ({
   supabase: { from: vi.fn() },
@@ -27,17 +27,25 @@ function setupSupabase({
   fetchGroupResult = { data: { ID_GrupoEstudiantil: 5 }, error: null },
   deactivateResult = { error: null },
 } = {}) {
-  let callCount = 0;
-  mockFrom.mockImplementation(() => {
-    callCount++;
+  mockFrom.mockImplementation((table: string) => {
+    if (table === 'RevokedTokens') {
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+      };
+    }
     return {
       update: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       neq: vi.fn().mockReturnThis(),
-      // 1st call = update, 2nd = fetchGroup, 3rd = deactivate siblings
-      single: vi.fn().mockResolvedValue(callCount === 1 ? updateResult : fetchGroupResult),
-      // deactivate siblings resolves without .single()
+      single: vi.fn().mockImplementation(() => {
+        if (table === 'Assessment') return Promise.resolve(updateResult);
+        if (table === 'Participante') return Promise.resolve(fetchGroupResult);
+        return Promise.resolve({ data: null, error: null });
+      }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
       mockResolvedValue: vi.fn().mockResolvedValue(deactivateResult),
     };
   });
@@ -46,6 +54,7 @@ function setupSupabase({
 describe('PUT /api/assessment/update', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setupRevokedTokenMock(supabase);
   });
 
   it('returns 405 for non-PUT requests', async () => {
@@ -65,6 +74,7 @@ describe('PUT /api/assessment/update', () => {
 
   it('returns 400 when no fields are provided', async () => {
     mockVerifyToken.mockReturnValue(mockSuperAdminToken({ assessmentId: 10 } as any));
+    setupSupabase();
     const req = createMockReq({
       method: 'PUT',
       cookies: { session: 'tok' },
@@ -78,6 +88,7 @@ describe('PUT /api/assessment/update', () => {
 
   it('returns 400 when grupoEstudiantilId is NaN', async () => {
     mockVerifyToken.mockReturnValue(mockSuperAdminToken({ assessmentId: 10 } as any));
+    setupSupabase();
     const req = createMockReq({
       method: 'PUT',
       cookies: { session: 'tok' },
@@ -91,6 +102,7 @@ describe('PUT /api/assessment/update', () => {
 
   it('returns 403 when regular admin tries to update a different assessment', async () => {
     mockVerifyToken.mockReturnValue(mockAdminToken(10));
+    setupSupabase();
     const req = createMockReq({
       method: 'PUT',
       cookies: { session: 'tok' },
@@ -104,12 +116,7 @@ describe('PUT /api/assessment/update', () => {
 
   it('updates successfully with only nombre', async () => {
     mockVerifyToken.mockReturnValue(mockAdminToken(10));
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: { ID_Assessment: 10 }, error: null }),
-    }));
+    setupSupabase({ updateResult: { data: { ID_Assessment: 10 }, error: null } });
     const req = createMockReq({
       method: 'PUT',
       cookies: { session: 'tok' },
@@ -123,12 +130,7 @@ describe('PUT /api/assessment/update', () => {
 
   it('returns 500 when Supabase update fails', async () => {
     mockVerifyToken.mockReturnValue(mockAdminToken(10));
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null, error: { message: 'db fail' } }),
-    }));
+    setupSupabase({ updateResult: { data: null, error: { message: 'db fail' } } });
     const req = createMockReq({
       method: 'PUT',
       cookies: { session: 'tok' },
@@ -140,13 +142,8 @@ describe('PUT /api/assessment/update', () => {
   });
 
   it('super-admin can update any assessment without assessmentId in their token', async () => {
-    mockVerifyToken.mockReturnValue(mockSuperAdminToken()); // No assessmentId in token
-    mockFrom.mockImplementation(() => ({
-      update: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: { ID_Assessment: 7 }, error: null }),
-    }));
+    mockVerifyToken.mockReturnValue(mockSuperAdminToken());
+    setupSupabase({ updateResult: { data: { ID_Assessment: 7 }, error: null } });
     const req = createMockReq({
       method: 'PUT',
       cookies: { session: 'tok' },

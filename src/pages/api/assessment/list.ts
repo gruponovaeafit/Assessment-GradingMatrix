@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const user = requireRoles(req, res, ['admin']);
+    const user = await requireRoles(req, res, ['admin']);
     if (!user) return;
     
     // Super-admins pueden ver todos los assessments sin restricción.

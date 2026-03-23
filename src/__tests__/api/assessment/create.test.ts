@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken } from '@/__tests__/helpers/mockApiContext';
+import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken, setupRevokedTokenMock } from '@/__tests__/helpers/mockApiContext';
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -38,7 +38,12 @@ function setupSupabase({
       insert: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn(),
+      maybeSingle: vi.fn(),
     };
+    if (table === 'RevokedTokens') {
+      chain.maybeSingle.mockResolvedValue({ data: null, error: null });
+      return chain;
+    }
     if (table === 'GrupoEstudiantil') {
       chain.single.mockResolvedValue(grupoResult);
     } else {
@@ -53,6 +58,7 @@ function setupSupabase({
 describe('POST /api/assessment/create', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setupRevokedTokenMock(supabase);
   });
 
   it('returns 405 for non-POST requests', async () => {

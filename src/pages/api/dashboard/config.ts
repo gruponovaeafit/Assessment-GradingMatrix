@@ -8,7 +8,7 @@ import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 // API para obtener datos del dashboard admin
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const user = requireRoles(req, res, ["admin"]);
+    const user = await requireRoles(req, res, ["admin"]);
     if (!user) return;
 
     const assessmentId = user.assessmentId;

@@ -4,11 +4,20 @@ import http from 'http';
 
 vi.mock('@/lib/supabase/server', () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: { ID_Assessment: 5 }, error: null }),
-    })),
+    from: vi.fn((table: string) => {
+      if (table === 'RevokedTokens') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        };
+      }
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({ data: { ID_Assessment: 5 }, error: null }),
+      };
+    }),
   },
 }));
 

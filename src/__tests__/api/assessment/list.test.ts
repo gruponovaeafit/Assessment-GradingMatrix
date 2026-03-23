@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken } from '@/__tests__/helpers/mockApiContext';
+import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken, setupRevokedTokenMock } from '@/__tests__/helpers/mockApiContext';
 
 vi.mock('@/lib/supabase/server', () => ({
   supabase: { from: vi.fn() },
@@ -37,6 +37,7 @@ function buildThenable(data: unknown, error: unknown = null) {
     select: vi.fn(),
     order: vi.fn(),
     eq: vi.fn(),
+    maybeSingle: vi.fn(),
     then: resolved.then.bind(resolved),
     catch: resolved.catch.bind(resolved),
     finally: resolved.finally.bind(resolved),
@@ -45,12 +46,14 @@ function buildThenable(data: unknown, error: unknown = null) {
   (chain.select as ReturnType<typeof vi.fn>).mockReturnValue(chain);
   (chain.order as ReturnType<typeof vi.fn>).mockReturnValue(chain);
   (chain.eq as ReturnType<typeof vi.fn>).mockReturnValue(chain);
+  (chain.maybeSingle as ReturnType<typeof vi.fn>).mockReturnValue(chain);
   return chain;
 }
 
 describe('GET /api/assessment/list', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setupRevokedTokenMock(supabase);
   });
 
   it('returns 405 for non-GET requests', async () => {
@@ -70,8 +73,16 @@ describe('GET /api/assessment/list', () => {
 
   it('super-admin gets all assessments', async () => {
     mockVerifyToken.mockReturnValue(mockSuperAdminToken());
-    // Super-admin never calls getAuthorizedAssessmentId, so only 1 from() call
-    mockFrom.mockReturnValue(buildThenable(SAMPLE_ASSESSMENTS));
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'RevokedTokens') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+        };
+      }
+      return buildThenable(SAMPLE_ASSESSMENTS);
+    });
     const req = createMockReq({ method: 'GET', cookies: { session: 'tok' } });
     const res = createMockRes();
     await handler(req, res);
@@ -85,7 +96,16 @@ describe('GET /api/assessment/list', () => {
     // For regular admin, getAuthorizedAssessmentId does NOT call supabase — it reads from JWT.
     // So only one from() call for the actual query.
     mockVerifyToken.mockReturnValue(mockAdminToken(1));
-    mockFrom.mockReturnValue(buildThenable([SAMPLE_ASSESSMENTS[0]]));
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'RevokedTokens') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+        };
+      }
+      return buildThenable([SAMPLE_ASSESSMENTS[0]]);
+    });
     const req = createMockReq({ method: 'GET', cookies: { session: 'tok' } });
     const res = createMockRes();
     await handler(req, res);
@@ -97,7 +117,16 @@ describe('GET /api/assessment/list', () => {
 
   it('returns empty array when no assessments exist', async () => {
     mockVerifyToken.mockReturnValue(mockSuperAdminToken());
-    mockFrom.mockReturnValue(buildThenable([]));
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'RevokedTokens') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+        };
+      }
+      return buildThenable([]);
+    });
     const req = createMockReq({ method: 'GET', cookies: { session: 'tok' } });
     const res = createMockRes();
     await handler(req, res);
@@ -107,7 +136,16 @@ describe('GET /api/assessment/list', () => {
 
   it('returns 500 when Supabase query fails', async () => {
     mockVerifyToken.mockReturnValue(mockSuperAdminToken());
-    mockFrom.mockReturnValue(buildThenable(null, { message: 'db error' }));
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'RevokedTokens') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+        };
+      }
+      return buildThenable(null, { message: 'db error' });
+    });
     const req = createMockReq({ method: 'GET', cookies: { session: 'tok' } });
     const res = createMockRes();
     await handler(req, res);

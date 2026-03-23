@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken } from '@/__tests__/helpers/mockApiContext';
+import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken, setupRevokedTokenMock } from '@/__tests__/helpers/mockApiContext';
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -28,12 +28,24 @@ const TABLES_IN_ORDER = ['CalificacionesPorPersona', 'Participante', 'Staff', 'B
 
 /** Sets up all 6 DELETE calls to succeed. Pass `failAt` to make one fail. */
 function setupCascadeSupabase(failAt?: string, failMsg = 'DB error') {
-  mockFrom.mockImplementation((table: string) => ({
-    delete: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockResolvedValue(
+  mockFrom.mockImplementation((table: string) => {
+    const chain = {
+      delete: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn(),
+    };
+
+    if (table === 'RevokedTokens') {
+      chain.maybeSingle.mockResolvedValue({ data: null, error: null });
+      return chain;
+    }
+
+    chain.eq.mockResolvedValue(
       table === failAt ? { error: { message: failMsg } } : { error: null }
-    ),
-  }));
+    );
+    return chain;
+  });
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -42,6 +54,7 @@ describe('DELETE /api/assessment/delete', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv('ADMIN_DELETE_PASSWORD', 'correct-password');
+    setupRevokedTokenMock(supabase);
   });
 
   it('returns 405 for non-DELETE requests', async () => {

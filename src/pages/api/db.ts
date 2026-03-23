@@ -5,7 +5,7 @@ import { requireRoles } from "@/lib/auth/apiAuth";
 // Endpoint de verificación de conexión para Supabase
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    if (!requireRoles(req, res, ["admin"])) return;
+    if (!await requireRoles(req, res, ["admin"])) return;
 
     const { data, error } = await supabase
       .from("Assessment")

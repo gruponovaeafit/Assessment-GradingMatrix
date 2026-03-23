@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken } from '@/__tests__/helpers/mockApiContext';
+import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken, setupRevokedTokenMock } from '@/__tests__/helpers/mockApiContext';
 
 vi.mock('@/lib/supabase/server', () => ({
   supabase: { from: vi.fn() },
@@ -25,10 +25,19 @@ const mockVerifyToken = verifyToken as ReturnType<typeof vi.fn>;
 const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
 
 function setupInsert(result: { data: unknown; error: unknown }) {
-  mockFrom.mockReturnValue({
-    insert: vi.fn().mockReturnThis(),
-    select: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue(result),
+  mockFrom.mockImplementation((table: string) => {
+    if (table === 'RevokedTokens') {
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+      };
+    }
+    return {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue(result),
+    };
   });
 }
 
@@ -42,6 +51,7 @@ const VALID_BODY = {
 describe('POST /api/super-admin/staff-create', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setupRevokedTokenMock(supabase);
   });
 
   it('returns 405 for non-POST requests', async () => {
