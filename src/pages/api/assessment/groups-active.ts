@@ -11,8 +11,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user = requireRoles(req, res, ['admin']);
   if (!user) return;
 
-  const assessmentId = getAuthorizedAssessmentId(user, res);
-  if (!assessmentId) return;
+  const assessmentId = user.id === 0 
+    ? Number(req.query.assessmentId) 
+    : getAuthorizedAssessmentId(user, res);
+
+  if (!assessmentId || Number.isNaN(assessmentId)) {
+    if (user.id === 0) {
+      return res.status(400).json({ error: 'assessmentId es obligatorio en el query para el super-admin' });
+    }
+    return; // getAuthorizedAssessmentId already sent the response
+  }
 
   try {
     const { data: participantes, error: participantesError } = await supabase
