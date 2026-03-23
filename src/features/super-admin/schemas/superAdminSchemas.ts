@@ -13,6 +13,8 @@ export const AssessmentSchema = z.object({
   activo: z.boolean(),
   grupoId: z.number().nullable(),
   grupoNombre: z.string().nullable(),
+  createdAt: z.string(),
+  periodo: z.string().nullable().optional(),
 });
 
 export const AdminUserSchema = z.object({

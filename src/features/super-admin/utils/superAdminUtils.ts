@@ -16,6 +16,18 @@ export const shortHash = (input: string): string => {
 };
 
 /**
+ * Calculates the semester (YYYY-1 or YYYY-2) from a date.
+ * Jan-Jun = 1, Jul-Dec = 2.
+ */
+export const calculateSemester = (date: Date | string): string => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = d.getMonth(); // 0-11
+  const semester = month < 6 ? 1 : 2;
+  return `${year}-${semester}`;
+};
+
+/**
  * Builds a standardized internal admin email.
  */
 export const buildAdminEmail = (
