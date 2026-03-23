@@ -138,4 +138,23 @@ describe('PUT /api/assessment/update', () => {
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(500);
   });
+
+  it('super-admin can update any assessment without assessmentId in their token', async () => {
+    mockVerifyToken.mockReturnValue(mockSuperAdminToken()); // No assessmentId in token
+    mockFrom.mockImplementation(() => ({
+      update: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { ID_Assessment: 7 }, error: null }),
+    }));
+    const req = createMockReq({
+      method: 'PUT',
+      cookies: { session: 'tok' },
+      body: { assessmentId: 7, nombre: 'Super Admin Update' },
+    });
+    const res = createMockRes();
+    await handler(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Assessment actualizado', id: 7 });
+  });
 });

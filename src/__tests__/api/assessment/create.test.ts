@@ -72,7 +72,7 @@ describe('POST /api/assessment/create', () => {
   });
 
   it('returns 400 when grupoEstudiantilId is missing', async () => {
-    mockVerifyToken.mockReturnValue(mockAdminToken(1));
+    mockVerifyToken.mockReturnValue(mockSuperAdminToken());
     const req = createMockReq({
       method: 'POST',
       cookies: { session: 'tok' },
@@ -85,7 +85,7 @@ describe('POST /api/assessment/create', () => {
   });
 
   it('returns 400 when nombre is missing', async () => {
-    mockVerifyToken.mockReturnValue(mockAdminToken(1));
+    mockVerifyToken.mockReturnValue(mockSuperAdminToken());
     const req = createMockReq({
       method: 'POST',
       cookies: { session: 'tok' },
@@ -98,8 +98,8 @@ describe('POST /api/assessment/create', () => {
   });
 
   it('returns 400 when GrupoEstudiantil does not exist in DB', async () => {
-    mockVerifyToken.mockReturnValue(mockAdminToken(1));
-    setupSupabase({ grupoResult: { data: null, error: { message: 'Not found' } } });
+    mockVerifyToken.mockReturnValue(mockSuperAdminToken());
+    setupSupabase({ grupoResult: { data: null, error: { message: 'Not found' } } as any });
     const req = createMockReq({
       method: 'POST',
       cookies: { session: 'tok' },
@@ -111,18 +111,17 @@ describe('POST /api/assessment/create', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'ID de GrupoEstudiantil no existe' });
   });
 
-  it('creates assessment successfully as regular admin', async () => {
-    mockVerifyToken.mockReturnValue(mockAdminToken(1));
-    setupSupabase();
+  it('returns 403 when a regular admin tries to create an assessment (Super Admin only action)', async () => {
+    mockVerifyToken.mockReturnValue(mockAdminToken(5));
     const req = createMockReq({
       method: 'POST',
       cookies: { session: 'tok' },
-      body: { grupoEstudiantilId: 1, nombre: 'Assessment EAFIT', descripcion: 'A test' },
+      body: { grupoEstudiantilId: 1, nombre: 'Assessment EAFIT' },
     });
     const res = createMockRes();
     await handler(req, res);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({ message: 'Assessment creado', ID_Assessment: 42 });
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Solo el super-admin puede crear assessments' });
   });
 
   it('creates assessment successfully as super-admin', async () => {
@@ -139,8 +138,8 @@ describe('POST /api/assessment/create', () => {
   });
 
   it('returns 500 when Supabase insert fails', async () => {
-    mockVerifyToken.mockReturnValue(mockAdminToken(1));
-    setupSupabase({ insertResult: { data: null, error: { message: 'DB error' } } });
+    mockVerifyToken.mockReturnValue(mockSuperAdminToken());
+    setupSupabase({ insertResult: { data: null, error: { message: 'DB error' } } as any });
     const req = createMockReq({
       method: 'POST',
       cookies: { session: 'tok' },

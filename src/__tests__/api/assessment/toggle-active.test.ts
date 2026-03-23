@@ -147,8 +147,8 @@ describe('POST /api/assessment/toggle-active', () => {
     expect(res.status).toHaveBeenCalledWith(500);
   });
 
-  it('super-admin can toggle any assessment', async () => {
-    mockVerifyToken.mockReturnValue(mockSuperAdminToken({ assessmentId: 7 } as any));
+  it('super-admin can toggle any assessment without assessmentId in their token', async () => {
+    mockVerifyToken.mockReturnValue(mockSuperAdminToken()); // No assessmentId in token
     mockFrom.mockImplementation(() => ({
       update: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
