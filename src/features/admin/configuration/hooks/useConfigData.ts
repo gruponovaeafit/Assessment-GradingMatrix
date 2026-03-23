@@ -6,7 +6,7 @@ import { CalificacionSchema, type Calificacion } from '../schemas/configSchemas'
 
 export function useConfigData(logout: () => void) {
   const [data, setData] = useState<Calificacion[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fetchAbortRef = useRef<AbortController | null>(null);
 
@@ -21,7 +21,7 @@ export function useConfigData(logout: () => void) {
     setError(null);
     try {
       const response = await authFetch(
-        '/api/dashboard/config',
+        '/api/staff/list',
         { signal: controller.signal },
         () => logout()
       );

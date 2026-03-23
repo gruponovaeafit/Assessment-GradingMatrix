@@ -16,46 +16,62 @@ export const EditParticipantModal: React.FC<EditParticipantModalProps> = ({
 }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fadeIn" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <div className="bg-[#1e1e1e] rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto border border-gray-700 shadow-2xl">
-        <h2 id="modal-title" className="text-lg sm:text-xl font-bold mb-4 text-white">Editar Participante</h2>
-        <form onSubmit={onUpdate}>
-          <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Nombre</label>
-          <input
-            type="text"
-            value={editModal.Participante}
-            onChange={(e) => setEditModal({ ...editModal, Participante: e.target.value })}
-            className="w-full border border-gray-600 px-3 py-2 rounded mb-4 text-white bg-[#2d2d2d] placeholder-gray-500 text-sm sm:text-base focus:border-[color:var(--color-accent)] focus:outline-none"
-          />
+      <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md max-h-[90vh] overflow-y-auto border border-gray-100 shadow-2xl">
+        <h2 id="modal-title" className="text-2xl font-bold mb-6 text-gray-900">Editar Staff</h2>
+        <form onSubmit={onUpdate} className="space-y-4">
+          <div>
+            <label className="block mb-1.5 font-semibold text-gray-700 text-sm">Correo</label>
+            <input
+              type="email"
+              value={editModal.Correo}
+              onChange={(e) => setEditModal({ ...editModal, Correo: e.target.value })}
+              className="w-full border border-gray-200 px-4 py-3 rounded-xl text-gray-900 bg-gray-50 placeholder-gray-400 text-sm focus:ring-2 focus:ring-purple-200 focus:outline-none transition"
+            />
+          </div>
 
-          <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Correo</label>
-          <input
-            type="email"
-            value={editModal.Correo}
-            onChange={(e) => setEditModal({ ...editModal, Correo: e.target.value })}
-            className="w-full border border-gray-600 px-3 py-2 rounded mb-4 text-white bg-[#2d2d2d] placeholder-gray-500 text-sm sm:text-base focus:border-[color:var(--color-accent)] focus:outline-none"
-          />
+          <div>
+            <label className="block mb-1.5 font-semibold text-gray-700 text-sm">Rol</label>
+            <select
+              value={editModal.role}
+              onChange={(e) => setEditModal({ ...editModal, role: e.target.value })}
+              className="w-full border border-gray-200 px-4 py-3 rounded-xl text-gray-900 bg-gray-50 text-sm focus:ring-2 focus:ring-purple-200 focus:outline-none transition"
+            >
+              <option value="admin">Administrador</option>
+              <option value="calificador">Calificador</option>
+              <option value="registrador">Registrador</option>
+            </select>
+          </div>
 
-          <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Rol</label>
-          <input
-            type="text"
-            value={editModal.role}
-            onChange={(e) => setEditModal({ ...editModal, role: e.target.value })}
-            className="w-full border border-gray-600 px-3 py-2 rounded mb-4 text-white bg-[#2d2d2d] placeholder-gray-500 text-sm sm:text-base focus:border-[color:var(--color-accent)] focus:outline-none"
-          />
+          <div className="flex items-center gap-3 py-2">
+            <label className="font-semibold text-gray-700 text-sm">Estado Activo</label>
+            <button
+              type="button"
+              onClick={() => setEditModal({ ...editModal, Active: !editModal.Active })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                editModal.Active ? 'bg-success' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  editModal.Active ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
 
-          <div className="flex justify-end gap-2 mt-2">
+          <div className="flex justify-end gap-3 mt-8">
             <button
               type="button"
               onClick={onCancel}
-              className="px-3 sm:px-4 py-2 rounded bg-gray-600 text-white hover:bg-gray-500 text-sm sm:text-base transition"
+              className="flex-1 px-4 py-3 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-semibold text-sm transition"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-3 sm:px-4 py-2 rounded bg-success text-white hover:bg-success-dark text-sm sm:text-base transition"
+              className="flex-1 px-4 py-3 rounded-xl bg-[color:var(--color-accent)] text-white hover:bg-[#5B21B6] font-semibold text-sm transition shadow-lg shadow-purple-200"
             >
-              Guardar
+              Guardar Cambios
             </button>
           </div>
         </form>

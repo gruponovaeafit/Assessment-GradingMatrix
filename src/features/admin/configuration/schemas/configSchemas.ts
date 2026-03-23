@@ -8,6 +8,7 @@ export const CalificacionSchema = z.object({
   role: z.string(),
   Calificacion_Promedio: z.number().nullable(),
   Estado: z.string(),
+  Active: z.boolean().optional(),
 });
 
 export const AssessmentSchema = z.object({
