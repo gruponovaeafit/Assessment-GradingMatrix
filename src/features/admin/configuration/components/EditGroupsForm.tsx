@@ -69,7 +69,7 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
           duration: 4000,
         });
       }
-    } catch (err) {
+    } catch {
       notify({
         title: 'Error de red',
         titleColor: 'var(--error)',
@@ -122,7 +122,7 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
           duration: 4000,
         });
       }
-    } catch (err) {
+    } catch {
       notify({
         title: 'Error de red',
         titleColor: 'var(--error)',
@@ -136,7 +136,6 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
     }
   };
 
-  // Organizar participantes por grupo
   const participantsByGroup = groups.reduce((acc, group) => {
     acc[group.id] = participants.filter(p => p.grupoId === group.id);
     return acc;
@@ -146,7 +145,7 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Sección de Participantes sin Grupo */}
+
       <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
         <h3 className="text-sm font-bold text-orange-800 mb-3 flex items-center gap-2">
           <UserPlus className="w-4 h-4" />
@@ -155,7 +154,7 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
         {unassignedParticipants.length === 0 ? (
           <p className="text-xs text-orange-600 italic">Todos los participantes tienen grupo.</p>
         ) : (
-          <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
             {unassignedParticipants.map(p => (
               <div key={p.id} className="flex items-center justify-between bg-white p-2 rounded-lg border border-orange-200 text-xs">
                 <div className="flex items-center gap-2 truncate mr-2">
@@ -166,7 +165,7 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
                     </span>
                   )}
                 </div>
-                <select 
+                <select
                   onChange={(e) => handleMoveParticipant(p.id, Number(e.target.value))}
                   disabled={processingId === `part-${p.id}`}
                   className="bg-orange-100 text-orange-800 border-none rounded px-2 py-1 font-bold outline-none focus:ring-1 focus:ring-orange-400"
@@ -183,7 +182,6 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
         )}
       </div>
 
-      {/* Lista de Grupos */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold text-gray-700">Grupos Existentes</h3>
         {groups.length === 0 ? (
@@ -193,33 +191,37 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {groups.map((group) => (
-              <div 
-                key={group.id} 
+              <div
+                key={group.id}
                 className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm"
               >
-                {/* Header del Grupo */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 border-b border-gray-100">
+                <div className="flex items-center justify-between p-3 bg-[color:var(--color-accent)] border-b border-gray-100">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-purple-600 text-white rounded-lg flex items-center justify-center font-bold text-xs">
+                    <div className="w-8 h-8 bg-white/20 text-white rounded-lg flex items-center justify-center font-bold text-xs">
                       {group.nombre.match(/\d+/)?.[0] || group.nombre.charAt(0)}
                     </div>
-                    <span className="font-bold text-gray-900">{group.nombre}</span>
-                    <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">
+                    <span className="font-bold text-white">{group.nombre}</span>
+                    <span className="text-[10px] bg-white/20 text-white px-1.5 py-0.5 rounded-full">
                       {participantsByGroup[group.id]?.length || 0} integrantes
                     </span>
                   </div>
-                  
-                  <button
-                    onClick={() => handleDeleteGroup(group.id)}
-                    disabled={processingId === `group-${group.id}`}
-                    className="p-1.5 text-gray-400 hover:text-red-500 transition"
-                    title="Eliminar grupo"
-                  >
-                    {processingId === `group-${group.id}` ? <Spinner size="sm" /> : <Trash2 className="w-4 h-4" />}
-                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleDeleteGroup(group.id)}
+                      disabled={processingId === `group-${group.id}`}
+                      className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-50"
+                      title="Eliminar grupo"
+                    >
+                      {processingId === `group-${group.id}` ? (
+                        <Spinner size="sm" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 text-white" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
-                {/* Lista de Integrantes */}
                 <div className="p-3 space-y-2">
                   {(participantsByGroup[group.id] || []).length === 0 ? (
                     <p className="text-[10px] text-gray-400 italic text-center py-2">Sin integrantes</p>
@@ -235,7 +237,7 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
                           )}
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                          <select 
+                          <select
                             onChange={(e) => handleMoveParticipant(p.id, e.target.value === "none" ? null : Number(e.target.value))}
                             disabled={processingId === `part-${p.id}`}
                             className="text-[10px] bg-gray-100 hover:bg-purple-100 text-gray-600 border-none rounded px-1.5 py-0.5 outline-none"

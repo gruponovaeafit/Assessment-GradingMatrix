@@ -3,7 +3,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { showToast } from '@/components/UI/Toast';
+import { notify, NotificationProvider } from '@/components/UI/Notification';
 import { authFetch } from '@/lib/auth/authFetch';
 
 // Hooks de dominio
@@ -24,7 +24,7 @@ import { EditGroupsForm } from './components/EditGroupsForm';
 // UI Components
 import { Box } from '@/components/UI/Box';
 import { Button } from '@/components/UI/Button';
-import { Spinner, BrandedLoading } from '@/components/UI/Loading';
+import { BrandedLoading } from '@/components/UI/Loading';
 
 export const ConfigContainer = () => {
   const {
@@ -43,7 +43,7 @@ export const ConfigContainer = () => {
   // UI State
   const [editModal, setEditModal] = useState<Calificacion | null>(null);
   const [originalData, setOriginalData] = useState<Calificacion | null>(null);
-  
+
   const [creatingStaff, setCreatingStaff] = useState(false);
   const [autoGroupCount, setAutoGroupCount] = useState("");
   const [autoGrouping, setAutoGrouping] = useState(false);
@@ -55,7 +55,6 @@ export const ConfigContainer = () => {
   const [showAutoGroupDropdown, setShowAutoGroupDropdown] = useState(false);
   const [showEditGroupsDropdown, setShowEditGroupsDropdown] = useState(false);
 
-  // Estados para búsqueda, filtros, orden y paginación
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRol, setFilterRol] = useState<string>("todos");
   const [sortBy, setSortBy] = useState<"nombre" | "rol">("nombre");
@@ -85,8 +84,7 @@ export const ConfigContainer = () => {
 
   const filteredAndSortedData = useMemo(() => {
     const filtered = data.filter((item) => {
-      const matchSearch =
-        item.Correo.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchSearch = item.Correo.toLowerCase().includes(searchTerm.toLowerCase());
       const matchRol = filterRol === "todos" || item.role === filterRol;
       return matchSearch && matchRol;
     });
@@ -108,7 +106,7 @@ export const ConfigContainer = () => {
   }, [data, searchTerm, filterRol, sortBy, sortOrder]);
 
   const totalPages = Math.max(1, Math.ceil(filteredAndSortedData.length / itemsPerPage));
-  
+
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -134,7 +132,14 @@ export const ConfigContainer = () => {
     if (editModal.Active !== originalData.Active) updates.active = editModal.Active;
 
     if (Object.keys(updates).length === 1) {
-      showToast.error("Debe modificarse al menos un campo");
+      notify({
+        title: 'Sin cambios',
+        titleColor: 'var(--error)',
+        subtitle: 'Debe modificarse al menos un campo',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 1500,
+      });
       return;
     }
 
@@ -150,25 +155,51 @@ export const ConfigContainer = () => {
 
     const result = await res.json();
     if (res.ok) {
-      showToast.success("Staff actualizado correctamente");
-      setData((prev) =>
-        prev.map((p) => (p.ID === editModal.ID ? editModal : p))
-      );
+      notify({
+        title: 'Staff actualizado',
+        titleColor: 'var(--color-accent)',
+        subtitle: 'Staff actualizado correctamente',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--color-accent)',
+        duration: 1500,
+      });
+      setData((prev) => prev.map((p) => (p.ID === editModal.ID ? editModal : p)));
       setEditModal(null);
       setOriginalData(null);
     } else {
-      showToast.error(result.error || "Error al actualizar");
+      notify({
+        title: 'Error al actualizar',
+        titleColor: 'var(--error)',
+        subtitle: result.error || 'Error al actualizar',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 1500,
+      });
     }
   };
 
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!staffCorreo || !staffPassword || !staffRol) {
-      showToast.error('Todos los campos obligatorios deben completarse');
+      notify({
+        title: 'Campos incompletos',
+        titleColor: 'var(--error)',
+        subtitle: 'Todos los campos obligatorios deben completarse',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 2000,
+      });
       return;
     }
     if (staffRol === 'calificador' && !staffBaseId) {
-      showToast.error('Los calificadores deben tener una base asignada');
+      notify({
+        title: 'Base requerida',
+        titleColor: 'var(--error)',
+        subtitle: 'Los calificadores deben tener una base asignada',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 2000,
+      });
       return;
     }
 
@@ -192,13 +223,27 @@ export const ConfigContainer = () => {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Error al crear staff');
 
-      showToast.success(`${staffRol === 'calificador' ? 'Calificador' : 'Registrador'} creado`);
+      notify({
+        title: staffRol === 'calificador' ? 'Calificador creado' : 'Registrador creado',
+        titleColor: 'var(--color-accent)',
+        subtitle: `${staffRol === 'calificador' ? 'Calificador' : 'Registrador'} creado correctamente`,
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--color-accent)',
+        duration: 2000,
+      });
       setStaffCorreo('');
       setStaffPassword('');
       setStaffRol('');
       setStaffBaseId('');
     } catch (err: unknown) {
-      showToast.error(err instanceof Error ? err.message : 'Error al crear staff');
+      notify({
+        title: 'Error al crear staff',
+        titleColor: 'var(--error)',
+        subtitle: err instanceof Error ? err.message : 'Error al crear staff',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 1500,
+      });
     } finally {
       setCreatingStaff(false);
     }
@@ -208,7 +253,14 @@ export const ConfigContainer = () => {
     e.preventDefault();
     const numGroups = Number(autoGroupCount);
     if (!autoGroupCount || Number.isNaN(numGroups) || numGroups <= 0) {
-      showToast.error('Ingresa una cantidad válida de grupos');
+      notify({
+        title: 'Cantidad invalida',
+        titleColor: 'var(--error)',
+        subtitle: 'Ingresa una cantidad valida de grupos',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 2000,
+      });
       return;
     }
 
@@ -219,9 +271,7 @@ export const ConfigContainer = () => {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            numGroups,
-          }),
+          body: JSON.stringify({ numGroups }),
         },
         () => logout()
       );
@@ -229,32 +279,43 @@ export const ConfigContainer = () => {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Error al sortear grupos');
 
-      showToast.success('Grupos creados y sorteados correctamente');
+      notify({
+        title: 'Grupos creados',
+        titleColor: 'var(--color-accent)',
+        subtitle: 'Grupos creados y sorteados correctamente',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--color-accent)',
+        duration: 2000,
+      });
       setAutoGroupCount('');
       setShowAutoGroupDropdown(false);
       await fetchData();
       await loadParticipantsAndGroups();
     } catch (err: unknown) {
-      showToast.error(err instanceof Error ? err.message : 'Error al sortear grupos');
+      notify({
+        title: 'Error al sortear grupos',
+        titleColor: 'var(--error)',
+        subtitle: err instanceof Error ? err.message : 'Error al sortear grupos',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 1500,
+      });
     } finally {
       setAutoGrouping(false);
     }
   };
 
   if (authLoading || dataLoading) {
-    return <BrandedLoading message="Preparando configuración del panel..." />;
+    return <BrandedLoading message="Preparando configuracion del panel..." />;
   }
-  
+
   if (dataError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-white">
         <p className="text-error text-xl">{dataError}</p>
-        <button 
-          onClick={() => router.refresh()}
-          className="mt-4 px-4 py-2 bg-gray-100 text-gray-900 rounded-lg border border-gray-200 hover:bg-gray-200"
-        >
+        <Button variant="outline" onClick={() => router.refresh()} className="mt-4">
           Reintentar
-        </button>
+        </Button>
       </div>
     );
   }
@@ -262,15 +323,17 @@ export const ConfigContainer = () => {
   return (
     <div className="flex flex-col items-center min-h-screen py-4 sm:py-8 px-3 sm:px-4 bg-white">
       <div className="w-full max-w-[900px] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 px-1 sm:px-2">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center sm:text-left">Configuración del Assessment</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[color:var(--color-accent)]">
+          Configuracion del Assessment
+        </h1>
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
           <Button variant="accent" onClick={() => router.push("/admin")}>
             <Image src="/HomeIcon.svg" alt="" width={18} height={18} className="mr-2" />
-            Menú principal
+            Menu principal
           </Button>
           <Button variant="error" onClick={logout}>
             <Image src="/LogoutIcon.svg" alt="" width={18} height={18} className="mr-2" />
-            Cerrar Sesión
+            Cerrar Sesion
           </Button>
         </div>
       </div>
@@ -289,7 +352,7 @@ export const ConfigContainer = () => {
         onSubmit={handleCreateStaff}
       />
 
-      {/* Ajustes de grupo Section */}
+      {/* Ajustes de grupo */}
       <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
         <Box className="p-4">
           <h2 className="text-lg font-bold text-gray-900 mb-4 text-center sm:text-left">Ajustes de grupo</h2>
@@ -347,14 +410,29 @@ export const ConfigContainer = () => {
         isOpen={showEditGroupsDropdown}
         onClose={() => setShowEditGroupsDropdown(false)}
         title="Editar Grupos"
+        wide
+        confirmLabel="Confirmar edicion"
+        cancelNotifyTitle="Edicion cancelada"
+        cancelNotifySubtitle="No se guardaron cambios en los grupos"
+        onConfirm={() => {
+          notify({
+            title: 'Grupos actualizados',
+            titleColor: 'var(--color-accent)',
+            subtitle: 'Los cambios en los grupos fueron guardados',
+            subtitleColor: 'var(--color-muted)',
+            borderColor: 'var(--color-accent)',
+            duration: 2000,
+          });
+          setShowEditGroupsDropdown(false);
+        }}
       >
         <EditGroupsForm
           groups={groups}
           participants={participants}
           assessmentId={assessmentId || 0}
           onRefresh={async () => {
-            await fetchData(true); // Silent refresh
-            await loadParticipantsAndGroups(true); // Silent refresh
+            await fetchData(true);
+            await loadParticipantsAndGroups(true);
           }}
           logout={logout}
         />
@@ -375,11 +453,8 @@ export const ConfigContainer = () => {
       <div className="w-full max-w-[900px] flex flex-col items-center">
         <div className="w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-gray-500 text-xs mb-2 px-4">
           <span>Mostrando {paginatedData.length} de {filteredAndSortedData.length} resultados</span>
-          {(searchTerm || filterRol !== "todos") && (
-            <button onClick={() => { setSearchTerm(""); setFilterRol("todos"); }} className="text-[color:var(--color-accent)] hover:text-gray-500 underline">Limpiar filtros</button>
-          )}
         </div>
-        
+
         <ParticipantGrid
           paginatedData={paginatedData}
           onEdit={(p) => { setEditModal({ ...p }); setOriginalData({ ...p }); }}
@@ -400,6 +475,8 @@ export const ConfigContainer = () => {
           onUpdate={handleUpdate}
         />
       )}
+
+      <NotificationProvider />
     </div>
   );
 };
