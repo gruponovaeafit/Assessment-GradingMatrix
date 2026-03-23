@@ -1,9 +1,16 @@
-import React from 'react';
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import { useRegisterForm } from '../hooks/useRegisterForm';
+import { useRegisterAuth } from '../hooks/useRegisterAuth';
 import { RegisterForm } from './RegisterForm';
-import { SuccessModal } from './SuccessModal';
+import { ConfirmRegisterModal } from './ConfirmRegisterModal';
+import { notify } from '@/components/UI/Notification';
 
 export const RegisterContainer: React.FC = () => {
+  const { logout } = useRegisterAuth();
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const {
     nombre,
     setNombre,
@@ -11,8 +18,6 @@ export const RegisterContainer: React.FC = () => {
     setCorreo,
     photo,
     fileName,
-    mensaje,
-    isError,
     enviando,
     successModalId,
     fileInputRef,
@@ -21,8 +26,73 @@ export const RegisterContainer: React.FC = () => {
     resetForm,
   } = useRegisterForm();
 
+  const handleRequestConfirm = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombre || !correo) {
+      notify({
+        title: "Error al registrar participante",
+        titleColor: "var(--error)",
+        subtitle: "Recuerda llenar los campos de texto",
+        subtitleColor: "var(--color-muted)",
+        borderColor: "var(--error)",
+        duration: 4000,
+      });
+      return;
+    }
+    setShowConfirm(true);
+  };
+
+  const handleConfirm = (isImpostor: boolean) => {
+    setShowConfirm(false);
+    handleSubmit(
+      { preventDefault: () => {} } as React.FormEvent,
+      isImpostor,
+      (msg) => notify({
+        title: "Error al registrar participante",
+        titleColor: "var(--error)",
+        subtitle: msg,
+        subtitleColor: "var(--color-muted)",
+        borderColor: "var(--error)",
+        duration: 4000,
+      })
+    );
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
+    notify({
+      title: "Inscripción cancelada",
+      titleColor: "var(--error)",
+      subtitle: "Puedes seguir editando la información del participante",
+      subtitleColor: "var(--color-muted)",
+      borderColor: "var(--error)",
+      duration: 4000,
+    });
+  };
+
+  const handleSuccess = (id: number) => {
+    notify({
+      title: "¡Participante inscrito!",
+      titleColor: "var(--success)",
+      subtitle: "El participante fue asignado con éxito",
+      subtitleColor: "var(--color-muted)",
+      borderColor: "var(--success)",
+      idLabel: "El participante fue asignado con ID:",
+      idValue: id,
+      idColor: "var(--success)",
+      duration: 5000,
+    });
+    resetForm();
+  };
+
+  useEffect(() => {
+    if (successModalId !== null && successModalId !== undefined) {
+      handleSuccess(successModalId);
+    }
+  }, [successModalId]);
+
   return (
-    <div className="flex flex-col items-center justify-center w-full min-h-screen bg-white px-4 py-8">
+    <>
       <RegisterForm
         nombre={nombre}
         setNombre={setNombre}
@@ -30,17 +100,23 @@ export const RegisterContainer: React.FC = () => {
         setCorreo={setCorreo}
         photo={photo}
         fileName={fileName}
-        mensaje={mensaje}
-        isError={isError}
         enviando={enviando}
         fileInputRef={fileInputRef}
         handleImageSelect={handleImageSelect}
-        handleSubmit={handleSubmit}
+        handleSubmit={handleRequestConfirm}
+        onLogout={logout}
       />
-      <SuccessModal
-        successId={successModalId}
-        onDismiss={resetForm}
-      />
-    </div>
+
+      {showConfirm && (
+        <ConfirmRegisterModal
+          nombre={nombre}
+          correo={correo}
+          photo={photo}
+          loading={enviando}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
+      )}
+    </>
   );
 };

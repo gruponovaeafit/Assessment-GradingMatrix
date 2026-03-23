@@ -115,38 +115,11 @@ export const SuperAdminContainer = () => {
                     nombre: data.nombre,
                     descripcion: data.descripcion,
                     grupoEstudiantilId: data.grupoId,
-                    activo: true, // Defaulting to true on creation for now
+                    activo: data.activo,
+                    admin: data.admin // Send admin credentials if present
                 })
             });
-            // If creating an assessment with a new admin, we also have to create the admin via /api/staff/create
-              if (response.ok && data.admin) {
-              const result = await response.json();
-              if (data.admin.correo && data.admin.password) {
-                const staffResp = await fetch('/api/super-admin/staff-create', {
-                   method: 'POST',
-                   headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({
-                      assessmentId: result.ID_Assessment,
-                      correo: data.admin.correo,
-                      password: data.admin.password,
-                      rol: 'admin'
-                   })
-                });
-                if (!staffResp.ok) {
-                  const staffErr = await staffResp.json();
-                  showToast.error(staffErr.error || 'Assessment creado, pero falló la creación del administrador');
-                }
-              } else if (data.admin.id) {
-                 await fetch('/api/staff/update', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                       staffId: data.admin.id,
-                       assessmentId: result.ID_Assessment
-                    })
-                 });
-              }
-            }
+            // Atomic creation handles the admin creation internally now.
         }
         
         if (response.ok) {

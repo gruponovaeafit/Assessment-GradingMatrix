@@ -70,9 +70,9 @@ export function getAuthorizedAssessmentId(
   return assessmentId;
 }
 
-// Función para resolver el ID del Assessment a partir de un string (por ejemplo, de una query)
-export async function resolveAssessmentId(data: string | string[] | undefined): Promise<{ id: number } | { error: string; status: number }> {
-  if (!data || Array.isArray(data)) {
+// Función para resolver el ID del Assessment a partir de un string o número
+export async function resolveAssessmentId(data: string | string[] | number | undefined): Promise<{ id: number } | { error: string; status: number }> {
+  if (data === undefined || data === null || Array.isArray(data)) {
     return { error: 'AssessmentId is required', status: 400 };
   }
 

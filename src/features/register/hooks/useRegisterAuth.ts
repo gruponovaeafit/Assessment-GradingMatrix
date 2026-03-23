@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 /**
@@ -30,5 +30,10 @@ export const useRegisterAuth = () => {
     checkAuth();
   }, [router]);
 
-  return { checkingAuth };
+  const logout = useCallback(async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    router.push('/auth/login');
+  }, [router]);
+
+  return { checkingAuth, logout };
 };

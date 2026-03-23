@@ -244,7 +244,7 @@ Lista assessments incluyendo grupo estudiantil asociado.
   ```
 
 ### POST /api/assessment/create
-Crea un assessment bajo un grupo estudiantil.
+Crea un assessment bajo un grupo estudiantil. Opcionalmente puede crear un administrador para el mismo de forma atómica.
 
 - Auth: **Superadmin (id:0)**
 - Payload
@@ -253,13 +253,17 @@ Crea un assessment bajo un grupo estudiantil.
     "grupoEstudiantilId": 3,
     "nombre": "Assessment 2026",
     "descripcion": "string",
-    "activo": true
+    "activo": true,
+    "admin": {
+      "correo": "admin@example.com",
+      "password": "securepassword"
+    }
   }
   ```
 - Respuesta (200 OK)
   ```json
   {
-    "message": "Assessment creado",
+    "message": "Assessment creado exitosamente",
     "ID_Assessment": 12
   }
   ```
@@ -691,13 +695,17 @@ Lista participantes registrados en un assessment.
 Inscribe un nuevo participante.
 
 - Auth: admin, registrador
-- Payload
+- Payload (multipart/form-data)
+  - `assessmentId`: number (opcional si el usuario es admin y se usa el de su JWT)
+  - `nombre`: string
+  - `correo`: string
+  - `isImpostor`: boolean (string "true" / "false" en el form-data)
+  - `image`: File (opcional, imagen del participante)
+- Respuesta (200 OK)
   ```json
   {
-    "assessmentId": 6,
-    "nombre": "Ana",
-    "correo": "ana@example.com",
-    "fotoUrl": "string"
+    "message": "Persona registrada correctamente",
+    "id": 42
   }
   ```
 

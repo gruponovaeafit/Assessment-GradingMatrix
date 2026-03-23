@@ -44,7 +44,7 @@ describe('useRegisterForm', () => {
       await result.current.handleSubmit({ preventDefault: vi.fn() } as any);
     });
 
-    expect(result.current.mensaje).toBe('Por favor completa los campos obligatorios');
+    expect(result.current.mensaje).toBe('Recuerda llenar los campos de texto');
     expect(result.current.isError).toBe(true);
   });
 
@@ -115,7 +115,7 @@ describe('useRegisterForm', () => {
       await result.current.handleSubmit({ preventDefault: vi.fn() } as any);
     });
 
-    expect(result.current.mensaje).toBe('❌ Error al conectar con el servidor');
+    expect(result.current.mensaje).toBe('Error al conectar con el servidor');
     expect(result.current.isError).toBe(true);
   });
 
