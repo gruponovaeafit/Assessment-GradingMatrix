@@ -7,6 +7,8 @@ import {
   type Group
 } from '../schemas/graderSchemas';
 
+import { type UseConfirmModalOptions } from '@/components/UI/ConfirmModal';
+
 export const useGraderActions = (
   usuarios: Participant[],
   selectedGroupId: string,
@@ -16,7 +18,7 @@ export const useGraderActions = (
   setGroups: (groups: Group[]) => void,
   setSelectedGroupId: (id: string) => void,
   setUsuarios: (u: Participant[]) => void,
-  confirm: (opts: any) => Promise<boolean>,
+  confirm: (opts: UseConfirmModalOptions) => Promise<string | boolean>,
   setIsLoading: (val: boolean) => void
 ) => {
   const [calificaciones, setCalificaciones] = useState<CalificacionesType>({});

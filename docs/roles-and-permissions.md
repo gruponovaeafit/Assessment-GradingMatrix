@@ -7,11 +7,12 @@ Este documento detalla la matriz de acceso del sistema para asegurar que los des
 ## Definición de Roles
 
 1. Superadmin: 
+    - Identificador: `id: 0` (asignado exclusivamente en login si el correo coincide con `ADMIN_EMAIL`).
     - Alcance: Global (todos los grupos).
-    - Misión: Crear grupos, crear assessments iniciales y gestionar los primeros administradores de grupo.
+    - Misión: Crear grupos, crear assessments y gestionar el staff administrativo inicial. Es el único con permiso para eliminar assessments.
 2. Admin de Grupo: 
-    - Alcance: Un solo GrupoEstudiantil.
-    - Misión: Configurar bases, registrar staff, gestionar participantes y ver dashboards de resultados de su grupo.
+    - Alcance: Un solo GrupoEstudiantil/Assessment asignado en su JWT.
+    - Misión: Configurar bases, registrar staff, gestionar participantes y ver dashboards de resultados de su grupo. No puede crear ni eliminar assessments.
 3. Registrador: 
     - Alcance: Assessment asignado.
     - Misión: Inscripción rápida de participantes (Mobile).
@@ -42,14 +43,18 @@ El sistema usa requireRoles(req, res, [roles]) para proteger los handlers.
 | Endpoint | Roles Permitidos |
 | --- | --- |
 | POST /api/auth/login | Público |
-| GET /api/assessment/list | admin |
-| POST /api/assessment/create | admin |
-| GET /api/base/* | admin |
-| POST /api/base/* | admin |
-| GET /api/staff/* | admin |
-| POST /api/staff/* | admin |
-| POST /api/register | admin, registrador |
-| PUT /api/update-person | admin, registrador |
+| GET /api/assessment/list | admin | |
+| POST /api/assessment/create | **Superadmin (id:0)** | Restringido por ID en servidor |
+| DELETE /api/assessment/delete | **Superadmin (id:0)** | Requiere `ADMIN_DELETE_PASSWORD` |
+| PUT /api/assessment/update | admin | Superadmin bypasses JWT restriction |
+| POST /api/assessment/toggle-active | admin | Superadmin bypasses JWT restriction |
+| GET /api/base/* | admin | |
+| POST /api/base/* | admin | |
+| GET /api/staff/* | admin | |
+| POST /api/staff/* | admin | |
+| POST /api/super-admin/staff-create | **Superadmin (id:0)** | Nueva para evitar logout bug |
+| POST /api/register | admin, registrador | |
+| PUT /api/update-person | admin, registrador | |
 | GET /api/grader/* | admin, calificador |
 | POST /api/add-calificaciones | admin, calificador |
 

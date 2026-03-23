@@ -11,18 +11,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user = requireRoles(req, res, ['admin']);
   if (!user) return;
 
-  const { assessmentId: payloadAssessmentId, descripcion, activo, grupoEstudiantilId } = req.body ?? {};
+  const { assessmentId: payloadAssessmentId, nombre, descripcion, activo, grupoEstudiantilId } = req.body ?? {};
   
-  const authorizedAssessmentId = getAuthorizedAssessmentId(user, res);
-  if (!authorizedAssessmentId) return;
+  let authorizedAssessmentId = null;
+  if (user.id !== 0) {
+    authorizedAssessmentId = getAuthorizedAssessmentId(user, res);
+    if (!authorizedAssessmentId) return;
+  }
 
-  if (payloadAssessmentId && Number(payloadAssessmentId) !== authorizedAssessmentId && user.id !== 0) {
+  if (payloadAssessmentId && authorizedAssessmentId && Number(payloadAssessmentId) !== authorizedAssessmentId) {
     return res.status(403).json({ error: 'Solo puedes actualizar tu propio assessment' });
   }
 
   const assessmentId = payloadAssessmentId ? Number(payloadAssessmentId) : authorizedAssessmentId;
 
+  if (!assessmentId) {
+    return res.status(400).json({ error: 'assessmentId es obligatorio' });
+  }
+
   const updatePayload: Record<string, string | number | boolean | null> = {};
+
+  if (nombre !== undefined) {
+    updatePayload.Nombre_Assessment = nombre;
+  }
 
   if (descripcion !== undefined) {
     updatePayload.Descripcion_Assessment = descripcion || null;

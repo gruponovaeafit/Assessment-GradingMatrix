@@ -13,10 +13,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { assessmentId: payloadAssessmentId, activo } = req.body;
 
-  const authorizedAssessmentId = getAuthorizedAssessmentId(user, res);
-  if (!authorizedAssessmentId) return;
+  let authorizedAssessmentId = null;
+  if (user.id !== 0) {
+    authorizedAssessmentId = getAuthorizedAssessmentId(user, res);
+    if (!authorizedAssessmentId) return;
+  }
 
-  if (payloadAssessmentId && Number(payloadAssessmentId) !== authorizedAssessmentId && user.id !== 0) {
+  if (payloadAssessmentId && authorizedAssessmentId && Number(payloadAssessmentId) !== authorizedAssessmentId) {
     return res.status(403).json({ error: 'Solo puedes activar/desactivar tu propio assessment' });
   }
 

@@ -59,10 +59,10 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4 py-8 lg:py-6">
+    <div className="flex flex-col space-y-6 items-center justify-center h-dvh bg-gray-100 px-4 py-8 lg:py-6">
 
       {/* Header */}
-      <div className="text-center mb-4 lg:mb-6 xl:mb-10 w-full max-w-2xl">
+      <div className="text-center w-full max-w-2xl">
         <h1 className="text-4xl sm:text-5xl xl:text-6xl font-extrabold text-purple-400 leading-tight drop-shadow-[3px_4px_1.5px_rgba(0,0,0,0.15)]">
           Assessment Grading Matrix
         </h1>
@@ -115,7 +115,7 @@ export default function Login() {
       </form>
 
       {/* Footer */}
-      <footer className="mt-6 lg:mt-8 xl:mt-16 text-gray-400 text-base xl:text-lg italic">
+      <footer className="text-gray-400 text-base xl:text-lg italic">
         POWERED BY{" "}
         <span className="font-bold text-2xl text-purple-400">Nova</span>
       </footer>

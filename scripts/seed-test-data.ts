@@ -43,21 +43,43 @@ async function seedTestData() {
 
     const { ID_GrupoEstudiantil } = grupoEstudiantil!;
 
-    // 2. Crear Assessment de Prueba
-    console.log('Creando Assessment...');
-    const { data: assessment, error: assessmentError } = await supabase
+    const NOMBRE_TEST_ASSESSMENT = 'Assessment de Desarrollo Local';
+    // 2. Buscar o Crear Assessment de Prueba
+    let { data: assessment, error: assessmentError } = await supabase
       .from('Assessment')
-      .insert({
-        ID_GrupoEstudiantil,
-        Nombre_Assessment: `Assessment de Prueba ${Date.now()}`,
-        Descripcion_Assessment: 'Assessment generado automáticamente para desarrollo local',
-        Activo_Assessment: true
-      })
-      .select()
-      .single();
-    if (assessmentError) throw assessmentError;
+      .select('ID_Assessment, Nombre_Assessment')
+      .eq('Nombre_Assessment', NOMBRE_TEST_ASSESSMENT)
+      .eq('ID_GrupoEstudiantil', ID_GrupoEstudiantil)
+      .maybeSingle();
 
-    const { ID_Assessment } = assessment;
+    if (assessment) {
+      console.log(`♻️ Reutilizando Assessment existente: "${NOMBRE_TEST_ASSESSMENT}" (ID: ${assessment.ID_Assessment})`);
+      console.log('Limpiando datos previos para un seed limpio...');
+      
+      const targetId = assessment.ID_Assessment;
+      // Orden de limpieza para respetar FKs
+      await supabase.from('CalificacionesPorPersona').delete().eq('ID_Assessment', targetId);
+      await supabase.from('Participante').delete().eq('ID_Assessment', targetId);
+      await supabase.from('GrupoAssessment').delete().eq('ID_Assessment', targetId);
+      await supabase.from('Staff').delete().eq('ID_Assessment', targetId);
+      await supabase.from('Bases').delete().eq('ID_Assessment', targetId);
+    } else {
+      console.log(`✨ Creando nuevo Assessment: "${NOMBRE_TEST_ASSESSMENT}"`);
+      const { data, error } = await supabase
+        .from('Assessment')
+        .insert({
+          ID_GrupoEstudiantil,
+          Nombre_Assessment: NOMBRE_TEST_ASSESSMENT,
+          Descripcion_Assessment: 'Assessment generado automáticamente para desarrollo local',
+          Activo_Assessment: true
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      assessment = data;
+    }
+
+    const { ID_Assessment } = assessment!;
 
     // 3. Crear una Base
     console.log('Creando Base de competencia...');
@@ -98,11 +120,20 @@ async function seedTestData() {
     const passwordRaw = 'prueba123';
     const passwordHash = await bcrypt.hash(passwordRaw, 10);
 
-    const suffix = Date.now();
-    const emailCalificador = `calificador_${suffix}@test.com`;
-    const emailRegistrador = `registrador_${suffix}@test.com`;
+    const emailCalificador = `calificador@test.com`;
+    const emailRegistrador = `registrador@test.com`;
+    const emailAdmin = `admin@test.com`;
 
     const staffPayload = [
+      {
+        ID_Assessment,
+        Correo_Staff: emailAdmin,
+        Contrasena_Staff: passwordHash,
+        Rol_Staff: 'admin',
+        Active: true,
+        ID_Base: null, 
+        ID_GrupoAssessment: null
+      },
       {
         ID_Assessment,
         Correo_Staff: emailCalificador,
@@ -153,7 +184,7 @@ async function seedTestData() {
       .insert(participantesPayload);
     if (partError) throw partError;
 
-    console.log('\n✅ ¡Datos creados exitosamente! Ya puedes probar tu aplicación.');
+    console.log('\n✅ ¡Datos creados exitosamente!');
     console.log('=========================================');
     console.log('🔑 Credenciales del Calificador:');
     console.log(`   Email:    ${emailCalificador}`);
@@ -161,6 +192,10 @@ async function seedTestData() {
     console.log('-----------------------------------------');
     console.log('🔑 Credenciales del Registrador:');
     console.log(`   Email:    ${emailRegistrador}`);
+    console.log(`   Password: ${passwordRaw}`);
+    console.log('-----------------------------------------');
+    console.log('🔑 Credenciales del Administrador:');
+    console.log(`   Email:    ${emailAdmin}`);
     console.log(`   Password: ${passwordRaw}`);
     console.log('=========================================');
     console.log(`📌 Assessment ID: ${ID_Assessment}`);

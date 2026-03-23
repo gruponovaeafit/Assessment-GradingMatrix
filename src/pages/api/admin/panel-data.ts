@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       supabase
         .from('Assessment')
         .select(
-          'ID_Assessment, Nombre_Assessment, Descripcion_Assessment, Activo_Assessment, ID_GrupoEstudiantil, GrupoEstudiantil:GrupoEstudiantil(Nombre_GrupoEstudiantil)'
+          'ID_Assessment, Nombre_Assessment, Descripcion_Assessment, Activo_Assessment, ID_GrupoEstudiantil, CreatedAt_Assessment, GrupoEstudiantil:GrupoEstudiantil(Nombre_GrupoEstudiantil)'
         )
         .order('ID_Assessment', { ascending: true }),
       supabase
@@ -42,11 +42,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })) ?? [];
 
     const assessments =
-      assessmentsResult.data?.map((row) => {
-        const grupo =
-          Array.isArray(row.GrupoEstudiantil) && row.GrupoEstudiantil.length > 0
-            ? row.GrupoEstudiantil[0]
-            : null;
+      assessmentsResult.data?.map((row: any) => {
+        const grupo = Array.isArray(row.GrupoEstudiantil) 
+          ? row.GrupoEstudiantil[0] 
+          : row.GrupoEstudiantil;
         return {
           id: row.ID_Assessment,
           nombre: row.Nombre_Assessment,
@@ -54,17 +53,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           activo: row.Activo_Assessment,
           grupoId: row.ID_GrupoEstudiantil,
           grupoNombre: grupo?.Nombre_GrupoEstudiantil ?? null,
+          createdAt: row.CreatedAt_Assessment,
+          periodo: (() => {
+            const d = new Date(row.CreatedAt_Assessment);
+            const year = d.getFullYear();
+            const semesterNum = d.getMonth() < 6 ? 1 : 2;
+            return `${year}-${semesterNum}`;
+          })(),
         };
       }) ?? [];
 
     const admins =
-      adminsResult.data?.map((row) => {
-        const assessment =
-          Array.isArray(row.Assessment) && row.Assessment.length > 0 ? row.Assessment[0] : null;
-        const grupo =
-          assessment && Array.isArray(assessment.GrupoEstudiantil) && assessment.GrupoEstudiantil.length > 0
-            ? assessment.GrupoEstudiantil[0]
-            : null;
+      adminsResult.data?.map((row: any) => {
+        const assessment = Array.isArray(row.Assessment) 
+          ? row.Assessment[0] 
+          : row.Assessment;
+        
+        const grupo = assessment ? (
+          Array.isArray(assessment.GrupoEstudiantil) 
+            ? assessment.GrupoEstudiantil[0] 
+            : assessment.GrupoEstudiantil
+        ) : null;
 
         return {
           id: row.ID_Staff,

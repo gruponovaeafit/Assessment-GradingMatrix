@@ -7,13 +7,17 @@ import { Button, ButtonProps } from './Button';
 interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (inputValue?: string) => void;
   title: string;
-  message: string;
+  message: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   isLoading?: boolean;
   variant?: 'danger' | 'warning' | 'info';
+  // Input Support
+  showInput?: boolean;
+  inputPlaceholder?: string;
+  inputType?: 'text' | 'password';
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -26,7 +30,17 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   cancelText = 'Cancelar',
   isLoading = false,
   variant = 'info',
+  showInput = false,
+  inputPlaceholder = 'Escribe aquí...',
+  inputType = 'text',
 }) => {
+  const [inputValue, setInputValue] = useState('');
+  
+  // Reset input value when modal closes/opens
+  React.useEffect(() => {
+    if (!isOpen) setInputValue('');
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const variantStyles: Record<string, {
@@ -68,7 +82,24 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <span className="text-3xl">{styles.icon}</span>
           <h3 className="text-xl font-bold text-[color:var(--color-text)]">{title}</h3>
         </div>
-        <p className="text-[color:var(--color-muted)] mb-6">{message}</p>
+        <div className="text-[color:var(--color-text)]/70 mb-6 text-sm">{message}</div>
+        
+        {showInput && (
+          <div className="mb-6">
+            <input
+              type={inputType}
+              placeholder={inputPlaceholder}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none text-gray-900 placeholder-gray-400"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && inputValue && !isLoading) onConfirm(inputValue);
+              }}
+            />
+          </div>
+        )}
+
         <div className="flex gap-3 justify-end">
           <Button
             type="button"
@@ -81,9 +112,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
           <Button
             type="button"
             variant={styles.confirmVariant}
-            onClick={onConfirm}
+            onClick={() => onConfirm(showInput ? inputValue : undefined)}
             loading={isLoading}
-            disabled={isLoading}
+            disabled={isLoading || (showInput && !inputValue)}
           >
             {confirmText}
           </Button>
@@ -93,12 +124,15 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   );
 };
 
-interface UseConfirmModalOptions {
+export interface UseConfirmModalOptions {
   title: string;
-  message: string;
+  message: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   variant?: 'danger' | 'warning' | 'info';
+  showInput?: boolean;
+  inputPlaceholder?: string;
+  inputType?: 'text' | 'password';
 }
 
 export function useConfirmModal() {
@@ -108,9 +142,9 @@ export function useConfirmModal() {
     title: '',
     message: '',
   });
-  const [resolveRef, setResolveRef] = useState<((value: boolean) => void) | null>(null);
+  const [resolveRef, setResolveRef] = useState<((value: string | boolean) => void) | null>(null);
 
-  const confirm = useCallback((opts: UseConfirmModalOptions): Promise<boolean> => {
+  const confirm = useCallback((opts: UseConfirmModalOptions): Promise<string | boolean> => {
     setOptions(opts);
     setIsOpen(true);
 
@@ -119,8 +153,9 @@ export function useConfirmModal() {
     });
   }, []);
 
-  const handleConfirm = useCallback(() => {
-    resolveRef?.(true);
+  const handleConfirm = useCallback((value?: string) => {
+    // If input was shown, return the value as string, otherwise true as boolean
+    resolveRef?.(value !== undefined ? value : true);
     setIsOpen(false);
     setResolveRef(null);
   }, [resolveRef]);

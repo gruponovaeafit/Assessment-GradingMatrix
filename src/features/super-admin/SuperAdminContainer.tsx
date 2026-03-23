@@ -1,26 +1,28 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import { useSuperAdminAuth } from "@/hooks/useSuperAdminAuth";
 import { Spinner } from "@/components/UI/Loading";
-import { LogOut, LayoutDashboard, AlertCircle } from "lucide-react";
+import { Button } from "@/components/UI/Button";
+import { LogOut, LayoutDashboard, AlertCircle, RefreshCw, PlusCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { showToast } from "@/components/UI/Toast";
 
 // Feature Hooks
 import { useSuperAdminData } from "./hooks/useSuperAdminData";
 import { useSuperAdminFilters } from "./hooks/useSuperAdminFilters";
 import { useSuperAdminActions } from "./hooks/useSuperAdminActions";
-
-// Feature Components
 import { SuperAdminToolbar } from "./components/SuperAdminToolbar";
 import { AssessmentList } from "./components/AssessmentList";
-import { AdminUserList } from "./components/AdminUserList";
 import { MassActionModal } from "./components/MassActionModal";
-import { Pagination } from "@/features/admin/management/components/Pagination"; // Reusing the pagination component
+import { AssessmentModal } from "./components/AssessmentModal";
+import { Pagination } from "@/features/admin/management/components/Pagination";
 
 // Utilities
-import { handleExportAdminsCSV } from "./utils/superAdminUtils";
+import { type Assessment } from "./schemas/superAdminSchemas";
 
 export const SuperAdminContainer = () => {
+  const router = useRouter();
   const { isSuperAdmin, isLoading: authLoading, logout } = useSuperAdminAuth();
   
   // Data Hook
@@ -30,8 +32,6 @@ export const SuperAdminContainer = () => {
     setAssessments,
     admins,
     setAdmins,
-    adminEdits,
-    setAdminEdits,
     assessmentEdits,
     setAssessmentEdits,
     loading: dataLoading,
@@ -47,18 +47,10 @@ export const SuperAdminContainer = () => {
     assessmentYearFilter, setAssessmentYearFilter,
     assessmentPage, setAssessmentPage,
     
-    adminFilter, setAdminFilter,
-    adminSearch, setAdminSearch,
-    adminGroupFilter, setAdminGroupFilter,
-    adminYearFilter, setAdminYearFilter,
-    adminPage, setAdminPage,
-
     uniqueGroups,
     uniqueYears,
     paginatedAssessments,
-    paginatedAdmins,
     totalAssessmentPages,
-    totalAdminPages
   } = useSuperAdminFilters(assessments, admins);
 
   // Actions Hook
@@ -67,9 +59,7 @@ export const SuperAdminContainer = () => {
     massAction,
     setMassAction,
     openBulkAssessmentPreview,
-    openBulkAdminPreview,
     handleUpdateAssessment,
-    handleUpdateAdmin
   } = useSuperAdminActions(
     logout, 
     gruposEstudiantiles, 
@@ -77,11 +67,121 @@ export const SuperAdminContainer = () => {
     setAssessments, 
     admins, 
     setAdmins, 
-    adminEdits, 
+    {}, // adminEdits removed
     assessmentEdits
   );
 
   const [assessmentActivo, setAssessmentActivo] = useState(true);
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAssessment, setEditingAssessment] = useState<Assessment | null>(null);
+
+  // Compute active assessments per group for the warning logic
+  const activeAssessmentsByGroup = React.useMemo(() => {
+    const map: Record<number, number> = {};
+    assessments.forEach(a => {
+      if (a.activo && a.grupoId) {
+        map[a.grupoId] = a.id;
+      }
+    });
+    return map;
+  }, [assessments]);
+
+  const handleSaveModal = async (data: any) => {
+    try {
+        const isUpdate = !!data.id;
+        let response;
+        if (isUpdate) {
+            response = await fetch('/api/assessment/update', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    assessmentId: data.id,
+                    nombre: data.nombre,
+                    descripcion: data.descripcion,
+                    grupoEstudiantilId: data.grupoId,
+                    activo: data.activo
+                })
+            });
+            // Update admin if necessary... Note: changing admin via update is complex if there's no endpoint.
+            // If the user meant to update the admin during Edit, we'd need another call to staff/update.
+            // Assuming for now the update handles basic fields, and create handles full initialization.
+        } else {
+            response = await fetch('/api/assessment/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: data.nombre,
+                    descripcion: data.descripcion,
+                    grupoEstudiantilId: data.grupoId,
+                    activo: true, // Defaulting to true on creation for now
+                })
+            });
+            // If creating an assessment with a new admin, we also have to create the admin via /api/staff/create
+              if (response.ok && data.admin) {
+              const result = await response.json();
+              if (data.admin.correo && data.admin.password) {
+                const staffResp = await fetch('/api/super-admin/staff-create', {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({
+                      assessmentId: result.ID_Assessment,
+                      correo: data.admin.correo,
+                      password: data.admin.password,
+                      rol: 'admin'
+                   })
+                });
+                if (!staffResp.ok) {
+                  const staffErr = await staffResp.json();
+                  showToast.error(staffErr.error || 'Assessment creado, pero falló la creación del administrador');
+                }
+              } else if (data.admin.id) {
+                 await fetch('/api/staff/update', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                       staffId: data.admin.id,
+                       assessmentId: result.ID_Assessment
+                    })
+                 });
+              }
+            }
+        }
+        
+        if (response.ok) {
+            showToast.success(isUpdate ? 'Assessment actualizado' : 'Assessment creado');
+            fetchData();
+        } else {
+            const err = await response.json();
+            showToast.error(err.error || 'Error al guardar assessment');
+        }
+    } catch (e) {
+        showToast.error('Error de red al guardar');
+    }
+  };
+
+  const handleDeleteModal = async (id: number, password?: string) => {
+    try {
+      const resp = await fetch('/api/assessment/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, password }),
+      });
+
+      const result = await resp.json();
+      if (resp.ok) {
+        showToast.success('Assessment eliminado correctamente');
+        fetchData();
+      } else {
+        showToast.error(result.error || 'Error al eliminar assessment');
+        throw new Error(result.error); // Re-throw to keep the modal open if failed
+      }
+    } catch (err: any) {
+      console.error('❌ Error:', err);
+      if (err.message) throw err; // Propagate to stop modal close
+    }
+  };
 
 
 
@@ -118,40 +218,33 @@ export const SuperAdminContainer = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-20">
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[color:var(--color-accent)] rounded-lg flex items-center justify-center shadow-lg shadow-purple-200">
-              <LayoutDashboard className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight">Super Admin Panel</h1>
-          </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 px-4 py-2 !bg-white !text-error border !border-error/20 hover:!bg-error hover:!text-white rounded-xl text-sm font-bold transition-all group !shadow-none"
-          >
-            <LogOut className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-            <span className="hidden sm:inline">Cerrar Sesión</span>
-          </button>
-        </div>
+    <div className="flex flex-col items-center min-h-screen py-4 sm:py-8 px-3 sm:px-4 bg-white">
+      {/* Premium Header */}
+      <header className="w-full max-w-[900px] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-8 px-1 sm:px-2">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[color:var(--color-accent)]">
+          Panel Admin de Assessment
+        </h1>
+        <Button
+          onClick={logout}
+          variant="error"
+          className="group"
+        >
+          <span className="text-base">Cerrar Sesión</span>
+          <LogOut className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
+        </Button>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="w-full max-w-[900px] px-1 sm:px-2">
         {dataLoading && assessments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Spinner size="lg" color="custom" customColor="var(--color-accent)" />
             <p className="text-gray-400 mt-4 font-medium">Sincronizando base de datos...</p>
           </div>
         ) : (
-          <>
-            <SuperAdminToolbar 
+          <div className="space-y-12 pb-20">
+            <SuperAdminToolbar
               onBulkAssessments={() => openBulkAssessmentPreview(assessmentActivo)}
-              onBulkAdmins={openBulkAdminPreview}
-              onExportAdmins={() => handleExportAdminsCSV(admins)}
               loadingBulkAssessments={actionLoading}
-              loadingBulkAdmins={actionLoading}
               assessmentSearch={assessmentSearch}
               setAssessmentSearch={setAssessmentSearch}
               assessmentFilter={assessmentFilter}
@@ -160,68 +253,79 @@ export const SuperAdminContainer = () => {
               setAssessmentGroupFilter={setAssessmentGroupFilter}
               assessmentYearFilter={assessmentYearFilter}
               setAssessmentYearFilter={setAssessmentYearFilter}
-              adminSearch={adminSearch}
-              setAdminSearch={setAdminSearch}
-              adminFilter={adminFilter}
-              setAdminFilter={setAdminFilter}
-              adminGroupFilter={adminGroupFilter}
-              setAdminGroupFilter={setAdminGroupFilter}
-              adminYearFilter={adminYearFilter}
-              setAdminYearFilter={setAdminYearFilter}
               uniqueGroups={uniqueGroups}
               uniqueYears={uniqueYears}
               gruposEstudiantiles={gruposEstudiantiles}
             />
 
             {/* Assessments Section */}
-            <section className="mb-12">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
-                  Assessments
-                  <span className="text-sm font-bold bg-gray-100 text-gray-500 px-3 py-1 rounded-full">{paginatedAssessments.length}</span>
-                </h2>
+            <section
+              className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm ring-1 ring-gray-100"
+            >
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Gestión de Assessments</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Crea, actualiza o elimina assessments y sus administradores.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => {
+                        setEditingAssessment(null);
+                        setIsModalOpen(true);
+                    }}
+                    variant="accent"
+                    className="h-[42px]"
+                  >
+                    <PlusCircle className="w-5 h-5 mr-2" />
+                    Crear Assessment
+                  </Button>
+                  <Button
+                    onClick={() => fetchData()}
+                    variant="secondary"
+                    className="h-[42px] min-w-[42px] px-2"
+                  >
+                    <RefreshCw className="w-5 h-5" />
+                  </Button>
+                </div>
               </div>
-              <AssessmentList 
+
+              <AssessmentList
                 assessments={paginatedAssessments}
                 gruposEstudiantiles={gruposEstudiantiles}
+                admins={admins}
                 assessmentEdits={assessmentEdits}
                 setAssessmentEdits={setAssessmentEdits}
                 onUpdate={handleUpdateAssessment}
+                openEditModal={(assessment) => {
+                   setEditingAssessment(assessment);
+                   setIsModalOpen(true);
+                }}
                 loading={actionLoading}
+                handleSwitchAssessment={async (id) => {
+                  try {
+                    const response = await fetch('/api/auth/switch-assessment', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ assessmentId: id }),
+                    });
+                    if (response.ok) router.push('/admin');
+                    else showToast.error('Error al cambiar de assessment');
+                  } catch {
+                    showToast.error('Error al cambiar de assessment');
+                  }
+                }}
               />
-              <div className="mt-6 flex justify-center">
-                <Pagination 
+              <div className="mt-8 flex justify-center">
+                <Pagination
                   currentPage={assessmentPage}
                   totalPages={totalAssessmentPages}
                   setCurrentPage={setAssessmentPage}
                 />
               </div>
             </section>
-
-            {/* Admins Section */}
-            <section>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
-                  Administradores
-                  <span className="text-sm font-bold bg-gray-100 text-gray-500 px-3 py-1 rounded-full">{paginatedAdmins.length}</span>
-                </h2>
-              </div>
-              <AdminUserList 
-                admins={paginatedAdmins}
-                adminEdits={adminEdits}
-                setAdminEdits={setAdminEdits}
-                onUpdate={handleUpdateAdmin}
-                loading={actionLoading}
-              />
-              <div className="mt-6 flex justify-center">
-                <Pagination 
-                  currentPage={adminPage}
-                  totalPages={totalAdminPages}
-                  setCurrentPage={setAdminPage}
-                />
-              </div>
-            </section>
-          </>
+          </div>
         )}
       </main>
 
@@ -235,6 +339,20 @@ export const SuperAdminContainer = () => {
           onCancel={() => setMassAction(null)}
         />
       )}
+
+      <AssessmentModal 
+         isOpen={isModalOpen}
+         onClose={() => setIsModalOpen(false)}
+         title={editingAssessment ? "Editar Assessment" : "Crear Assessment"}
+         isEdit={!!editingAssessment}
+         gruposEstudiantiles={gruposEstudiantiles}
+         allAdmins={admins}
+         activeAssessmentsByGroup={activeAssessmentsByGroup}
+         initialAssessment={editingAssessment}
+         onSave={handleSaveModal}
+         onDelete={handleDeleteModal}
+      />
     </div>
   );
 };
+
