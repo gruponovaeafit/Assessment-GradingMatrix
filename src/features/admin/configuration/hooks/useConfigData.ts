@@ -10,14 +10,14 @@ export function useConfigData(logout: () => void) {
   const [error, setError] = useState<string | null>(null);
   const fetchAbortRef = useRef<AbortController | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (silent = false) => {
     if (fetchAbortRef.current) {
       fetchAbortRef.current.abort();
     }
     const controller = new AbortController();
     fetchAbortRef.current = controller;
 
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const response = await authFetch(

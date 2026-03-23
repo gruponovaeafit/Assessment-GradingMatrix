@@ -14,7 +14,6 @@ import { type Calificacion } from './schemas/configSchemas';
 
 // Componentes de Feature
 import { RegisterStaffForm } from './components/RegisterStaffForm';
-import { AssignGroupForm } from './components/AssignGroupForm';
 import { ParticipantFiltersBar } from './components/ParticipantFiltersBar';
 import { ParticipantGrid } from './components/ParticipantGrid';
 import { ParticipantPagination } from './components/ParticipantPagination';
@@ -30,6 +29,7 @@ import { Spinner, BrandedLoading } from '@/components/UI/Loading';
 export const ConfigContainer = () => {
   const {
     isAdmin,
+    assessmentId,
     isLoading: authLoading,
     logout,
   } = useAdminAuth();
@@ -44,10 +44,7 @@ export const ConfigContainer = () => {
   const [editModal, setEditModal] = useState<Calificacion | null>(null);
   const [originalData, setOriginalData] = useState<Calificacion | null>(null);
   
-  const [selectedParticipant, setSelectedParticipant] = useState<string>("");
-  const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [creatingStaff, setCreatingStaff] = useState(false);
-  const [assigningGroup, setAssigningGroup] = useState(false);
   const [autoGroupCount, setAutoGroupCount] = useState("");
   const [autoGrouping, setAutoGrouping] = useState(false);
   const [staffCorreo, setStaffCorreo] = useState("");
@@ -204,41 +201,6 @@ export const ConfigContainer = () => {
     }
   };
 
-  const handleAssignGroup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedParticipant || !selectedGroup) {
-      showToast.error('Selecciona participante y grupo');
-      return;
-    }
-
-    try {
-      setAssigningGroup(true);
-      const response = await authFetch(
-        '/api/participante/assign-group',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            participanteId: Number(selectedParticipant),
-            grupoAssessmentId: Number(selectedGroup),
-          }),
-        },
-        () => logout()
-      );
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Error al asignar participante');
-
-      showToast.success('Participante asignado al grupo');
-      setSelectedParticipant('');
-      setSelectedGroup('');
-    } catch (err: unknown) {
-      showToast.error(err instanceof Error ? err.message : 'Error al asignar participante');
-    } finally {
-      setAssigningGroup(false);
-    }
-  };
-
   const handleAutoGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     const numGroups = Number(autoGroupCount);
@@ -324,17 +286,6 @@ export const ConfigContainer = () => {
         onSubmit={handleCreateStaff}
       />
 
-      <AssignGroupForm
-        selectedParticipant={selectedParticipant}
-        setSelectedParticipant={setSelectedParticipant}
-        selectedGroup={selectedGroup}
-        setSelectedGroup={setSelectedGroup}
-        participants={participants}
-        groups={groups}
-        assigningGroup={assigningGroup}
-        onSubmit={handleAssignGroup}
-      />
-
       {/* Ajustes de grupo Section */}
       <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
         <Box className="p-4">
@@ -396,7 +347,12 @@ export const ConfigContainer = () => {
       >
         <EditGroupsForm
           groups={groups}
-          onRefresh={loadParticipantsAndGroups}
+          participants={participants}
+          assessmentId={assessmentId || 0}
+          onRefresh={async () => {
+            await fetchData(true); // Silent refresh
+            await loadParticipantsAndGroups(true); // Silent refresh
+          }}
           logout={logout}
         />
       </DropdownOverlay>

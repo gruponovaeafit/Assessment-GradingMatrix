@@ -21,6 +21,8 @@ export const ParticipantSchema = z.object({
   id: z.number(),
   nombre: z.string(),
   correo: z.string().email(),
+  grupoId: z.number().nullable().optional(),
+  isImpostor: z.boolean().optional(),
 });
 
 export const GroupSchema = z.object({

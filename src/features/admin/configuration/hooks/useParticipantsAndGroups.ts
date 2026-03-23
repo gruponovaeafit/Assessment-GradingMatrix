@@ -8,8 +8,8 @@ export function useParticipantsAndGroups(logout: () => void) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const loadParticipantsAndGroups = useCallback(async () => {
-    setLoading(true);
+  const loadParticipantsAndGroups = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [participantsRes, groupsRes] = await Promise.all([
         authFetch(

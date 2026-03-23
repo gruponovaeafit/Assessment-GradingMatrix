@@ -1,28 +1,33 @@
 import React, { useState } from 'react';
-import { type Group } from '../schemas/configSchemas';
+import { type Group, type Participant } from '../schemas/configSchemas';
 import { authFetch } from '@/lib/auth/authFetch';
 import { showToast } from '@/components/UI/Toast';
 import { Spinner } from '@/components/UI/Loading';
+import { Trash2, UserMinus, UserPlus, MoveHorizontal, Ghost } from 'lucide-react';
 
 interface EditGroupsFormProps {
   groups: Group[];
+  participants: Participant[];
+  assessmentId: number;
   onRefresh: () => void;
   logout: () => void;
 }
 
 export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
   groups,
+  participants,
+  assessmentId,
   onRefresh,
   logout,
 }) => {
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [processingId, setProcessingId] = useState<string | number | null>(null);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este grupo? Los participantes y staff asignados quedarán sin grupo.')) {
+  const handleDeleteGroup = async (id: number) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este grupo? Los participantes quedarán sin grupo.')) {
       return;
     }
 
-    setDeletingId(id);
+    setProcessingId(`group-${id}`);
     try {
       const response = await authFetch(
         '/api/assessment/delete-group',
@@ -44,55 +49,163 @@ export const EditGroupsForm: React.FC<EditGroupsFormProps> = ({
     } catch (err) {
       showToast.error('Error de red al eliminar grupo');
     } finally {
-      setDeletingId(null);
+      setProcessingId(null);
     }
   };
 
+  const handleMoveParticipant = async (participantId: number, newGroupId: number | null) => {
+    setProcessingId(`part-${participantId}`);
+    try {
+      const response = await authFetch(
+        '/api/participante/assign-group',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            assessmentId,
+            participanteId: participantId,
+            grupoAssessmentId: newGroupId,
+          }),
+        },
+        () => logout()
+      );
+
+      if (response.ok) {
+        showToast.success('Cambio realizado');
+        onRefresh();
+      } else {
+        const result = await response.json();
+        showToast.error(result.error || 'Error al mover participante');
+      }
+    } catch (err) {
+      showToast.error('Error de red al mover participante');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // Organizar participantes por grupo
+  const participantsByGroup = groups.reduce((acc, group) => {
+    acc[group.id] = participants.filter(p => p.grupoId === group.id);
+    return acc;
+  }, {} as Record<number, Participant[]>);
+
+  const unassignedParticipants = participants.filter(p => !p.grupoId);
+
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500 mb-2">
-        Lista de grupos actuales en este assessment. Eliminar un grupo desvinculará a sus integrantes.
-      </p>
-      
-      {groups.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 rounded-xl text-gray-400">
-          No hay grupos creados
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-2">
-          {groups.map((group) => (
-            <div 
-              key={group.id} 
-              className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-purple-200 transition group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center font-bold">
-                  {group.nombre.charAt(0).toUpperCase()}
+    <div className="space-y-6">
+      {/* Sección de Participantes sin Grupo */}
+      <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
+        <h3 className="text-sm font-bold text-orange-800 mb-3 flex items-center gap-2">
+          <UserPlus className="w-4 h-4" />
+          Participantes sin grupo ({unassignedParticipants.length})
+        </h3>
+        {unassignedParticipants.length === 0 ? (
+          <p className="text-xs text-orange-600 italic">Todos los participantes tienen grupo.</p>
+        ) : (
+          <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+            {unassignedParticipants.map(p => (
+              <div key={p.id} className="flex items-center justify-between bg-white p-2 rounded-lg border border-orange-200 text-xs">
+                <div className="flex items-center gap-2 truncate mr-2">
+                  <span className="font-bold text-gray-900 truncate max-w-[150px]">{p.nombre}</span>
+                  {p.isImpostor && (
+                    <span title="Impostor">
+                      <Ghost className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" />
+                    </span>
+                  )}
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{group.nombre}</h3>
-                  <p className="text-xs text-gray-500">ID: {group.id}</p>
+                <select 
+                  onChange={(e) => handleMoveParticipant(p.id, Number(e.target.value))}
+                  disabled={processingId === `part-${p.id}`}
+                  className="bg-orange-100 text-orange-800 border-none rounded px-2 py-1 font-bold outline-none focus:ring-1 focus:ring-orange-400"
+                  value=""
+                >
+                  <option value="" disabled>Asignar a...</option>
+                  {groups.map(g => (
+                    <option key={g.id} value={g.id}>{g.nombre}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Lista de Grupos */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-bold text-gray-700">Grupos Existentes</h3>
+        {groups.length === 0 ? (
+          <div className="text-center py-8 bg-gray-50 rounded-xl text-gray-400 text-sm">
+            No hay grupos creados. Usa "Crear y sortear".
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {groups.map((group) => (
+              <div 
+                key={group.id} 
+                className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm"
+              >
+                {/* Header del Grupo */}
+                <div className="flex items-center justify-between p-3 bg-gray-50 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-purple-600 text-white rounded-lg flex items-center justify-center font-bold text-xs">
+                      {group.nombre.match(/\d+/)?.[0] || group.nombre.charAt(0)}
+                    </div>
+                    <span className="font-bold text-gray-900">{group.nombre}</span>
+                    <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">
+                      {participantsByGroup[group.id]?.length || 0} integrantes
+                    </span>
+                  </div>
+                  
+                  <button
+                    onClick={() => handleDeleteGroup(group.id)}
+                    disabled={processingId === `group-${group.id}`}
+                    className="p-1.5 text-gray-400 hover:text-red-500 transition"
+                    title="Eliminar grupo"
+                  >
+                    {processingId === `group-${group.id}` ? <Spinner size="sm" /> : <Trash2 className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {/* Lista de Integrantes */}
+                <div className="p-3 space-y-2">
+                  {(participantsByGroup[group.id] || []).length === 0 ? (
+                    <p className="text-[10px] text-gray-400 italic text-center py-2">Sin integrantes</p>
+                  ) : (
+                    participantsByGroup[group.id].map(p => (
+                      <div key={p.id} className="flex items-center justify-between group/item">
+                        <div className="flex items-center gap-2 truncate mr-2">
+                          <span className="text-xs font-semibold text-gray-900 truncate max-w-[180px]">{p.nombre}</span>
+                          {p.isImpostor && (
+                            <span title="Impostor">
+                              <Ghost className="w-3 h-3 text-purple-400 flex-shrink-0" />
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                          <select 
+                            onChange={(e) => handleMoveParticipant(p.id, e.target.value === "none" ? null : Number(e.target.value))}
+                            disabled={processingId === `part-${p.id}`}
+                            className="text-[10px] bg-gray-100 hover:bg-purple-100 text-gray-600 border-none rounded px-1.5 py-0.5 outline-none"
+                            value={group.id}
+                          >
+                            <option value="none">Desvincular</option>
+                            <optgroup label="Mover a...">
+                              {groups.filter(g => g.id !== group.id).map(g => (
+                                <option key={g.id} value={g.id}>{g.nombre}</option>
+                              ))}
+                            </optgroup>
+                          </select>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
-              
-              <button
-                onClick={() => handleDelete(group.id)}
-                disabled={deletingId === group.id}
-                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
-                title="Eliminar grupo"
-              >
-                {deletingId === group.id ? (
-                  <Spinner size="sm" />
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
