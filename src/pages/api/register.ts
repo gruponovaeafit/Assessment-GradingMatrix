@@ -68,8 +68,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const nombre = fields.nombre?.toString().trim();
     const correo = fields.correo?.toString().trim();
 
-    if (!nombre || !correo || !file?.filepath) {
-      return res.status(400).json({ error: 'Nombre, correo e imagen son obligatorios' });
+    if (!nombre || !correo) {
+      return res.status(400).json({ error: 'Nombre y correo son obligatorios' });
     }
 
     // Resolver ID_Assessment según rol
@@ -88,43 +88,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    // Procesar imagen solo si fue enviada
+    let photoStoragePath: string | null = null;
+    let optimizedBuffer: Buffer | null = null;
 
-    if (!ALLOWED_MIME_TYPES.has(file.mimetype || '')) {
-      return res.status(400).json({ error: 'Formato de imagen no permitido' });
-    }
+    if (file?.filepath) {
+      if (!ALLOWED_MIME_TYPES.has(file.mimetype || '')) {
+        return res.status(400).json({ error: 'Formato de imagen no permitido' });
+      }
 
-    if ((file.size || 0) > MAX_FILE_SIZE) {
-      return res.status(400).json({ error: 'La imagen supera el tamaño permitido' });
-    }
+      if ((file.size || 0) > MAX_FILE_SIZE) {
+        return res.status(400).json({ error: 'La imagen supera el tamaño permitido' });
+      }
 
-    tmpPath = file.filepath;
+      tmpPath = file.filepath;
 
-    // Guardar en buena calidad para que no se vean pixeladas al mostrarlas (512px, quality 82)
-    const optimizedBuffer = await sharp(tmpPath)
-      .resize(512, 512, { fit: 'cover' })
-      .webp({ quality: 82 })
-      .toBuffer();
+      // Guardar en buena calidad para que no se vean pixeladas al mostrarlas (512px, quality 82)
+      optimizedBuffer = await sharp(tmpPath)
+        .resize(512, 512, { fit: 'cover' })
+        .webp({ quality: 82 })
+        .toBuffer();
 
-    // 🗂️ Subir a Supabase Storage
-    const fileName = `participantes/${uuidv4()}.webp`;
+      // 🗂️ Subir a Supabase Storage
+      const fileName = `participantes/${uuidv4()}.webp`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('imagenes_participantes')
-      .upload(fileName, optimizedBuffer, {
-        contentType: 'image/webp',
-        upsert: false,
-      });
+      const { error: uploadError } = await supabase.storage
+        .from('imagenes_participantes')
+        .upload(fileName, optimizedBuffer, {
+          contentType: 'image/webp',
+          upsert: false,
+        });
 
-    if (uploadError) {
-      throw uploadError;
-    }
+      if (uploadError) {
+        throw uploadError;
+      }
 
-    // Guardar la ruta en Storage (path), no la URL pública. El dashboard generará URLs firmadas
+      // Guardar la ruta en Storage (path), no la URL pública. El dashboard generará URLs firmadas
     // para que las fotos carguen aunque el bucket sea privado.
-    const photoStoragePath = fileName;
+      photoStoragePath = fileName;
+    }
 
     // 🧠 Insertar en DB
-
     console.log(assessmentId);
 
     const { data: inserted, error: dbError } = await supabase
@@ -134,7 +138,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         Nombre_Participante: nombre,
         Correo_Participante: correo,
         Rol_Participante: '0',
-        FotoUrl_Participante: photoStoragePath,
+        FotoUrl_Participante: photoStoragePath, // null si no hay foto
       })
       .select('ID_Participante')
       .single();
@@ -149,7 +153,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       message: 'Persona registrada correctamente',
       id: inserted?.ID_Participante ?? null,
-      sizeKB: Math.round(optimizedBuffer.length / 1024),
+      sizeKB: optimizedBuffer ? Math.round(optimizedBuffer.length / 1024) : 0,
     });
 
   } catch (error) {

@@ -15,7 +15,7 @@ export interface UseRegisterFormReturn {
   successModalId: number | null;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   handleImageSelect: (file: File) => Promise<void>;
-  handleSubmit: (e: React.FormEvent) => Promise<void>;
+  handleSubmit: (e: React.FormEvent, onError?: (msg: string) => void) => Promise<void>;
   resetForm: () => void;
 }
 
@@ -42,9 +42,7 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
   // Clean up object URLs on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
-      if (photo) {
-        URL.revokeObjectURL(photo);
-      }
+      if (photo) URL.revokeObjectURL(photo);
     };
   }, [photo]);
 
@@ -69,11 +67,16 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
     setIsError(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, onError?: (msg: string) => void) => {
     e.preventDefault();
 
     if (!nombre || !correo) {
-      setMensaje('Por favor completa los campos obligatorios');
+      const msg = 'Recuerda llenar los campos de texto';
+      if (onError) {
+        onError(msg);
+      } else {
+        setMensaje(msg);
+      }
       setIsError(true);
       return;
     }
@@ -84,7 +87,6 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
       const formData = new FormData();
       formData.append('nombre', nombre);
       formData.append('correo', correo);
-
       if (imagen) {
         formData.append('image', imagen);
       }
@@ -101,12 +103,22 @@ export const useRegisterForm = (): UseRegisterFormReturn => {
         setIsError(false);
         setSuccessModalId(data.id ?? null);
       } else {
-        setMensaje(`❌ Error: ${data.error}`);
+        const msg = `Error: ${data.error}`;
+        if (onError) {
+          onError(msg);
+        } else {
+          setMensaje(msg);
+        }
         setIsError(true);
       }
     } catch (err) {
       console.error(err);
-      setMensaje('❌ Error al conectar con el servidor');
+      const msg = 'Error al conectar con el servidor';
+      if (onError) {
+        onError(msg);
+      } else {
+        setMensaje(msg);
+      }
       setIsError(true);
     } finally {
       setEnviando(false);
