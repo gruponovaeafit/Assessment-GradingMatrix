@@ -1,47 +1,24 @@
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/AuthContext";
 
+/**
+ * useGraderAuth - Consumer hook for grader-related auth state.
+ * Refactored to use centralized AuthContext.
+ */
 export const useGraderAuth = () => {
-  const [isGrader, setIsGrader] = useState<boolean | null>(null); // null = loading
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const { 
+    isGrader, 
+    isLoading, 
+    logout: originalLogout 
+  } = useAuth();
 
-  useEffect(() => {
-    let mounted = true;
-    const checkAuth = async () => {
-      try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          if (mounted) {
-            setIsGrader(data.role === "calificador");
-          }
-        } else if (mounted) {
-          setIsGrader(false);
-        }
-      } catch {
-        if (mounted) setIsGrader(false);
-      }
-      if (mounted) setIsLoading(false);
-    };
-
-    checkAuth();
-    return () => { mounted = false; };
-  }, []);
-
-  const loginAsGrader = useCallback(() => {
-    setIsGrader(true);
-  }, []);
-
-  const logout = useCallback(async () => {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
+  const logout = async () => {
     localStorage.removeItem("storedData");
-    setIsGrader(false);
-    router.push("/auth/login");
-  }, [router]);
+    await originalLogout();
+  };
 
-  return { isGrader, isLoading, loginAsGrader, logout };
+  return { 
+    isGrader, 
+    isLoading, 
+    logout 
+  };
 };
