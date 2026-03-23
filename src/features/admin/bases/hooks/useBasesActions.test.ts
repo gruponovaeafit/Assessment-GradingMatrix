@@ -128,7 +128,20 @@ describe('useBasesActions', () => {
     expect(notify).toHaveBeenCalledWith(expect.objectContaining({
       title: 'Base actualizada'
     }));
-    expect(mockSetBases).toHaveBeenCalled();
+    expect(mockSetBases).toHaveBeenCalledWith(expect.any(Function));
+    
+    // Verify state update function maps fields correctly
+    const stateUpdateFn = mockSetBases.mock.calls[0][0];
+    const updatedBases = stateUpdateFn(mockBases);
+    expect(updatedBases[0]).toEqual(expect.objectContaining({
+      Nombre_Base: 'Base 1 Edited',
+      Competencia_Base: 'Comp 1',
+      Descripcion_Base: 'Desc 1',
+      Comportamiento1_Base: 'C1',
+      Comportamiento2_Base: 'C2',
+      Comportamiento3_Base: 'C3',
+    }));
+    
     expect(result.current.showModal).toBe(false);
   });
 
@@ -189,6 +202,11 @@ describe('useBasesActions', () => {
     expect(notify).toHaveBeenCalledWith(expect.objectContaining({
       title: 'Base eliminada'
     }));
-    expect(mockSetBases).toHaveBeenCalled();
+    expect(mockSetBases).toHaveBeenCalledWith(expect.any(Function));
+    
+    // Verify state update function removes the correct base
+    const stateUpdateFn = mockSetBases.mock.calls[0][0];
+    const updatedBases = stateUpdateFn(mockBases);
+    expect(updatedBases).toHaveLength(0);
   });
 });

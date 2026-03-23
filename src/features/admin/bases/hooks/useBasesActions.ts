@@ -94,7 +94,15 @@ export const useBasesActions = ({ bases, setBases }: UseBasesActionsProps) => {
         setBases((prevBases) => 
           prevBases.map((b) => 
             b.ID_Base === editingBase.ID_Base 
-              ? { ...b, ...formData, Nombre_Base: formData.nombre } as Base
+              ? { 
+                  ...b, 
+                  Nombre_Base: formData.nombre,
+                  Competencia_Base: formData.competencia,
+                  Descripcion_Base: formData.descripcion,
+                  Comportamiento1_Base: formData.comportamiento1,
+                  Comportamiento2_Base: formData.comportamiento2,
+                  Comportamiento3_Base: formData.comportamiento3,
+                } 
               : b
           )
         );
