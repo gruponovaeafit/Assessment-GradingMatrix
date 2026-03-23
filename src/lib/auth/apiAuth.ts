@@ -32,7 +32,10 @@ export async function requireRoles(
     .eq('Token', token)
     .maybeSingle();
 
-  if (revokedError || revoked) {
+  if (revokedError) {
+    console.error('[requireRoles] Error verificando blacklist:', revokedError);
+    // Si la DB falla, permitimos el paso por defecto para evitar logouts falsos positivos
+  } else if (revoked) {
     console.warn('[requireRoles] Acceso denegado: Token revocado');
     res.status(401).json({ error: 'Sesión terminada' });
     return null;

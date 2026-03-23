@@ -71,14 +71,17 @@ export const ConfigContainer = () => {
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
-    fetchData();
-  }, [authLoading, isAdmin, fetchData]);
+    
+    const loadAllData = async () => {
+      await Promise.all([
+        fetchData(),
+        loadParticipantsAndGroups(),
+        loadBases()
+      ]);
+    };
 
-  useEffect(() => {
-    if (authLoading || !isAdmin) return;
-    loadParticipantsAndGroups();
-    loadBases();
-  }, [authLoading, isAdmin, loadParticipantsAndGroups, loadBases]);
+    loadAllData();
+  }, [authLoading, isAdmin, fetchData, loadParticipantsAndGroups, loadBases]);
 
   const filteredAndSortedData = useMemo(() => {
     const filtered = data.filter((item) => {

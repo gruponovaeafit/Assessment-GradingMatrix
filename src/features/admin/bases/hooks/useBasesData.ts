@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { authFetch } from '@/lib/auth/authFetch';
-import { showToast } from '@/components/UI/Toast';
-import { type Assessment, type Base } from '../schemas/basesSchemas';
+import { notify } from '@/components/UI/Notification';
+import { type Base } from '../schemas/basesSchemas';
 
 export const useBasesData = () => {
   const { isAdmin, isLoading: authLoading, logout } = useAdminAuth();
@@ -13,7 +13,10 @@ export const useBasesData = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Only fetch if authenticated and we have an assessmentId
     if (authLoading || !isAdmin) return;
+
+    let isMounted = true;
 
     const fetchBases = async () => {
       setLoading(true);
@@ -24,8 +27,10 @@ export const useBasesData = () => {
           () => logout()
         );
 
+        if (!isMounted) return;
+
         if (response.status === 401) {
-          router.push('/auth/login');
+          // logout() is already called by authFetch callback
           return;
         }
 
@@ -33,15 +38,28 @@ export const useBasesData = () => {
         const result = await response.json();
         setBases(result || []);
       } catch (err) {
-        console.error(err);
-        showToast.error('Error al cargar bases');
+        if (isMounted) {
+          console.error(err);
+          notify({
+            title: 'Error',
+            titleColor: 'var(--error)',
+            subtitle: 'Error al cargar bases',
+            subtitleColor: 'var(--color-muted)',
+            borderColor: 'var(--error)',
+            duration: 4000,
+          });
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchBases();
-  }, [authLoading, isAdmin, router, logout]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authLoading, isAdmin, logout]);
 
   return {
     bases,
