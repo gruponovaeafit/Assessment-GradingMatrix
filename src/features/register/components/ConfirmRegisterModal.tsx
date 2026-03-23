@@ -9,7 +9,8 @@ interface ConfirmRegisterModalProps {
   nombre: string;
   correo: string;
   photo: string;
-  onConfirm: () => void;
+  loading?: boolean;
+  onConfirm: (isImpostor: boolean) => void;
   onCancel: () => void;
 }
 
@@ -17,6 +18,7 @@ export const ConfirmRegisterModal: React.FC<ConfirmRegisterModalProps> = ({
   nombre,
   correo,
   photo,
+  loading = false,
   onConfirm,
   onCancel,
 }) => {
@@ -100,13 +102,16 @@ export const ConfirmRegisterModal: React.FC<ConfirmRegisterModalProps> = ({
               variant="error"
               className="flex-1 py-2 sm:py-3 text-sm sm:text-base lg:text-lg"
               onClick={onCancel}
+              disabled={loading}
             >
               Cancelar
             </Button>
             <Button
               variant="accent"
               className="flex-1 py-2 sm:py-3 text-sm sm:text-base lg:text-lg"
-              onClick={onConfirm}
+              onClick={() => onConfirm(isImpostor)}
+              loading={loading}
+              disabled={loading}
             >
               Confirmar
             </Button>

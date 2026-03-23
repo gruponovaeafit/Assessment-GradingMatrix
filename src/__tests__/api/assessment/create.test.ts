@@ -148,6 +148,6 @@ describe('POST /api/assessment/create', () => {
     const res = createMockRes();
     await handler(req, res);
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Error al crear assessment' });
+    expect(res.json).toHaveBeenCalledWith({ error: 'DB error' });
   });
 });
