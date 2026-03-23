@@ -1,4 +1,8 @@
 import React from 'react';
+import { Box } from '@/components/UI/Box';
+import { Button } from '@/components/UI/Button';
+import { InputBox } from '@/components/UI/InputBox';
+import { notify } from '@/components/UI/Notification';
 import { type Base, type BaseFormData } from '../schemas/basesSchemas';
 
 interface BaseModalProps {
@@ -20,127 +24,157 @@ export const BaseModal: React.FC<BaseModalProps> = ({
 }) => {
   if (!showModal) return null;
 
+  const isEditing = !!editingBase;
+
+  const handleCancel = () => {
+    notify({
+      title: isEditing ? 'Edicion cancelada' : 'Creacion cancelada',
+      titleColor: 'var(--error)',
+      subtitle: isEditing
+        ? 'Se cancelo la edicion de la base'
+        : 'Se cancelo la creacion de la base',
+      subtitleColor: 'var(--color-muted)',
+      borderColor: 'var(--error)',
+      duration: 3000,
+    });
+    onClose();
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const camposObligatorios = [
+      formData.nombre,
+      formData.descripcion,
+      formData.competencia,
+      formData.comportamiento1,
+      formData.comportamiento2,
+      formData.comportamiento3,
+      ...(!isEditing ? [formData.numeroBase] : []),
+    ];
+
+    if (camposObligatorios.some((campo) => !campo?.trim())) {
+      notify({
+        title: 'Campos incompletos',
+        titleColor: 'var(--error)',
+        subtitle: 'Todos los campos son obligatorios',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 3000,
+      });
+      return;
+    }
+
+    onSubmit(e);
+    notify({
+      title: isEditing ? 'Base editada' : 'Base creada',
+      titleColor: 'var(--color-accent)',
+      subtitle: isEditing
+        ? 'Se confirmo la edicion de la base correctamente'
+        : 'Se confirmo la creacion de la base correctamente',
+      subtitleColor: 'var(--color-muted)',
+      borderColor: 'var(--color-accent)',
+      duration: 3000,
+    });
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4 text-gray-900">
-          {editingBase ? 'Editar Base' : 'Crear Nueva Base'}
-        </h2>
+      <Box className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          {!editingBase && (
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">
-                Número de Base *
-              </label>
-              <input
-                type="number"
-                required
-                min="1"
-                value={formData.numeroBase}
-                onChange={(e) => setFormData({ ...formData, numeroBase: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg bg-white text-gray-900 border border-gray-300"
-                placeholder="Ej: 1"
-              />
-            </div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-900">
+            {isEditing ? 'Editar Base' : 'Crear Nueva Base'}
+          </h2>
+          <Button variant="error" onClick={handleCancel} className="!px-3 !py-1 text-base font-bold">
+            X
+          </Button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {!isEditing && (
+            <InputBox
+              label="Numero de Base"
+              type="number"
+              value={formData.numeroBase}
+              onChange={(e) => {
+                if (e.target.value.length <= 2) {
+                  setFormData({ ...formData, numeroBase: e.target.value });
+                }
+              }}
+              placeholder="Ej: 1"
+              maxLength={2}
+            />
           )}
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-1">
-              Nombre de la Base *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.nombre}
-              onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-              className="w-full px-4 py-2 rounded-lg bg-white text-gray-900 border border-gray-300"
-              placeholder="Ej: Liderazgo Transformacional"
-            />
-          </div>
+          <InputBox
+            label="Nombre de la Base"
+            type="text"
+            value={formData.nombre}
+            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+            placeholder="Inserte el nombre de la base"
+            maxLength={100}
+          />
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-1">
-              Competencia *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.competencia}
-              onChange={(e) => setFormData({ ...formData, competencia: e.target.value })}
-              className="w-full px-4 py-2 rounded-lg bg-white text-gray-900 border border-gray-300"
-              placeholder="Ej: Liderazgo"
-            />
-          </div>
+          <InputBox
+            label="Descripcion"
+            type="textarea"
+            rows={3}
+            value={formData.descripcion}
+            onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+            placeholder="Inserte pequeña descripcion de la base (Visible para calificadores)"
+            maxLength={500}
+          />
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-1">
-              Descripción *
-            </label>
-            <textarea
-              required
-              rows={3}
-              value={formData.descripcion}
-              onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-              className="w-full px-4 py-2 rounded-lg bg-white text-gray-900 border border-gray-300"
-              placeholder="Describe la competencia a evaluar"
-            />
-          </div>
+          <InputBox
+            label="Competencia"
+            type="text"
+            value={formData.competencia}
+            onChange={(e) => setFormData({ ...formData, competencia: e.target.value })}
+            placeholder="Competencia general a evaluar"
+            maxLength={500}
+          />
 
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-gray-900">Comportamientos *</p>
+          <InputBox
+            label="Comportamiento 1"
+            type="textarea"
+            rows={2}
+            value={formData.comportamiento1}
+            onChange={(e) => setFormData({ ...formData, comportamiento1: e.target.value })}
+            placeholder="Primer comportamiento a evaluar"
+            maxLength={500}
+          />
 
-            <div>
-              <label className="block text-xs text-gray-600 mb-1">Comportamiento 1</label>
-              <textarea
-                required
-                rows={2}
-                value={formData.comportamiento1}
-                onChange={(e) => setFormData({ ...formData, comportamiento1: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
-              />
-            </div>
+          <InputBox
+            label="Comportamiento 2"
+            type="textarea"
+            rows={2}
+            value={formData.comportamiento2}
+            onChange={(e) => setFormData({ ...formData, comportamiento2: e.target.value })}
+            placeholder="Segundo comportamiento a evaluar"
+            maxLength={500}
+          />
 
-            <div>
-              <label className="block text-xs text-gray-600 mb-1">Comportamiento 2</label>
-              <textarea
-                required
-                rows={2}
-                value={formData.comportamiento2}
-                onChange={(e) => setFormData({ ...formData, comportamiento2: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
-              />
-            </div>
+          <InputBox
+            label="Comportamiento 3"
+            type="textarea"
+            rows={2}
+            value={formData.comportamiento3}
+            onChange={(e) => setFormData({ ...formData, comportamiento3: e.target.value })}
+            placeholder="Tercer comportamiento a evaluar"
+            maxLength={500}
+          />
 
-            <div>
-              <label className="block text-xs text-gray-600 mb-1">Comportamiento 3</label>
-              <textarea
-                required
-                rows={2}
-                value={formData.comportamiento3}
-                onChange={(e) => setFormData({ ...formData, comportamiento3: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg bg-white text-gray-900 border border-gray-300 text-sm"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-gray-200 text-gray-900 hover:bg-gray-300 transition"
-            >
+          <div className="flex gap-3 pt-4">
+            <Button variant="error" type="button" onClick={handleCancel} className="flex-1">
               Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-lg bg-[color:var(--color-accent)] hover:bg-[#5B21B6] text-white transition"
-            >
-              {editingBase ? 'Guardar Cambios' : 'Crear Base'}
-            </button>
+            </Button>
+            <Button variant="accent" type="submit" className="flex-1">
+              {isEditing ? 'Editar Base' : 'Crear Base'}
+            </Button>
           </div>
         </form>
-      </div>
+      </Box>
     </div>
   );
 };

@@ -1,27 +1,27 @@
 import React from 'react';
+import Image from 'next/image';
+import { Button } from '@/components/UI/Button';
 
 interface BasesHeaderProps {
-  onBack: () => void;
+  onAdmin: () => void;
   onLogout: () => void;
 }
 
-export const BasesHeader: React.FC<BasesHeaderProps> = ({ onBack, onLogout }) => {
+export const BasesHeader: React.FC<BasesHeaderProps> = ({ onAdmin, onLogout }) => {
   return (
     <div className="w-full max-w-[1200px] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 px-1 sm:px-2">
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Gestión de Bases</h1>
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-[color:var(--color-accent)]">
+        Gestión de Bases
+      </h1>
       <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
-        <button
-          onClick={onBack}
-          className="bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-2 rounded-lg text-sm font-medium transition"
-        >
-          Volver a Config
-        </button>
-        <button
-          onClick={onLogout}
-          className="bg-error hover:bg-error-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-        >
+        <Button variant="accent" onClick={onAdmin}>
+          <Image src="/HomeIcon.svg" alt="" width={18} height={18} className="mr-2" />
+          Menú principal
+        </Button>
+        <Button variant="error" onClick={onLogout}>
+          <Image src="/LogoutIcon.svg" alt="" width={18} height={18} className="mr-2" />
           Cerrar Sesión
-        </button>
+        </Button>
       </div>
     </div>
   );
