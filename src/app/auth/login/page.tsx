@@ -2,16 +2,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStoredId } from "@/hooks/useStoredId";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { useGraderAuth } from "@/hooks/useGraderAuth";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { Box } from "@/components/UI/Box";
 import { InputBox } from "@/components/UI/InputBox";
 import { Button } from "@/components/UI/Button";
 
 export default function Login() {
   const { saveData } = useStoredId();
-  const { loginAsAdmin } = useAdminAuth();
-  const { loginAsGrader } = useGraderAuth();
+  const { login } = useAuth();
 
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -40,13 +38,32 @@ export default function Login() {
 
       if (data.role === "admin") {
         const isSuper = Boolean(data.superAdmin);
-        loginAsAdmin(isSuper);
+        login({
+          id: data.ID_Calificador || 0,
+          email: email,
+          role: "admin",
+          isSuperAdmin: isSuper,
+          assessmentId: data.assessmentId || null,
+        });
         router.push(isSuper ? "/super-admin" : "/admin");
       } else if (data.role === "registrador") {
+        login({
+          id: data.ID_Calificador,
+          email: email,
+          role: "registrador",
+          isSuperAdmin: false,
+          assessmentId: data.assessmentId || null,
+        });
         router.push("/register");
       } else if (data.role === "calificador") {
         saveData(data.ID_Grupo, data.ID_Calificador, data.ID_Base);
-        loginAsGrader();
+        login({
+          id: data.ID_Calificador,
+          email: email,
+          role: "calificador",
+          isSuperAdmin: false,
+          assessmentId: data.assessmentId || null,
+        });
         router.push(`/grader`);
       } else {
         router.push("/dashboard");
