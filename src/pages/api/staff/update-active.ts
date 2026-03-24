@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
 import { getAuthorizedAssessmentId } from '@/lib/assessment';
+import { logAudit, AuditActions, getClientIP } from '@/lib/utils/audit';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'PUT') {
@@ -15,6 +16,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!authorizedAssessmentId) return;
 
   const { id, active, role, correo } = req.body;
+  const ip = getClientIP(req);
+  const userAgent = req.headers['user-agent'] || 'unknown';
 
   if (!id) {
     return res.status(400).json({ error: 'ID es obligatorio' });
@@ -33,6 +36,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .eq('ID_Assessment', authorizedAssessmentId);
 
     if (error) throw new Error(error.message);
+
+    // 📝 Log Audit: Staff Updated
+    await logAudit({
+        accion: AuditActions.STAFF_UPDATED,
+        usuario_id: user.id,
+        usuario_email: user.email,
+        detalles: { 
+          targetStaffId: id,
+          assessmentId: authorizedAssessmentId,
+          changes: updateData 
+        },
+        ip,
+        user_agent: userAgent
+    });
 
     return res.status(200).json({ message: 'Staff actualizado correctamente' });
   } catch (error: any) {

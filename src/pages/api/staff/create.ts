@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase/server';
 import { hashPassword } from '@/lib/auth';
 import { requireRoles } from '@/lib/auth/apiAuth';
 import { getAuthorizedAssessmentId } from '@/lib/assessment';
+import { logAudit, AuditActions, getClientIP } from '@/lib/utils/audit';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -13,6 +14,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return;
 
   const { correo, password, rol, idBase } = req.body;
+  const ip = getClientIP(req);
+  const userAgent = req.headers['user-agent'] || 'unknown';
 
   const assessmentId = getAuthorizedAssessmentId(user, res);
   if (!assessmentId) return;
@@ -45,8 +48,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ID_Base: idBase ? Number(idBase) : null,
     };
 
-    console.log('Intentando insertar en Staff:', staffData);
-
     const { data, error } = await supabase
       .from('Staff')
       .insert(staffData)
@@ -64,6 +65,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!data) {
       throw new Error('No se pudo crear el staff');
     }
+
+    // 📝 Log Audit: Staff Created
+    await logAudit({
+      accion: AuditActions.STAFF_CREATED,
+      usuario_id: user.id,
+      usuario_email: user.email,
+      detalles: { 
+        targetEmail: correo, 
+        role: rol, 
+        assessmentId, 
+        staffId: data.ID_Staff,
+        baseId: idBase || null
+      },
+      ip,
+      user_agent: userAgent
+    });
 
     res.status(200).json({ message: 'Staff registrado', ID_Staff: data.ID_Staff });
   } catch (error) {

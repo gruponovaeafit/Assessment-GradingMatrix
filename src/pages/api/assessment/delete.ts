@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { logAudit, AuditActions, getClientIP } from '@/lib/utils/audit';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'DELETE') {
@@ -14,6 +15,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { id, password } = req.body;
+  const ip = getClientIP(req);
+  const userAgent = req.headers['user-agent'] || 'unknown';
 
   if (!id || Number.isNaN(Number(id))) {
     return res.status(400).json({ error: 'ID de Assessment inválido' });
@@ -27,12 +30,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (password !== deleteSecret) {
+    // 📝 Log Audit: Failed Assessment Deletion (Wrong password)
+    await logAudit({
+      accion: 'FAILED_ASSESSMENT_DELETION',
+      usuario_id: user.id,
+      usuario_email: user.email,
+      detalles: { assessmentId: Number(id), reason: 'Contraseña de borrado incorrecta' },
+      ip,
+      user_agent: userAgent
+    });
     return res.status(401).json({ error: 'Contraseña de borrado incorrecta' });
   }
 
   const assessmentId = Number(id);
 
   try {
+    // Get Assessment info before deletion for logging
+    const { data: assessmentInfo } = await supabase
+      .from('Assessment')
+      .select('Nombre_Assessment')
+      .eq('ID_Assessment', assessmentId)
+      .single();
+
     // 1. Calificaciones (references Staff, Bases, Participante, Assessment)
     const { error: e1 } = await supabase
       .from('CalificacionesPorPersona')
@@ -74,6 +93,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .delete()
       .eq('ID_Assessment', assessmentId);
     if (e6) throw new Error(`Error borrando assessment: ${e6.message}`);
+
+    // 📝 Log Audit: Assessment Deleted
+    await logAudit({
+        accion: AuditActions.ASSESSMENT_DELETED,
+        usuario_id: user.id,
+        usuario_email: user.email,
+        detalles: { 
+          assessmentId, 
+          assessmentName: assessmentInfo?.Nombre_Assessment || 'Desconocido'
+        },
+        ip,
+        user_agent: userAgent
+    });
 
     res.status(200).json({ message: 'Assessment y todos sus datos eliminados con éxito' });
   } catch (error: any) {
