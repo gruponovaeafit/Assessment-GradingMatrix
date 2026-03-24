@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { Button } from '@/components/UI/Button';
-import { notify } from '@/components/UI/Notification';
 
 interface DropdownOverlayProps {
   isOpen: boolean;
@@ -11,8 +10,6 @@ interface DropdownOverlayProps {
   confirmLabel?: string;
   confirmDisabled?: boolean;
   wide?: boolean;
-  cancelNotifyTitle?: string;
-  cancelNotifySubtitle?: string;
 }
 
 export const DropdownOverlay: React.FC<DropdownOverlayProps> = ({
@@ -24,12 +21,12 @@ export const DropdownOverlay: React.FC<DropdownOverlayProps> = ({
   confirmLabel = "Confirmar",
   confirmDisabled = false,
   wide = false,
-  cancelNotifyTitle = "Accion cancelada",
-  cancelNotifySubtitle = "No se realizaron cambios",
 }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
@@ -38,18 +35,6 @@ export const DropdownOverlay: React.FC<DropdownOverlayProps> = ({
 
   if (!isOpen) return null;
 
-  const handleCancel = () => {
-    notify({
-      title: cancelNotifyTitle,
-      titleColor: 'var(--error)',
-      subtitle: cancelNotifySubtitle,
-      subtitleColor: 'var(--color-muted)',
-      borderColor: 'var(--error)',
-      duration: 3000,
-    });
-    onClose();
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div className={`relative w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]`}>
@@ -57,7 +42,7 @@ export const DropdownOverlay: React.FC<DropdownOverlayProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-          <Button variant="error" onClick={handleCancel} className="!px-3 !py-1 text-base font-bold">
+          <Button variant="error" onClick={onClose} className="!px-3 !py-1 text-base font-bold">
             X
           </Button>
         </div>
@@ -69,7 +54,7 @@ export const DropdownOverlay: React.FC<DropdownOverlayProps> = ({
 
         {/* Footer — siempre visible */}
         <div className="p-6 border-t border-gray-100 flex gap-4">
-          <Button variant="error" onClick={handleCancel} className="flex-1">
+          <Button variant="error" onClick={onClose} className="flex-1">
             Cancelar
           </Button>
           {onConfirm && (

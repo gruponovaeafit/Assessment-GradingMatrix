@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
 import { getAuthorizedAssessmentId } from '@/lib/assessment';
 
+
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Método no permitido' });
@@ -11,16 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user = await requireRoles(req, res, ['admin']);
   if (!user) return;
 
-  const assessmentId = user.id === 0 
-    ? Number(req.query.assessmentId) 
-    : getAuthorizedAssessmentId(user, res);
-
-  if (!assessmentId || Number.isNaN(assessmentId)) {
-    if (user.id === 0) {
-      return res.status(400).json({ error: 'assessmentId es obligatorio en el query para el super-admin' });
-    }
-    return; // getAuthorizedAssessmentId already sent the response
-  }
+  const assessmentId = getAuthorizedAssessmentId(user, res);
+  if (!assessmentId) return;
 
   try {
     const { data, error } = await supabase

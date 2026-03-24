@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
-import { verifyAssessmentAccess } from '@/lib/assessment';
+import { getAuthorizedAssessmentId } from '@/lib/assessment';
+
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -11,10 +12,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user = await requireRoles(req, res, ['admin']);
   if (!user) return;
 
-  const assessmentId = user.assessmentId;
-  if (!verifyAssessmentAccess(user, assessmentId as number, res)) {
-    return;
-  }
+  const assessmentId = getAuthorizedAssessmentId(user, res);
+  if (!assessmentId) return;
 
   try {
     const { data, error } = await supabase

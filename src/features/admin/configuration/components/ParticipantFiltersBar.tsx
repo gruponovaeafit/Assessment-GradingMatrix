@@ -55,7 +55,8 @@ export const ParticipantFiltersBar: React.FC<ParticipantFiltersBarProps> = ({
 
   return (
     <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
-      <Box className="w-full space-y-3">
+      <Box className="w-full p-4 space-y-4">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 text-center sm:text-left">Buscar y editar staff</h2>
 
         {/* Busqueda y filtros */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -78,6 +79,7 @@ export const ParticipantFiltersBar: React.FC<ParticipantFiltersBarProps> = ({
             className="px-3 py-2 rounded-lg bg-gray-50 text-gray-900 border border-transparent focus:bg-white focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none transition text-sm"
           >
             <option value="todos">Todos los roles</option>
+            <option value="admin">Administradores</option>
             <option value="calificador">Calificadores</option>
             <option value="registrador">Registradores</option>
           </select>

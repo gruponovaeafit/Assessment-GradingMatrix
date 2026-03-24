@@ -68,6 +68,27 @@ button:disabled {
 
 /* ============ ANIMACIONES ============ */
 
+/* Shimmer effect for skeleton loaders - Forced Light Mode for now */
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 25%,
+    rgba(124, 58, 237, 0.1) 50%,
+    #f3f4f6 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
 /* Fade in sutil */
 @keyframes fadeIn {
   from {

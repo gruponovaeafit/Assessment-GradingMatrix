@@ -31,6 +31,8 @@ import { handleExportCSV } from "./utils/gestionUtils";
 import { type ParticipantDashboardRow, type ClassificationRanges } from "./schemas/gestionSchemas";
 import { showToast } from "@/components/UI/Toast";
 
+import { BrandedLoading } from "@/components/UI/Loading";
+
 // ─── RangesInline — fuera del page para no perder foco ───────────────────────
 interface RangesInlineProps {
   localRanges: ClassificationRanges;
@@ -190,6 +192,8 @@ export const GestionContainer = () => {
 
   const { ConfirmModalComponent } = useConfirmModal();
 
+  const isInitialLoading = authLoading || (dataLoading && data.length === 0);
+
   const hasActiveFilters =
     !!searchTerm ||
     filterGrupo !== "todos" ||
@@ -230,32 +234,6 @@ export const GestionContainer = () => {
       });
     }
   };
-  if (authLoading || !isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-        <Spinner size="xl" color="custom" customColor="var(--color-accent)" />
-        <p className="text-[color:var(--color-text)] text-xl mt-4">Verificando acceso...</p>
-      </div>
-    );
-  }
-
-  if (dataLoading && data.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen py-8 px-4 bg-white">
-        <div className="w-full max-w-7xl flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-extrabold text-[color:var(--color-accent)]">Gestión del Assessment</h1>
-        </div>
-        <div className="flex items-center gap-3 mb-6">
-          <Spinner size="lg" color="custom" customColor="var(--color-accent)" />
-          <span className="text-[color:var(--color-muted)] text-lg">Cargando datos...</span>
-        </div>
-        <div className="hidden lg:block w-full max-w-7xl bg-white shadow rounded-xl overflow-hidden border border-gray-100">
-          <div className="p-4 border-b"><Skeleton className="h-6 w-48" /></div>
-          {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonTableRow key={i} />)}
-        </div>
-      </div>
-    );
-  }
 
   if (dataError) {
     return (
@@ -358,28 +336,42 @@ export const GestionContainer = () => {
 
       <div className="w-full max-w-7xl">
         <Box className="!p-0 overflow-hidden">
-          <ParticipantTable
-            paginatedData={paginatedData}
-            baseNumbers={baseNumbers}
-            getEstadoInfo={getEstadoInfo}
-            onEdit={openEditModal}
-            onDetail={setDetailModal}
-          />
-          <div className="px-4">
-            <ParticipantCardList
-              paginatedData={paginatedData}
-              getEstadoInfo={getEstadoInfo}
-              onEdit={openEditModal}
-              onDetail={setDetailModal}
-            />
-          </div>
-          <div className="px-4 pb-4">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              setCurrentPage={setCurrentPage}
-            />
-          </div>
+          {dataLoading && data.length === 0 ? (
+            <div className="p-4 space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-8 w-24" />
+              </div>
+              {[1, 2, 3, 4, 5, 6].map((_, i) => (
+                <SkeletonTableRow key={i} index={i} />
+              ))}
+            </div>
+          ) : (
+            <>
+              <ParticipantTable
+                paginatedData={paginatedData}
+                baseNumbers={baseNumbers}
+                getEstadoInfo={getEstadoInfo}
+                onEdit={openEditModal}
+                onDetail={setDetailModal}
+              />
+              <div className="px-4">
+                <ParticipantCardList
+                  paginatedData={paginatedData}
+                  getEstadoInfo={getEstadoInfo}
+                  onEdit={openEditModal}
+                  onDetail={setDetailModal}
+                />
+              </div>
+              <div className="px-4 pb-4">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  setCurrentPage={setCurrentPage}
+                />
+              </div>
+            </>
+          )}
         </Box>
       </div>
 

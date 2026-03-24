@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from "@/lib/supabase/server";
-import { verifyAssessmentAccess } from "@/lib/assessment";
+import { verifyAssessmentAccess, getAuthorizedAssessmentId } from "@/lib/assessment";
 import { requireRoles } from "@/lib/auth/apiAuth";
 import { resolveParticipantPhotoUrls } from "@/lib/utils/imageUrl";
 
@@ -9,16 +9,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const user = await requireRoles(req, res, ["admin"]);
     if (!user) return;
 
-    // Si viene assessmentId en el query param, usarlo; si no, usar el del token
-    const queryAssessmentId = req.query.assessmentId
-      ? Number(req.query.assessmentId)
-      : null;
-
-    const assessmentId = queryAssessmentId ?? user.assessmentId;
-
-    if (!verifyAssessmentAccess(user, assessmentId as number, res)) {
-      return;
-    }
+    const assessmentId = getAuthorizedAssessmentId(user, res);
+    if (!assessmentId) return;
 
     // Obtener participantes y su grupo
     const { data: participantes, error: participantesError } = await supabase
