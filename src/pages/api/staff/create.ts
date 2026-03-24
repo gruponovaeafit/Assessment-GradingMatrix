@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       Correo_Staff: correo,
       Contrasena_Staff: hashedPassword,
       Rol_Staff: rol,
-      Active: false,
+      Active: true,
       ID_Base: idBase ? Number(idBase) : null,
     };
 
