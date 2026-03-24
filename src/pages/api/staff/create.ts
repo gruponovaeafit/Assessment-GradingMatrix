@@ -6,7 +6,7 @@ import { getAuthorizedAssessmentId } from '@/lib/assessment';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
+    return res.status(405).json({ error: 'Metodo no permitido' });
   }
 
   const user = await requireRoles(req, res, ['admin']);
@@ -15,15 +15,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { correo, password, rol, idBase } = req.body;
 
   const assessmentId = getAuthorizedAssessmentId(user, res);
-  if (!assessmentId) return; // La función ya responde con 403 y destruye la cookie si no hay acceso
+  if (!assessmentId) return;
 
   if (!correo || !password || !rol) {
     return res.status(400).json({ error: 'correo, password y rol son obligatorios' });
   }
-  
+
   try {
-    // Validar que el Base pertenezca al Assessment si se proporciona
-    
     if (idBase) {
       const { data: baseData, error: baseError } = await supabase
         .from('Bases')
@@ -33,10 +31,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (baseError || !baseData || baseData.ID_Assessment !== Number(assessmentId)) {
         return res.status(400).json({ error: 'El Base no pertenece a este Assessment' });
-        
       }
     }
-      
 
     const hashedPassword = await hashPassword(password);
 
@@ -49,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ID_Base: idBase ? Number(idBase) : null,
     };
 
-    console.log('📝 Intentando insertar en Staff:', staffData);
+    console.log('Intentando insertar en Staff:', staffData);
 
     const { data, error } = await supabase
       .from('Staff')
@@ -57,13 +53,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .select('ID_Staff')
       .single();
 
-    if (error || !data) {
-      throw new Error(error?.message || 'Error creando staff');
+    if (error) {
+      // Correo duplicado — unique constraint de Supabase/Postgres
+      if (error.code === '23505') {
+        return res.status(409).json({ error: `El correo ${correo} ya esta registrado como staff` });
+      }
+      throw new Error(error.message);
     }
 
-    res.status(200).json({ message: 'Calificador registrado', ID_Staff: data.ID_Staff });
+    if (!data) {
+      throw new Error('No se pudo crear el staff');
+    }
+
+    res.status(200).json({ message: 'Staff registrado', ID_Staff: data.ID_Staff });
   } catch (error) {
-    console.error('❌ Error al crear staff:', error);
-    res.status(500).json({ error: 'Error al crear staff' });
+    console.error('Error al crear staff:', error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Error inesperado al crear staff',
+    });
   }
 }

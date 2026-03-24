@@ -36,8 +36,17 @@ export const BaseSchema = z.object({
   Nombre_Base: z.string(),
 });
 
+export const StaffSchema = z.object({
+  ID: z.number(),
+  Correo: z.string().email(),
+  role: z.string(),
+  Active: z.boolean(),
+  idBase: z.number().nullable().optional(),
+});
+
 export type Calificacion = z.infer<typeof CalificacionSchema>;
 export type Assessment = z.infer<typeof AssessmentSchema>;
 export type Participant = z.infer<typeof ParticipantSchema>;
 export type Group = z.infer<typeof GroupSchema>;
 export type Base = z.infer<typeof BaseSchema>;
+export type Staff = z.infer<typeof StaffSchema>;

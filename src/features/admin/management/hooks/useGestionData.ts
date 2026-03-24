@@ -5,7 +5,7 @@ import { ParticipantDashboardRowSchema, type ParticipantDashboardRow } from '../
 
 export function useGestionData(logout: () => void) {
   const [data, setData] = useState<ParticipantDashboardRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 

@@ -64,96 +64,101 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
 
 interface SkeletonProps {
   className?: string;
+  index?: number;
 }
 
-export const Skeleton: React.FC<SkeletonProps> = ({ className = '' }) => (
+export const Skeleton: React.FC<SkeletonProps> = ({ className = '', index = 0 }) => (
   <div
-    className={`bg-[color:var(--color-muted)]/20 rounded animate-pulse ${className}`}
+    className={`animate-shimmer rounded ${className}`}
+    style={{ animationDelay: `-${index * 150}ms` }}
     aria-hidden="true"
   />
 );
 
-export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({
+export const SkeletonText: React.FC<{ lines?: number; className?: string; index?: number }> = ({
   lines = 1,
   className = '',
+  index = 0,
 }) => (
   <div className={`space-y-2 ${className}`}>
     {Array.from({ length: lines }).map((_, i) => (
       <Skeleton
         key={i}
+        index={index + i}
         className={`h-4 ${i === lines - 1 ? 'w-3/4' : 'w-full'}`}
       />
     ))}
   </div>
 );
 
-export const SkeletonAvatar: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({
+export const SkeletonAvatar: React.FC<{ size?: 'sm' | 'md' | 'lg'; index?: number }> = ({
   size = 'md',
+  index = 0,
 }) => {
   const sizes = {
     sm: 'w-10 h-10',
     md: 'w-16 h-16',
     lg: 'w-24 h-24',
   };
-  return <Skeleton className={`${sizes[size]} rounded-full`} />;
+  return <Skeleton index={index} className={`${sizes[size]} rounded-full`} />;
 };
 
-export const SkeletonUserCard: React.FC = () => (
+export const SkeletonUserCard: React.FC<{ index?: number }> = ({ index = 0 }) => (
   <div
     className="bg-[color:var(--color-surface)]/60 backdrop-blur-sm rounded-xl p-4 flex flex-col items-center space-y-3 border border-[color:var(--color-muted)]/30"
     style={{ width: '100%', maxWidth: '360px', minHeight: '450px' }}
   >
-    <SkeletonAvatar size="lg" />
-    <Skeleton className="h-4 w-20" />
-    <Skeleton className="h-4 w-32" />
+    <SkeletonAvatar size="lg" index={index} />
+    <Skeleton index={index + 1} className="h-4 w-20" />
+    <Skeleton index={index + 2} className="h-4 w-32" />
     <div className="w-full space-y-4 mt-4">
       {[1, 2, 3].map((i) => (
         <div key={i} className="space-y-2">
-          <Skeleton className="h-3 w-full" />
-          <Skeleton className="h-10 w-full rounded-md" />
+          <Skeleton index={index + 2 + i} className="h-3 w-full" />
+          <Skeleton index={index + 3 + i} className="h-10 w-full rounded-md" />
         </div>
       ))}
     </div>
   </div>
 );
 
-export const SkeletonTableRow: React.FC = () => (
-  <div className="flex items-center space-x-4 p-4 border-b border-white/10">
-    <SkeletonAvatar size="sm" />
+export const SkeletonTableRow: React.FC<{ index?: number }> = ({ index = 0 }) => (
+  <div className="flex items-center space-x-4 p-4 border-b border-gray-100">
+    <SkeletonAvatar size="sm" index={index} />
     <div className="flex-1 space-y-2">
-      <Skeleton className="h-4 w-1/3" />
-      <Skeleton className="h-3 w-1/2" />
+      <Skeleton index={index + 1} className="h-4 w-1/3" />
+      <Skeleton index={index + 2} className="h-3 w-1/2" />
     </div>
-    <Skeleton className="h-8 w-20 rounded-md" />
+    <Skeleton index={index + 3} className="h-8 w-20 rounded-md" />
   </div>
 );
 
-export const SkeletonDashboardCard: React.FC = () => (
+export const SkeletonDashboardCard: React.FC<{ index?: number }> = ({ index = 0 }) => (
   <div
     className="bg-white rounded-lg p-4 flex flex-col items-center border border-gray-100 shadow"
     style={{ width: '100%', maxWidth: '320px', minHeight: '240px' }}
   >
-    <div className="h-5 w-3/4 mb-4 bg-gray-200 rounded" />
+    <Skeleton index={index} className="h-5 w-3/4 mb-4" />
     <div className="h-px w-full mb-4 bg-gray-100" />
     <div className="w-full space-y-2">
-      <div className="h-4 w-1/4 bg-gray-200 rounded" />
-      <div className="h-4 w-1/2 bg-gray-200 rounded" />
-      <div className="h-4 w-2/3 bg-gray-200 rounded" />
-      <div className="h-4 w-1/3 bg-gray-200 rounded" />
-      <div className="h-4 w-1/2 bg-gray-200 rounded" />
+      <Skeleton index={index + 1} className="h-4 w-1/4" />
+      <Skeleton index={index + 2} className="h-4 w-1/2" />
+      <Skeleton index={index + 3} className="h-4 w-2/3" />
+      <Skeleton index={index + 4} className="h-4 w-1/3" />
+      <Skeleton index={index + 5} className="h-4 w-1/2" />
     </div>
   </div>
 );
 
-export const SkeletonBaseInfo: React.FC = () => (
+export const SkeletonBaseInfo: React.FC<{ index?: number }> = ({ index = 0 }) => (
   <div className="w-full max-w-xl mb-6 sm:mb-10 px-4 sm:px-6 py-4 sm:py-6 rounded-2xl bg-[color:var(--color-surface)]/60 backdrop-blur-sm border border-[color:var(--color-muted)]/30">
-    <Skeleton className="h-7 w-1/2 mx-auto mb-4" />
-    <Skeleton className="h-5 w-2/3 mx-auto mb-4" />
-    <SkeletonText lines={3} className="mb-6" />
+    <Skeleton index={index} className="h-7 w-1/2 mx-auto mb-4" />
+    <Skeleton index={index + 1} className="h-5 w-2/3 mx-auto mb-4" />
+    <SkeletonText lines={3} className="mb-6" index={index + 2} />
     <div className="space-y-3">
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-full" />
+      <Skeleton index={index + 5} className="h-4 w-full" />
+      <Skeleton index={index + 6} className="h-4 w-full" />
+      <Skeleton index={index + 7} className="h-4 w-full" />
     </div>
   </div>
 );

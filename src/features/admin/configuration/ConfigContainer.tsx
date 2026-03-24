@@ -3,266 +3,256 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { showToast } from '@/components/UI/Toast';
-import { authFetch } from '@/lib/auth/authFetch';
-
-// Hooks de dominio
-import { useConfigData } from './hooks/useConfigData';
+import { notify, NotificationProvider } from '@/components/UI/Notification';
+import { Button } from '@/components/UI/Button';
+import { Box } from '@/components/UI/Box';
+import { BrandedLoading, Skeleton } from '@/components/UI/Loading';
 import { useParticipantsAndGroups } from './hooks/useParticipantsAndGroups';
-import { useBases } from './hooks/useBases';
-import { type Calificacion } from './schemas/configSchemas';
-
-// Componentes de Feature
-import { RegisterStaffForm } from './components/RegisterStaffForm';
+import { useBasesData } from '../bases/hooks/useBasesData';
 import { ParticipantFiltersBar } from './components/ParticipantFiltersBar';
+import { RegisterStaffForm } from './components/RegisterStaffForm';
+import { EditGroupsForm } from './components/EditGroupsForm';
+import { DropdownOverlay } from './components/DropdownOverlay';
+import { useConfirmModal } from '@/components/UI/ConfirmModal';
+import { authFetch } from '@/lib/auth/authFetch';
 import { ParticipantGrid } from './components/ParticipantGrid';
+import { ParticipantCard } from './components/ParticipantCard';
 import { ParticipantPagination } from './components/ParticipantPagination';
 import { EditParticipantModal } from './components/EditParticipantModal';
-import { DropdownOverlay } from './components/DropdownOverlay';
-import { EditGroupsForm } from './components/EditGroupsForm';
-
-// UI Components
-import { Box } from '@/components/UI/Box';
-import { Button } from '@/components/UI/Button';
-import { Spinner, BrandedLoading } from '@/components/UI/Loading';
 
 export const ConfigContainer = () => {
-  const {
-    isAdmin,
-    assessmentId,
-    isLoading: authLoading,
-    logout,
-  } = useAdminAuth();
+  const { isAdmin, assessmentId, isLoading: authLoading, logout } = useAdminAuth();
   const router = useRouter();
 
-  // Domain Hooks
-  const { data, setData, loading: dataLoading, error: dataError, fetchData } = useConfigData(logout);
-  const { participants, groups, loadParticipantsAndGroups } = useParticipantsAndGroups(logout);
-  const { basesList, loadBases } = useBases(logout);
+  const { staff, participants, groups, loading: dataLoading, loadParticipantsAndGroups } = useParticipantsAndGroups(logout);
+  const { bases } = useBasesData();
 
-  // UI State
-  const [editModal, setEditModal] = useState<Calificacion | null>(null);
-  const [originalData, setOriginalData] = useState<Calificacion | null>(null);
-  
+  const [staffCorreo, setStaffCorreo] = useState('');
+  const [staffPassword, setStaffPassword] = useState('');
+  const [staffRol, setStaffRol] = useState('');
+  const [staffBaseId, setStaffBaseId] = useState('');
   const [creatingStaff, setCreatingStaff] = useState(false);
-  const [autoGroupCount, setAutoGroupCount] = useState("");
-  const [autoGrouping, setAutoGrouping] = useState(false);
-  const [staffCorreo, setStaffCorreo] = useState("");
-  const [staffPassword, setStaffPassword] = useState("");
-  const [staffRol, setStaffRol] = useState("");
-  const [staffBaseId, setStaffBaseId] = useState("");
 
   const [showAutoGroupDropdown, setShowAutoGroupDropdown] = useState(false);
+  const [autoGroupCount, setAutoGroupCount] = useState('');
+  const [autoGrouping, setAutoGrouping] = useState(false);
+
   const [showEditGroupsDropdown, setShowEditGroupsDropdown] = useState(false);
 
-  // Estados para búsqueda, filtros, orden y paginación
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterRol, setFilterRol] = useState<string>("todos");
+  const [filterRol, setFilterRol] = useState("todos");
   const [sortBy, setSortBy] = useState<"nombre" | "rol">("nombre");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const [itemsPerPage] = useState(10);
 
-  useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      router.push("/auth/login");
-    }
-  }, [authLoading, isAdmin, router]);
+  const [editModal, setEditModal] = useState<{
+    id: number;
+    correo: string;
+    role: string;
+    active: boolean;
+  } | null>(null);
+  const [originalData, setOriginalData] = useState<{
+    correo: string;
+    role: string;
+    active: boolean;
+  } | null>(null);
+
+  const { ConfirmModalComponent } = useConfirmModal();
 
   useEffect(() => {
     if (authLoading || !isAdmin) return;
-    
     const loadAllData = async () => {
       await Promise.all([
-        fetchData(),
-        loadParticipantsAndGroups(),
-        loadBases()
+        loadParticipantsAndGroups()
       ]);
     };
-
     loadAllData();
-  }, [authLoading, isAdmin, fetchData, loadParticipantsAndGroups, loadBases]);
+  }, [authLoading, isAdmin, loadParticipantsAndGroups]);
 
   const filteredAndSortedData = useMemo(() => {
-    const filtered = data.filter((item) => {
-      const matchSearch =
-        item.Correo.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchRol = filterRol === "todos" || item.role === filterRol;
-      return matchSearch && matchRol;
+    const results = staff.filter((s) => {
+      const matchesSearch = s.Correo.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRol = filterRol === "todos" || s.role === filterRol;
+      return matchesSearch && matchesRol;
     });
 
-    filtered.sort((a, b) => {
+    return results.sort((a, b) => {
       let comparison = 0;
-      switch (sortBy) {
-        case "nombre":
-          comparison = a.Correo.localeCompare(b.Correo);
-          break;
-        case "rol":
-          comparison = a.role.localeCompare(b.role);
-          break;
-      }
+      if (sortBy === "nombre") comparison = a.Correo.localeCompare(b.Correo);
+      else if (sortBy === "rol") comparison = a.role.localeCompare(b.role);
       return sortOrder === "asc" ? comparison : -comparison;
     });
-
-    return filtered;
-  }, [data, searchTerm, filterRol, sortBy, sortOrder]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredAndSortedData.length / itemsPerPage));
-  
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [totalPages, currentPage]);
+  }, [staff, searchTerm, filterRol, sortBy, sortOrder]);
 
   const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredAndSortedData.slice(startIndex, startIndex + itemsPerPage);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedData.slice(start, start + itemsPerPage);
   }, [filteredAndSortedData, currentPage, itemsPerPage]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterRol]);
-
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editModal || !originalData) return;
-
-    const updates: Record<string, any> = { id: editModal.ID };
-    if (editModal.Correo !== originalData.Correo) updates.correo = editModal.Correo;
-    if (editModal.role !== originalData.role) updates.role = editModal.role;
-    if (editModal.Active !== originalData.Active) updates.active = editModal.Active;
-
-    if (Object.keys(updates).length === 1) {
-      showToast.error("Debe modificarse al menos un campo");
-      return;
-    }
-
-    const res = await authFetch(
-      '/api/staff/update-active',
-      {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      },
-      () => logout()
-    );
-
-    const result = await res.json();
-    if (res.ok) {
-      showToast.success("Staff actualizado correctamente");
-      setData((prev) =>
-        prev.map((p) => (p.ID === editModal.ID ? editModal : p))
-      );
-      setEditModal(null);
-      setOriginalData(null);
-    } else {
-      showToast.error(result.error || "Error al actualizar");
-    }
-  };
+  const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
 
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!staffCorreo || !staffPassword || !staffRol) {
-      showToast.error('Todos los campos obligatorios deben completarse');
-      return;
-    }
-    if (staffRol === 'calificador' && !staffBaseId) {
-      showToast.error('Los calificadores deben tener una base asignada');
+      notify({
+        title: 'Campos incompletos',
+        titleColor: 'var(--warning)',
+        subtitle: 'Por favor completa todos los campos obligatorios',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--warning)',
+        duration: 3000,
+      });
       return;
     }
 
+    setCreatingStaff(true);
     try {
-      setCreatingStaff(true);
-      const response = await authFetch(
-        '/api/staff/create',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            correo: staffCorreo.trim(),
-            password: staffPassword,
-            rol: staffRol,
-            idBase: staffRol === 'calificador' && staffBaseId ? Number(staffBaseId) : null,
-          }),
-        },
-        () => logout()
-      );
+      const response = await authFetch('/api/staff/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          correo: staffCorreo,
+          password: staffPassword,
+          rol: staffRol,
+          idBase: staffRol === 'calificador' ? Number(staffBaseId) : null,
+        }),
+      }, () => logout());
 
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Error al crear staff');
-
-      showToast.success(`${staffRol === 'calificador' ? 'Calificador' : 'Registrador'} creado`);
-      setStaffCorreo('');
-      setStaffPassword('');
-      setStaffRol('');
-      setStaffBaseId('');
-    } catch (err: unknown) {
-      showToast.error(err instanceof Error ? err.message : 'Error al crear staff');
+      if (response.ok) {
+        notify({
+          title: 'Staff registrado',
+          titleColor: 'var(--color-accent)',
+          subtitle: 'El miembro del staff ha sido creado exitosamente',
+          subtitleColor: 'var(--color-muted)',
+          borderColor: 'var(--color-accent)',
+          duration: 3000,
+        });
+        setStaffCorreo('');
+        setStaffPassword('');
+        setStaffRol('');
+        setStaffBaseId('');
+        await loadParticipantsAndGroups();
+      } else {
+        const error = await response.json();
+        notify({
+          title: 'Error al registrar',
+          titleColor: 'var(--error)',
+          subtitle: error.error || 'No se pudo completar el registro',
+          subtitleColor: 'var(--color-muted)',
+          borderColor: 'var(--error)',
+          duration: 4000,
+        });
+      }
+    } catch {
+      notify({
+        title: 'Error de red',
+        titleColor: 'var(--error)',
+        subtitle: 'No se pudo conectar con el servidor',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 4000,
+      });
     } finally {
       setCreatingStaff(false);
     }
   };
 
-  const handleAutoGroup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const numGroups = Number(autoGroupCount);
-    if (!autoGroupCount || Number.isNaN(numGroups) || numGroups <= 0) {
-      showToast.error('Ingresa una cantidad válida de grupos');
+  const handleUpdateStaff = async () => {
+    if (!editModal) return;
+    const isNoChange = 
+      editModal.correo === originalData?.correo &&
+      editModal.role === originalData?.role &&
+      editModal.active === originalData?.active;
+
+    if (isNoChange) {
+      setEditModal(null);
       return;
     }
 
     try {
-      setAutoGrouping(true);
-      const response = await authFetch(
-        '/api/assessment/auto-groups',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            numGroups,
-          }),
-        },
-        () => logout()
-      );
+      const response = await authFetch('/api/staff/update-active', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editModal.id,
+          correo: editModal.correo,
+          role: editModal.role,
+          active: editModal.active,
+        }),
+      }, () => logout());
 
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Error al sortear grupos');
+      if (response.ok) {
+        notify({
+          title: 'Staff actualizado',
+          titleColor: 'var(--color-accent)',
+          subtitle: 'Los cambios se guardaron correctamente',
+          subtitleColor: 'var(--color-muted)',
+          borderColor: 'var(--color-accent)',
+          duration: 3000,
+        });
+        setEditModal(null);
+        setOriginalData(null);
+        await loadParticipantsAndGroups();
+      }
+    } catch (err) {
+      console.error('Error updating staff:', err);
+    }
+  };
 
-      showToast.success('Grupos creados y sorteados correctamente');
+  const handleAutoGroup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!autoGroupCount || autoGrouping) return;
+
+    setAutoGrouping(true);
+    try {
+      const response = await authFetch('/api/assessment/auto-groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          numGroups: Number(autoGroupCount),
+        }),
+      }, () => logout());
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al sortear');
+      }
+
+      notify({
+        title: 'Sorteo Exitoso',
+        titleColor: 'var(--color-accent)',
+        subtitle: 'Grupos creados y sorteados correctamente',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--color-accent)',
+        duration: 2000,
+      });
       setAutoGroupCount('');
       setShowAutoGroupDropdown(false);
-      await fetchData();
       await loadParticipantsAndGroups();
     } catch (err: unknown) {
-      showToast.error(err instanceof Error ? err.message : 'Error al sortear grupos');
+      notify({
+        title: 'Error al sortear grupos',
+        titleColor: 'var(--error)',
+        subtitle: err instanceof Error ? err.message : 'Error al sortear grupos',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--error)',
+        duration: 1500,
+      });
     } finally {
       setAutoGrouping(false);
     }
   };
 
-  if (authLoading || dataLoading) {
-    return <BrandedLoading message="Preparando configuración del panel..." />;
-  }
-  
-  if (dataError) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-        <p className="text-error text-xl">{dataError}</p>
-        <button 
-          onClick={() => router.refresh()}
-          className="mt-4 px-4 py-2 bg-gray-100 text-gray-900 rounded-lg border border-gray-200 hover:bg-gray-200"
-        >
-          Reintentar
-        </button>
-      </div>
-    );
-  }
+  if (authLoading) return <BrandedLoading message="Preparando panel..." />;
 
+  // Los spinners internos usarán dataLoading para feedback.
   return (
     <div className="flex flex-col items-center min-h-screen py-4 sm:py-8 px-3 sm:px-4 bg-white">
       <div className="w-full max-w-[900px] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 px-1 sm:px-2">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center sm:text-left">Configuración del Assessment</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-[color:var(--color-accent)]">
+          Configuracion del Assessment
+        </h1>
         <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
           <Button variant="accent" onClick={() => router.push("/admin")}>
             <Image src="/HomeIcon.svg" alt="" width={18} height={18} className="mr-2" />
@@ -275,6 +265,62 @@ export const ConfigContainer = () => {
         </div>
       </div>
 
+      <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
+        <Box className="p-4 sm:p-6">
+          <div className="flex justify-between items-center mb-6">
+            {dataLoading && staff.length === 0 ? (
+              <Skeleton className="h-7 w-48" />
+            ) : (
+              <h2 className="text-lg font-bold text-gray-900">Ajustes de grupo</h2>
+            )}
+            
+            <div className="flex gap-2">
+              {dataLoading && staff.length === 0 ? (
+                <>
+                  <Skeleton className="h-10 w-32 rounded-lg" />
+                  <Skeleton className="h-10 w-32 rounded-lg" />
+                </>
+              ) : (
+                <>
+                  <Button variant="accent" onClick={() => setShowAutoGroupDropdown(true)}>
+                    Crear y sortear
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowEditGroupsDropdown(true)}>
+                    Editar grupos
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {dataLoading && staff.length === 0 ? (
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-full rounded-xl" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Skeleton className="h-24 w-full rounded-xl" />
+                <Skeleton className="h-24 w-full rounded-xl" />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">
+                Administra la estructura de grupos del assessment. Puedes realizar un sorteo automático repartiendo impostores o gestionar integrantes manualmente.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                  <span className="text-2xl font-bold text-gray-900">{groups.length}</span>
+                  <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Grupos Creados</span>
+                </div>
+                <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col items-center justify-center text-center">
+                  <span className="text-2xl font-bold text-gray-900">{participants.filter(p => !p.grupoId).length}</span>
+                  <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Participantes sin grupo</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </Box>
+      </div>
+
       <RegisterStaffForm
         staffCorreo={staffCorreo}
         setStaffCorreo={setStaffCorreo}
@@ -284,33 +330,10 @@ export const ConfigContainer = () => {
         setStaffRol={setStaffRol}
         staffBaseId={staffBaseId}
         setStaffBaseId={setStaffBaseId}
-        basesList={basesList}
+        basesList={bases}
         creatingStaff={creatingStaff}
         onSubmit={handleCreateStaff}
       />
-
-      {/* Ajustes de grupo Section */}
-      <div className="w-full max-w-[900px] mb-4 px-1 sm:px-2">
-        <Box className="p-4">
-          <h2 className="text-lg font-bold text-gray-900 mb-4 text-center sm:text-left">Ajustes de grupo</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button
-              onClick={() => setShowEditGroupsDropdown(true)}
-              className="w-full py-3 h-auto text-base font-bold"
-              variant="accent"
-            >
-              Editar grupos
-            </Button>
-            <Button
-              onClick={() => setShowAutoGroupDropdown(true)}
-              className="w-full py-3 h-auto text-base font-bold"
-              variant="accent"
-            >
-              Crear y sortear grupos
-            </Button>
-          </div>
-        </Box>
-      </div>
 
       <DropdownOverlay
         isOpen={showAutoGroupDropdown}
@@ -347,14 +370,26 @@ export const ConfigContainer = () => {
         isOpen={showEditGroupsDropdown}
         onClose={() => setShowEditGroupsDropdown(false)}
         title="Editar Grupos"
+        wide
+        confirmLabel="Confirmar edicion"
+        onConfirm={() => {
+          notify({
+            title: 'Grupos actualizados',
+            titleColor: 'var(--color-accent)',
+            subtitle: 'Los cambios en los grupos fueron guardados',
+            subtitleColor: 'var(--color-muted)',
+            borderColor: 'var(--color-accent)',
+            duration: 2000,
+          });
+          setShowEditGroupsDropdown(false);
+        }}
       >
         <EditGroupsForm
           groups={groups}
           participants={participants}
           assessmentId={assessmentId || 0}
           onRefresh={async () => {
-            await fetchData(true); // Silent refresh
-            await loadParticipantsAndGroups(true); // Silent refresh
+            await loadParticipantsAndGroups();
           }}
           logout={logout}
         />
@@ -375,31 +410,83 @@ export const ConfigContainer = () => {
       <div className="w-full max-w-[900px] flex flex-col items-center">
         <div className="w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-gray-500 text-xs mb-2 px-4">
           <span>Mostrando {paginatedData.length} de {filteredAndSortedData.length} resultados</span>
-          {(searchTerm || filterRol !== "todos") && (
-            <button onClick={() => { setSearchTerm(""); setFilterRol("todos"); }} className="text-[color:var(--color-accent)] hover:text-gray-500 underline">Limpiar filtros</button>
-          )}
         </div>
-        
-        <ParticipantGrid
-          paginatedData={paginatedData}
-          onEdit={(p) => { setEditModal({ ...p }); setOriginalData({ ...p }); }}
-        />
 
-        <ParticipantPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          setCurrentPage={setCurrentPage}
-        />
+        <Box className="w-full !p-0 overflow-hidden">
+          {dataLoading && staff.length === 0 ? (
+            <div className="p-4 space-y-4">
+              {[1, 2, 3, 4, 5].map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton className="h-10 w-10 rounded-full" index={i} />
+                  <Skeleton className="h-4 flex-1" index={i + 1} />
+                  <Skeleton className="h-8 w-20 rounded-lg" index={i + 2} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* Para prop paginatedData, pasamos staff formateado si es necesario */}
+              <ParticipantGrid
+                paginatedData={paginatedData.map(s => ({
+                  ID: s.ID,
+                  Participante: s.Correo.split('@')[0],
+                  Correo: s.Correo,
+                  role: s.role,
+                  Grupo: '', // Staff no tiene grupo
+                  Calificacion_Promedio: null,
+                  Estado: '',
+                  Active: s.Active
+                }))}
+                onEdit={(item) => {
+                  const s = staff.find(x => x.ID === item.ID);
+                  if (s) {
+                    setEditModal({
+                      id: s.ID,
+                      correo: s.Correo,
+                      role: s.role,
+                      active: s.Active
+                    });
+                    setOriginalData({ correo: s.Correo, role: s.role, active: s.Active });
+                  }
+                }}
+              />
+              {totalPages > 1 && (
+                <div className="p-4 border-t border-gray-100 flex justify-center">
+                  <ParticipantPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    setCurrentPage={setCurrentPage}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </Box>
       </div>
 
       {editModal && (
         <EditParticipantModal
-          editModal={editModal}
-          setEditModal={setEditModal}
+          editModal={{
+            ID: editModal.id,
+            Participante: editModal.correo.split('@')[0],
+            Correo: editModal.correo,
+            role: editModal.role,
+            Active: editModal.active,
+            Grupo: '',
+            Calificacion_Promedio: null,
+            Estado: ''
+          }}
+          setEditModal={(val) => {
+            if (!val) setEditModal(null);
+            else setEditModal({ id: val.ID, correo: val.Correo, role: val.role, active: !!val.Active });
+          }}
           onCancel={() => { setEditModal(null); setOriginalData(null); }}
-          onUpdate={handleUpdate}
+          onUpdate={handleUpdateStaff}
         />
       )}
+
+      <ConfirmModalComponent />
+      <NotificationProvider />
     </div>
   );
 };

@@ -55,9 +55,11 @@ export function getAuthorizedAssessmentId(
   if (!assessmentId) {
     if (user.id === SUPER_ADMIN_ID) {
       console.warn(`[getAuthorizedAssessmentId] Super-admin ${user.id} intentó acceder sin assessmentId en el token. Debe usar /api/auth/switch-assessment`);
-    } else {
-      console.warn(`[getAuthorizedAssessmentId] Usuario ${user.id} no tiene assessmentId en su token`);
-    }
+      res.status(403).json({ error: 'Debes seleccionar un assessment en el panel de super-admin' });
+      return null;
+    } 
+    
+    console.warn(`[getAuthorizedAssessmentId] Usuario ${user.id} no tiene assessmentId en su token`);
     clearSessionCookie(res);
     res.status(403).json({ error: 'No tienes un assessment asignado activo' });
     return null;

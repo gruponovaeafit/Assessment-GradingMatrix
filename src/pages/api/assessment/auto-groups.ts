@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { getAuthorizedAssessmentId } from '@/lib/assessment';
 
 const shuffle = <T,>(arr: T[]) => {
   const copy = [...arr];
@@ -32,15 +33,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  if (!await requireRoles(req, res, ['admin'])) return;
+  const user = await requireRoles(req, res, ['admin']);
+  if (!user) return;
 
-  const { assessmentId, numGroups } = req.body ?? {};
-  const assessmentIdNum = Number(assessmentId);
+  const assessmentId = getAuthorizedAssessmentId(user, res);
+  if (!assessmentId) return;
+
+  const { numGroups } = req.body ?? {};
   const groupCount = Number(numGroups);
-
-  if (!assessmentId || Number.isNaN(assessmentIdNum)) {
-    return res.status(400).json({ error: 'assessmentId es obligatorio' });
-  }
 
   if (!numGroups || Number.isNaN(groupCount) || groupCount <= 0) {
     return res.status(400).json({ error: 'numGroups debe ser un número válido' });
@@ -50,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data: participantes, error: participantesError } = await supabase
       .from('Participante')
       .select('ID_Participante, Rol_Participante')
-      .eq('ID_Assessment', assessmentIdNum)
+      .eq('ID_Assessment', assessmentId)
       .order('ID_Participante', { ascending: true });
 
     if (participantesError) {
@@ -92,7 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data: existingGroups, error: existingError } = await supabase
       .from('GrupoAssessment')
       .select('ID_GrupoAssessment, Nombre_GrupoAssessment')
-      .eq('ID_Assessment', assessmentIdNum)
+      .eq('ID_Assessment', assessmentId)
       .in('Nombre_GrupoAssessment', groupNames);
 
     if (existingError) {
@@ -112,7 +112,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('GrupoAssessment')
         .insert(
           missingGroupNames.map((name) => ({
-            ID_Assessment: assessmentIdNum,
+            ID_Assessment: assessmentId,
             Nombre_GrupoAssessment: name,
           }))
         )
@@ -130,7 +130,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { error: clearError } = await supabase
       .from('Participante')
       .update({ ID_GrupoAssessment: null })
-      .eq('ID_Assessment', assessmentIdNum);
+      .eq('ID_Assessment', assessmentId);
 
     if (clearError) {
       throw new Error(clearError.message);
@@ -149,7 +149,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('Participante')
         .update({ ID_GrupoAssessment: groupId })
         .in('ID_Participante', memberIds)
-        .eq('ID_Assessment', assessmentIdNum);
+        .eq('ID_Assessment', assessmentId);
 
       if (updateError) {
         throw new Error(updateError.message);

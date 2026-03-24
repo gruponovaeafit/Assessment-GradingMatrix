@@ -737,13 +737,16 @@ Obtiene el correo de un calificador por ID.
 Lista participantes registrados en un assessment.
 
 - Auth: admin
+- Notas:
+  - Ignora el `assessmentId` del query param. Utiliza exclusivamente el del token de sesión (JWT).
+  - Si no hay ID en la sesión y el usuario es Superadmin, devuelve 403.
 
 ### POST /api/register
 Inscribe un nuevo participante.
 
 - Auth: admin, registrador
 - Payload (multipart/form-data)
-  - `assessmentId`: number (opcional si el usuario es admin y se usa el de su JWT)
+  - `assessmentId`: number (opcional, se prioriza el del JWT si el usuario es admin)
   - `nombre`: string
   - `correo`: string
   - `isImpostor`: boolean (string "true" / "false" en el form-data)
@@ -991,18 +994,18 @@ Devuelve el resumen de configuración para dashboard administrativo.
 
 - Auth: admin
 - Uso esperado: GET
-- Notas
-  - El código actual acepta assessmentId opcional y usa un assessment por defecto si no se envía.
-  - El handler actual no valida método explícitamente, pero debe consumirse vía GET.
+- Notas:
+  - Utiliza exclusivamente el `assessmentId` de la sesión (JWT).
+  - Ignora cualquier parámetro enviado por URL.
 
 ### GET /api/dashboard/gh?assessmentId=6
 Devuelve la sábana de resultados y promedios por base.
 
 - Auth: admin
 - Uso esperado: GET
-- Notas
-  - El código actual usa assessmentId opcional y cae al assessment por defecto.
-  - El handler actual no valida método explícitamente, pero debe consumirse vía GET.
+- Notas:
+  - Utiliza exclusivamente el `assessmentId` de la sesión (JWT).
+  - Ignora cualquier parámetro enviado por URL.
 
 ### GET /api/dashboard/rotations?assessmentId=6
 Lista las rotaciones de calificadores, incluyendo base y grupo asignados.
