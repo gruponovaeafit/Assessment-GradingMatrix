@@ -115,6 +115,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
 
+    // 2. Add validation after staff is found and password verified:
+    if (staff.Active === false) {
+      // 📝 Log Audit: Failed Login (Account disabled)
+      await logAudit({
+        accion: AuditActions.LOGIN_FAILED,
+        usuario_id: staff.ID_Staff,
+        usuario_email: staff.Correo_Staff,
+        detalles: { reason: 'Cuenta desactivada' },
+        ip,
+        user_agent: userAgent
+      });
+      return res.status(401).json({ error: 'Tu cuenta ha sido desactivada por el administrador.' });
+    }
+
+    // 3. Check assessment status (if not super-admin):
+    const { data: assessment, error: assessmentError } = await supabase
+      .from('Assessment')
+      .select('Activo_Assessment')
+      .eq('ID_Assessment', staff.ID_Assessment)
+      .single();
+
+    if (assessmentError || !assessment || !assessment.Activo_Assessment) {
+      // 📝 Log Audit: Failed Login (Assessment inactive)
+      await logAudit({
+        accion: AuditActions.LOGIN_FAILED,
+        usuario_id: staff.ID_Staff,
+        usuario_email: staff.Correo_Staff,
+        detalles: { reason: 'Assessment desactivado', assessmentId: staff.ID_Assessment },
+        ip,
+        user_agent: userAgent
+      });
+      return res.status(401).json({ error: 'Este assessment se encuentra desactivado.' });
+    }
+
     // Generar token JWT
     let role: 'admin' | 'registrador' | 'calificador' = 'calificador';
     if (staff.Rol_Staff === 'admin') {
@@ -131,11 +165,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     setSessionCookie(res, token, role);
-
-    await supabase
-      .from('Staff')
-      .update({ Active: true })
-      .eq('ID_Staff', staff.ID_Staff);
 
     // 📝 Log Audit: Successful Login
     await logAudit({
