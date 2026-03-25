@@ -7,6 +7,7 @@ import { Box } from "@/components/UI/Box";
 import { InputBox } from "@/components/UI/InputBox";
 import { Button } from "@/components/UI/Button";
 import { notify, NotificationProvider } from "@/components/UI/Notification";
+import { EmailInput } from "@/components/UI/EmailInput";
 
 export default function Login() {
   const { saveData } = useStoredId();
@@ -105,13 +106,11 @@ export default function Login() {
           <h2 className="text-xl xl:text-2xl font-bold text-gray-800 text-center">
             Ingresar Credenciales
           </h2>
-
-          <InputBox
+          <EmailInput
             label="Correo Electrónico"
-            type="email"
             placeholder="Correo Electrónico"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={setEmail}
             disabled={isLoading}
           />
 

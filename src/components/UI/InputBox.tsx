@@ -12,6 +12,8 @@ type InputBoxProps = {
   maxLength?: number;
   min?: string | number;
   max?: string | number;
+  error?: string;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 };
 
 const EyeOpenIcon = () => (
@@ -40,7 +42,6 @@ const getCounterColor = (remaining: number): string => {
   if (remaining <= 50) return 'var(--warning)';
   return 'var(--color-muted)';
 };
-
 export const InputBox = ({
   label,
   type = "text",
@@ -52,6 +53,8 @@ export const InputBox = ({
   maxLength,
   min,
   max,
+  error,
+  onBlur,
 }: InputBoxProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
@@ -63,7 +66,7 @@ export const InputBox = ({
   return (
     <div className="w-full flex flex-col gap-1">
       <div className="flex justify-between items-baseline">
-        <label className="text-base font-semibold text-gray-700">
+        <label className={`text-base font-semibold ${error ? 'text-red-500' : 'text-gray-700'}`}>
           {label}
         </label>
         {maxLength !== undefined && remaining !== null && (
@@ -84,10 +87,11 @@ export const InputBox = ({
             placeholder={placeholder}
             value={value}
             onChange={onChange as React.ChangeEventHandler<HTMLTextAreaElement>}
+            onBlur={onBlur as React.FocusEventHandler<HTMLTextAreaElement>}
             disabled={disabled}
             rows={rows ?? 3}
             maxLength={maxLength}
-            className={`${sharedInputClasses} resize-none`}
+            className={`${sharedInputClasses} resize-none ${error ? 'border-red-500 ring-1 ring-red-500' : ''}`}
           />
         ) : (
           <input
@@ -95,11 +99,12 @@ export const InputBox = ({
             placeholder={placeholder}
             value={value}
             onChange={onChange as React.ChangeEventHandler<HTMLInputElement>}
+            onBlur={onBlur as React.FocusEventHandler<HTMLInputElement>}
             disabled={disabled}
             maxLength={maxLength}
             min={min}
             max={max}
-            className={`${sharedInputClasses} ${isPassword ? "pr-12" : ""}`}
+            className={`${sharedInputClasses} ${isPassword ? "pr-12" : ""} ${error ? 'border-red-500 ring-1 ring-red-500' : ''}`}
           />
         )}
 
@@ -113,6 +118,11 @@ export const InputBox = ({
           </button>
         )}
       </div>
+      {error && (
+        <span className="text-sm font-medium text-red-500">
+          {error}
+        </span>
+      )}
     </div>
   );
 };
