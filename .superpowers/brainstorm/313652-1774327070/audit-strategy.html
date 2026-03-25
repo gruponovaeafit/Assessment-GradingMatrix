@@ -1,0 +1,40 @@
+<h2>Strategy Comparison</h2>
+<p class="subtitle">How should we implement the logging for these priority areas?</p>
+
+<div class="options">
+  <div class="option" data-choice="manual" onclick="toggleSelect(this)">
+    <div class="letter">1</div>
+    <div class="content">
+      <h3>Explicit Manual Logging</h3>
+      <p>Manually call <code>logAudit()</code> inside each API route. Gives full control over the "Detalles" string for each specific action.</p>
+      <div class="pros-cons" style="margin-top: 15px;">
+        <div class="pros"><ul><li>Precise messages</li><li>Simple to understand</li></ul></div>
+        <div class="cons"><ul><li>Boilerplate code</li><li>Easy to forget one</li></ul></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="option" data-choice="middleware" onclick="toggleSelect(this)">
+    <div class="letter">2</div>
+    <div class="content">
+      <h3>Generic Logging Middleware</h3>
+      <p>Wrap API handlers in a <code>withAudit</code> middleware that automatically logs the request (method, path, user) after it completes.</p>
+      <div class="pros-cons" style="margin-top: 15px;">
+        <div class="pros"><ul><li>Automatic coverage</li><li>Less code repetition</li></ul></div>
+        <div class="cons"><ul><li>Harder to log details</li><li>Noisy logs</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="hybrid" onclick="toggleSelect(this)">
+    <div class="letter">3</div>
+    <div class="content">
+      <h3>Hybrid Approach (Recommended)</h3>
+      <p>Use manual logging for high-value actions (Staff, Assessment) and a standardized helper for common operations.</p>
+      <div class="pros-cons" style="margin-top: 15px;">
+        <div class="pros"><ul><li>Best of both worlds</li><li>High signal-to-noise</li></ul></div>
+        <div class="cons"><ul><li>Slightly more complex</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

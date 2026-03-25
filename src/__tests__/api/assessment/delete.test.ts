@@ -49,20 +49,30 @@ function setupCascadeSupabase(failAt?: string, failMsg = 'DB error') {
     chain.insert = vi.fn().mockReturnValue(chain);
     chain.update = vi.fn().mockReturnValue(chain);
     chain.eq = vi.fn().mockReturnValue(chain);
-    chain.single = vi.fn();
-    chain.maybeSingle = vi.fn();
+    chain.neq = vi.fn().mockReturnValue(chain);
+    chain.single = vi.fn().mockResolvedValue({ data: null, error: null });
+    chain.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
 
     // 1. requireRoles & other table logics
     if (table === 'RevokedTokens' || table === 'AuditLogs') {
-      chain.maybeSingle.mockResolvedValue({ data: null, error: null });
-      chain.insert.mockResolvedValue({ error: null });
       return chain;
+    }
+    
+    if (table === 'Staff') {
+        chain.single.mockResolvedValue({ 
+            data: { Active: true, Assessment: { Activo_Assessment: true } }, 
+            error: null 
+        });
+        return chain;
     }
 
     // 2. Pre-deletion fetch in delete.ts
     if (table === 'Assessment') {
         chain.single.mockResolvedValue({ 
-            data: { Nombre_Assessment: 'Test Assessment' }, 
+            data: { 
+                Nombre_Assessment: 'Test Assessment', 
+                Activo_Assessment: true 
+            }, 
             error: null 
         });
     }

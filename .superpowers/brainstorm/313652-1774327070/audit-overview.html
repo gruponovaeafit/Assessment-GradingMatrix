@@ -1,0 +1,61 @@
+<h2>Audit System Overview</h2>
+<p class="subtitle">Where should we focus our traceability efforts first?</p>
+
+<div class="mockup">
+  <div class="mockup-header">Audit Flow Diagram</div>
+  <div class="mockup-body" style="padding: 20px; background: #f9fafb;">
+    <div style="display: flex; justify-content: space-around; align-items: center; text-align: center;">
+      <div style="border: 2px solid #6366f1; padding: 10px; border-radius: 8px; background: white; width: 120px;">
+        <strong>User/Staff</strong><br/><small>Action Trigger</small>
+      </div>
+      <div style="font-size: 24px;">&rarr;</div>
+      <div style="border: 2px solid #10b981; padding: 10px; border-radius: 8px; background: white; width: 120px;">
+        <strong>API Routes</strong><br/><small>Validation & Logic</small>
+      </div>
+      <div style="font-size: 24px;">&rarr;</div>
+      <div style="border: 2px solid #f59e0b; padding: 10px; border-radius: 8px; background: white; width: 120px;">
+        <strong>logAudit()</strong><br/><small>Capture Details</small>
+      </div>
+      <div style="font-size: 24px;">&rarr;</div>
+      <div style="border: 2px solid #ef4444; padding: 10px; border-radius: 8px; background: white; width: 120px;">
+        <strong>AuditLogs</strong><br/><small>Database Table</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Priority Areas</h3>
+  <p>Select the areas that are most critical for initial implementation:</p>
+</div>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="auth" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Authentication Security</h3>
+      <p>Log all login attempts (success/fail), logouts, and token revocations. Focus on identifying potential brute-force or unauthorized access.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="staff" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Administrative Actions</h3>
+      <p>Log creation, updates, and deletion of Staff members. Know exactly which admin created which account.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="assessment" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Assessment Integrity</h3>
+      <p>Log creation and deletion of Assessments and Groups. Critical for preventing accidental data loss.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="grading" onclick="toggleSelect(this)">
+    <div class="letter">D</div>
+    <div class="content">
+      <h3>Grading Operations</h3>
+      <p>Log when grades are submitted or modified. Useful for resolving disputes about scores.</p>
+    </div>
+  </div>
+</div>

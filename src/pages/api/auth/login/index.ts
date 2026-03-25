@@ -62,6 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ip,
             user_agent: userAgent
         });
+        return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
   }
 

@@ -10,15 +10,19 @@ Este documento detalla la matriz de acceso del sistema para asegurar que los des
     - Identificador: `id: 0` (asignado exclusivamente en login si el correo coincide con `ADMIN_EMAIL`).
     - Alcance: Global (todos los grupos).
     - Misión: Crear grupos, crear assessments y gestionar el staff administrativo inicial. Es el único con permiso para eliminar assessments.
+    - **Modo Solo Lectura**: Si el assessment actual tiene `Activo_Assessment = false`, el superadmin puede entrar pero no realizar cambios (POST/PUT/DELETE), excepto para reactivar el assessment.
 2. Admin de Grupo: 
     - Alcance: Un solo GrupoEstudiantil/Assessment asignado en su JWT.
     - Misión: Configurar bases, registrar staff, gestionar participantes y ver dashboards de resultados de su grupo. No puede crear ni eliminar assessments.
+    - **Bloqueo por Estado**: Si el assessment tiene `Activo_Assessment = false`, el acceso es denegado (403).
 3. Registrador: 
     - Alcance: Assessment asignado.
     - Misión: Inscripción rápida de participantes (Mobile).
+    - **Bloqueo por Estado**: Denegado (403) si el assessment está inactivo.
 4. Calificador (Grader): 
     - Alcance: Base asignada dentro de un Assessment.
     - Misión: Evaluar a los participantes de su grupo asignado (Mobile).
+    - **Bloqueo por Estado**: Denegado (403) si el assessment está inactivo.
 
 ---
 

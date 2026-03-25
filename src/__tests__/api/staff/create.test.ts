@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockReq, createMockRes, mockAdminToken, setupRevokedTokenMock } from '@/__tests__/helpers/mockApiContext';
+import { createMockReq, createMockRes, mockAdminToken, setupAuthMocks, buildSupabaseChain } from '@/__tests__/helpers/mockApiContext';
 import handler from '@/pages/api/staff/create';
 import { verifyToken } from '@/lib/auth';
 import { supabase } from '@/lib/supabase/server';
@@ -22,30 +22,6 @@ vi.mock('@/lib/auth/cookie', () => ({
 const mockVerifyToken = verifyToken as ReturnType<typeof vi.fn>;
 const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
 
-function setupMocks(insertResult: { data: any; error: any }) {
-  mockFrom.mockImplementation((table: string) => {
-    if (table === 'RevokedTokens') {
-      return {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-      };
-    }
-    if (table === 'Staff') {
-      return {
-        insert: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue(insertResult),
-      };
-    }
-    return {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: null, error: null }),
-    };
-  });
-}
-
 const VALID_BODY = {
   correo: 'newstaff@example.com',
   password: 'Password123!',
@@ -55,7 +31,7 @@ const VALID_BODY = {
 describe('POST /api/staff/create', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    setupRevokedTokenMock(supabase);
+    setupAuthMocks(supabase);
   });
 
   it('creates staff with Active: true by default', async () => {
@@ -64,25 +40,41 @@ describe('POST /api/staff/create', () => {
     
     let capturedStaffData: any = null;
     mockFrom.mockImplementation((table: string) => {
-      const mockChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-        single: vi.fn().mockResolvedValue({ data: null, error: null }),
-        insert: vi.fn().mockResolvedValue({ data: null, error: null }),
-      };
-
+      // Keep requireRoles happy
+      if (table === 'RevokedTokens') return buildSupabaseChain({ data: null, error: null });
       if (table === 'Staff') {
-        mockChain.insert = vi.fn().mockImplementation((data) => {
-          capturedStaffData = data;
-          return {
-            select: vi.fn().mockReturnThis(),
-            single: vi.fn().mockResolvedValue({ data: { ID_Staff: 123 }, error: null }),
-          };
-        });
+        return {
+          ...buildSupabaseChain(),
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockImplementation((col, val) => {
+             // If checking status for requireRoles
+             if (col === 'ID_Staff') {
+               return buildSupabaseChain({ 
+                 data: { Active: true, Assessment: { Activo_Assessment: true } } 
+               });
+             }
+             return buildSupabaseChain();
+          }),
+          single: vi.fn().mockImplementation(async () => {
+             // If this is the final insert check
+             if (capturedStaffData) {
+               return { data: { ID_Staff: 123 }, error: null };
+             }
+             // Fallback for requireRoles status check if eq didn't catch it
+             return { data: { Active: true, Assessment: { Activo_Assessment: true } }, error: null };
+          }),
+          insert: vi.fn().mockImplementation((data) => {
+            capturedStaffData = data;
+            return {
+              select: vi.fn().mockReturnThis(),
+              single: vi.fn().mockResolvedValue({ data: { ID_Staff: 123 }, error: null }),
+            };
+          }),
+        };
       }
+      if (table === 'Bases') return buildSupabaseChain({ data: { ID_Assessment: assessmentId }, error: null });
       
-      return mockChain;
+      return buildSupabaseChain();
     });
 
     const req = createMockReq({

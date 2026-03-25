@@ -24,6 +24,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'correo, password y rol son obligatorios' });
   }
 
+  // Basic server-side email format guard
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(String(correo).trim())) {
+    return res.status(400).json({ error: 'El formato del correo no es válido' });
+  }
+
   try {
     if (idBase) {
       const { data: baseData, error: baseError } = await supabase
@@ -37,11 +43,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    const normalizedCorreo = String(correo).trim().toLowerCase();
     const hashedPassword = await hashPassword(password);
 
     const staffData = {
       ID_Assessment: Number(assessmentId),
-      Correo_Staff: correo,
+      Correo_Staff: normalizedCorreo,
       Contrasena_Staff: hashedPassword,
       Rol_Staff: rol,
       Active: true,
@@ -72,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       usuario_id: user.id,
       usuario_email: user.email,
       detalles: { 
-        targetEmail: correo, 
+        targetEmail: normalizedCorreo, 
         role: rol, 
         assessmentId, 
         staffId: data.ID_Staff,

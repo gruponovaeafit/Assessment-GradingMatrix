@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { Box } from "@/components/UI/Box";
 import { InputBox } from "@/components/UI/InputBox";
 import { Button } from "@/components/UI/Button";
+import { notify, NotificationProvider } from "@/components/UI/Notification";
 
 export default function Login() {
   const { saveData } = useStoredId();
@@ -31,7 +32,8 @@ export default function Login() {
       });
 
       if (!response.ok) {
-        throw new Error("Credenciales incorrectas");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Credenciales incorrectas");
       }
 
       const data = await response.json();
@@ -68,8 +70,17 @@ export default function Login() {
       } else {
         router.push("/dashboard");
       }
-    } catch (err) {
-      setError("Error al iniciar sesión. Verifica tus credenciales.");
+    } catch (err: any) {
+      const message = err instanceof Error ? err.message : "Error al iniciar sesión. Verifica tus credenciales.";
+      setError(message);
+      notify({
+        title: "Error de Acceso",
+        titleColor: "#ef4444",
+        subtitle: message,
+        subtitleColor: "#6b7280",
+        borderColor: "#ef4444",
+        duration: 5000,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -122,12 +133,6 @@ export default function Login() {
             {!isLoading && "Iniciar Sesión"}
           </Button>
 
-          {error && (
-            <p className="text-red-500 text-sm text-center font-medium">
-              {error}
-            </p>
-          )}
-
         </Box>
       </form>
 
@@ -136,6 +141,7 @@ export default function Login() {
         POWERED BY{" "}
         <span className="font-bold text-2xl text-purple-400">Nova</span>
       </footer>
+      <NotificationProvider />
     </div>
   );
 }

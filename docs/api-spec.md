@@ -192,6 +192,8 @@ Autentica a un usuario admin, registrador o calificador.
 - Errores frecuentes
   - 400: credenciales incompletas.
   - 401: credenciales incorrectas.
+  - 401: cuenta desactivada (`{ "error": "Tu cuenta ha sido desactivada por el administrador." }`).
+  - 401: assessment desactivado (`{ "error": "Este assessment se encuentra desactivado." }`).
   - 500: configuración de admin incompleta o error interno.
 
 ### POST /api/auth/logout

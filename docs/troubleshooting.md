@@ -9,12 +9,13 @@ Este documento recopila problemas comunes y sus soluciones para ahorrarte tiempo
 ### ¿Por qué recibo 401 localmente si mis credenciales son correctas?
 - Causa 1: El token JWT en la cookie `session` ha expirado o ya no coincide con el JWT_SECRET de Supabase.
 - Solución: Vuelve a iniciar sesión desde `/auth/login` (esto limpia y reemplaza la cookie automáticamente), o bórrala en la pestaña de Application de tu navegador.
-- Causa 2: El flag Active del usuario staff en la DB puede estar impidiendo un nuevo login (si la lógica de "sesión única" está activa).
-- Solución: Ve a la tabla Staff en Supabase y pon Active = false.
+- Causa 2: El flag `Active` del usuario staff en la DB está en `false`, lo que desactiva la cuenta.
+- Solución: Ve a la tabla `Staff` en Supabase y pon `Active = true` para rehabilitar el acceso.
 
-### ¿Por qué el Superadmin no puede crear un Administrador?
-- Causa: Un grupo estudiantil solo puede tener un administrador principal por ahora. Si intentas crear uno para un grupo que ya tiene, la API retornará un error.
-- Solución: Verifica los registros de la tabla Staff para ese ID_GrupoEstudiantil.
+### ¿Por qué recibo 403 "Assessment desactivado" como Superadmin?
+- Causa: El assessment al que has cambiado tiene `Activo_Assessment = false`.
+- Comportamiento: El sistema entra en modo **Solo Lectura**. Puedes navegar y ver datos, pero no realizar cambios (POST/PUT/DELETE).
+- Solución: Si necesitas editar, reactiva el assessment desde el panel de configuración o directamente en la base de datos.
 
 ---
 

@@ -23,10 +23,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'ID es obligatorio' });
   }
 
+  // Basic server-side email format guard
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (correo && !emailRegex.test(String(correo).trim())) {
+    return res.status(400).json({ error: 'El formato del correo no es válido' });
+  }
+
   const updateData: Record<string, any> = {};
   if (active !== undefined) updateData.Active = active;
   if (role !== undefined) updateData.Rol_Staff = role;
-  if (correo !== undefined) updateData.Correo_Staff = correo;
+  if (correo !== undefined) updateData.Correo_Staff = String(correo).trim().toLowerCase();
 
   try {
     const { error } = await supabase

@@ -20,21 +20,32 @@ export function useParticipantsAndGroups(logout: () => void) {
 
       if (staffRes.ok) {
         const result = await staffRes.json();
-        const parsed = z.array(StaffSchema).safeParse(result);
-        if (parsed.success) setStaff(parsed.data || []);
-        else console.error('❌ Validation error (Staff):', parsed.error);
+        if (Array.isArray(result)) {
+          const parsed = result.map(i => StaffSchema.safeParse(i));
+          const valid = parsed.filter(p => p.success).map(p => (p as any).data as Staff);
+          setStaff(valid);
+          if (valid.length < result.length) {
+            console.error('❌ Some Staff items failed validation:', parsed.filter(p => !p.success));
+          }
+        }
       }
 
       if (groupsRes.ok) {
         const result = await groupsRes.json();
-        const parsed = z.array(GroupSchema).safeParse(result);
-        if (parsed.success) setGroups(parsed.data || []);
+        if (Array.isArray(result)) {
+          const parsed = result.map(i => GroupSchema.safeParse(i));
+          const valid = parsed.filter(p => p.success).map(p => (p as any).data as Group);
+          setGroups(valid);
+        }
       }
 
       if (participantsRes.ok) {
         const result = await participantsRes.json();
-        const parsed = z.array(ParticipantSchema).safeParse(result);
-        if (parsed.success) setParticipants(parsed.data || []);
+        if (Array.isArray(result)) {
+          const parsed = result.map(i => ParticipantSchema.safeParse(i));
+          const valid = parsed.filter(p => p.success).map(p => (p as any).data as Participant);
+          setParticipants(valid);
+        }
       }
     } catch (err) {
       console.error('❌ Error loading participants/groups:', err);
