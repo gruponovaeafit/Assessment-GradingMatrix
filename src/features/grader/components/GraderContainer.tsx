@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useGraderAuth } from "@/hooks/useGraderAuth";
 import { Spinner, SkeletonBaseInfo, SkeletonUserCard } from '@/components/UI/Loading';
 import { useConfirmModal } from '@/components/UI/ConfirmModal';
@@ -14,145 +14,144 @@ import { GraderCarousel } from './GraderCarousel';
 export const GraderContainer: React.FC = () => {
   const { isGrader, isLoading: authLoading } = useGraderAuth();
   const { confirm, setIsLoading, ConfirmModalComponent } = useConfirmModal();
+  const [showBaseInfoPopup, setShowBaseInfoPopup] = useState(false);
 
-  // Data hook
-  const {
-    loading,
-    loadingParticipants,
-    groups,
-    setGroups,
-    selectedGroupId,
-    setSelectedGroupId,
-    usuarios,
-    setUsuarios,
-    baseData,
-    alreadyGraded,
-    setAlreadyGraded,
-    checkingStatus
-  } = useGraderData();
-
-  // Actions hook
-  const {
-    calificaciones,
-    errores,
-    submitting,
-    carouselIndex,
-    handleInputChange,
-    handleSubmit,
-    goPrev,
-    goNext,
-    participantesToGrade
-  } = useGraderActions(
-    usuarios,
-    selectedGroupId,
-    alreadyGraded,
-    setAlreadyGraded,
-    groups,
-    setGroups,
-    setSelectedGroupId,
-    setUsuarios,
+  // Data & Actions Hooks
+  const data = useGraderData();
+  const actions = useGraderActions(
+    data.usuarios,
+    data.selectedGroupId,
+    data.alreadyGraded,
+    data.setAlreadyGraded,
+    data.groups,
+    data.setGroups,
+    data.setSelectedGroupId,
+    data.setUsuarios,
     confirm,
     setIsLoading
   );
 
-  const [showBaseInfoPopup, setShowBaseInfoPopup] = useState(false);
+  const isInitialLoading = data.loading || authLoading;
+  const hasParticipants = actions.participantesToGrade.length > 0;
 
+  // --- Handlers ---
+  const handleExit = () => {
+    confirm({
+      title: '¿Salir de la sesión?',
+      message: 'Si sales, perderás cualquier cambio no guardado.',
+      confirmText: 'Salir',
+      cancelText: 'Cancelar',
+      variant: 'danger',
+    }).then((confirmed) => {
+      if (confirmed) window.location.href = '/';
+    });
+  };
 
+  // --- Sub-renderizados para limpiar el return principal ---
 
-  if (loading || authLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen py-4 sm:py-8 px-4 bg-white">
-        <div className="flex items-center gap-3 mb-6">
-          <Spinner size="lg" color="primary-light" />
-          <span className="text-gray-500 text-xl font-medium">Cargando datos...</span>
-        </div>
-        <SkeletonBaseInfo />
-        <div className="flex flex-col items-center gap-6 sm:gap-8 w-full mt-6">
-          {[1, 2].map((i) => (
-            <SkeletonUserCard key={i} />
-          ))}
-        </div>
+  const renderLoadingState = () => (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <Spinner size="lg" color="primary-light" />
+        <span className="text-gray-500 text-xl font-medium">Cargando datos...</span>
       </div>
-    );
-  }
+      <SkeletonBaseInfo />
+      <div className="flex flex-col items-center gap-6 w-full">
+        {[1, 2].map((i) => <SkeletonUserCard key={i} />)}
+      </div>
+    </div>
+  );
 
-  const hasParticipants = participantesToGrade.length > 0;
+  const renderHeader = () => (
+    <div className="flex items-center gap-2 mb-4">
+      <select
+        value={data.selectedGroupId}
+        onChange={(e) => data.setSelectedGroupId(e.target.value)}
+        className="flex-1 rounded-lg px-3 py-2 border border-gray-300 text-gray-900 bg-white text-sm focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none"
+      >
+        {data.groups.map((g) => (
+          <option key={g.id} value={g.id}>{g.nombre}</option>
+        ))}
+      </select>
+
+      <button
+        onClick={() => setShowBaseInfoPopup(true)}
+        className="w-8 h-8 rounded-full bg-[color:var(--color-accent)] text-white flex items-center justify-center text-xs shadow hover:brightness-90 transition"
+        title="Ver información base"
+      >
+        ?
+      </button>
+
+      <button
+        onClick={handleExit}
+        className="w-8 h-8 rounded-md bg-red-500 text-white flex items-center justify-center shadow hover:bg-red-600 transition"
+      >
+        <img src="/LogoutIcon.svg" alt="logout" className="w-3 h-3" />
+      </button>
+    </div>
+  );
 
   return (
-    <div className="flex flex-col items-center min-h-screen py-4 sm:py-10 px-4 bg-white">
-      <BaseInfoPopup 
-        show={showBaseInfoPopup} 
-        onClose={() => setShowBaseInfoPopup(false)} 
-        baseData={baseData} 
+    <div className="flex flex-col items-center min-h-screen py-4 px-4 bg-gray-50">
+      <BaseInfoPopup
+        show={showBaseInfoPopup}
+        onClose={() => setShowBaseInfoPopup(false)}
+        baseData={data.baseData}
       />
 
-      <div className="w-full max-w-2xl">
-        {/* Selector de grupo */}
-        {groups.length > 0 && (
-          <div className="mb-3">
-            <select
-              value={selectedGroupId}
-              onChange={(e) => setSelectedGroupId(e.target.value)}
-              className="w-full rounded-lg px-3 py-2 border border-gray-300 text-gray-900 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)]"
-              aria-label="Grupo a calificar"
-            >
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {loadingParticipants && (
-          <div className="flex justify-center gap-2 items-center py-8">
-            <Spinner size="lg" color="primary-light" />
-            <span className="text-gray-500">Cargando participantes...</span>
-          </div>
-        )}
-
-        {!loading && groups.length === 0 && (
-          <div className="text-center py-8 text-gray-600">
-            <p className="text-lg">No hay grupos disponibles para calificar.</p>
-          </div>
-        )}
-        
-        {!loadingParticipants && !hasParticipants && selectedGroupId && groups.length > 0 && (
-          <div className="text-center py-8 text-gray-600">
-            <p className="text-lg">No hay participantes en este grupo.</p>
-          </div>
-        )}
-
-        {!loadingParticipants && hasParticipants && (
+      <div className="w-full max-w-md md:max-w-2xl">
+        {isInitialLoading ? (
+          renderLoadingState()
+        ) : (
           <>
-            <GraderCarousel 
-              participantes={participantesToGrade}
-              baseData={baseData}
-              calificaciones={calificaciones}
-              errores={errores}
-              carouselIndex={carouselIndex}
-              onPrev={goPrev}
-              onNext={goNext}
-              onInputChange={handleInputChange}
-              onShowBaseInfo={() => setShowBaseInfoPopup(true)}
-              submitting={submitting}
-              alreadyGraded={alreadyGraded}
-            />
+            {data.groups.length > 0 && renderHeader()}
 
-            <div className="w-full flex justify-center mt-6">
-              <button
-                onClick={handleSubmit}
-                disabled={submitting || alreadyGraded}
-                className="bg-[color:var(--color-accent)] text-white font-bold px-8 py-3 rounded-lg shadow hover:bg-[#5B21B6] transition disabled:opacity-60"
-              >
-                {submitting ? 'Enviando...' : alreadyGraded ? 'Ya calificado' : 'Enviar calificaciones'}
-              </button>
-            </div>
+            {data.loadingParticipants ? (
+              <div className="flex justify-center gap-2 items-center py-12">
+                <Spinner size="lg" color="primary-light" />
+                <span className="text-gray-500">Actualizando lista...</span>
+              </div>
+            ) : (
+              <main>
+                {/* Casos de estado vacío */}
+                {data.groups.length === 0 && (
+                  <EmptyState message="No hay grupos disponibles para calificar." />
+                )}
+
+                {data.groups.length > 0 && !hasParticipants && data.selectedGroupId && (
+                  <EmptyState message="No hay participantes en este grupo." />
+                )}
+
+                {/* Carousel principal */}
+                {hasParticipants && (
+                  <GraderCarousel
+                    participantes={actions.participantesToGrade}
+                    baseData={data.baseData}
+                    calificaciones={actions.calificaciones}
+                    errores={actions.errores}
+                    carouselIndex={actions.carouselIndex}
+                    onPrev={actions.goPrev}
+                    onNext={actions.goNext}
+                    onInputChange={actions.handleInputChange}
+                    submitting={actions.submitting}
+                    alreadyGraded={data.alreadyGraded}
+                    onSubmit={actions.handleSubmit}
+                  />
+                )}
+              </main>
+            )}
           </>
         )}
       </div>
+
       <ConfirmModalComponent />
     </div>
   );
 };
+
+// Componente interno simple para mensajes vacíos
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="text-center py-12 text-gray-600 animate-fade-in">
+    <p className="text-lg font-medium">{message}</p>
+  </div>
+);
