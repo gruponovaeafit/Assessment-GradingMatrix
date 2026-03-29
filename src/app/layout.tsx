@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/UI/Toast";
+import { NotificationProvider } from "@/components/UI/Notification";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import { AuthProvider } from "@/lib/auth/AuthContext";
 
@@ -50,6 +51,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <ToastProvider />
+          <NotificationProvider />
           <ServiceWorkerRegistration />
         </AuthProvider>
       </body>

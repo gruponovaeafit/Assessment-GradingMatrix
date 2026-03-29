@@ -1,11 +1,6 @@
-import React, { useRef, useState } from 'react';
-import {
-  type Participant,
-  type CalificacionesType,
-  type CalificacionKey,
-  type BaseData
-} from '../schemas/graderSchemas';
-import { getInitials } from '../utils/graderUtils';
+import React, { useRef, useState, useMemo } from 'react';
+import { Participant, CalificacionesType, BaseData } from '../schemas/graderSchemas';
+import { ParticipantCard } from './ParticipantCard';
 
 interface GraderCarouselProps {
   participantes: Participant[];
@@ -16,87 +11,74 @@ interface GraderCarouselProps {
   onPrev: () => void;
   onNext: () => void;
   onInputChange: (id: number, num: number, value: string) => void;
-  onShowBaseInfo: () => void;
   submitting: boolean;
   alreadyGraded: boolean;
+  onSubmit: () => void;
 }
 
-export const GraderCarousel: React.FC<GraderCarouselProps> = ({
-  participantes,
-  baseData,
-  calificaciones,
-  errores,
-  carouselIndex,
-  onPrev,
-  onNext,
-  onInputChange,
-  onShowBaseInfo,
-  submitting,
-  alreadyGraded
-}) => {
+export const GraderCarousel: React.FC<GraderCarouselProps> = (props) => {
+  const { participantes, carouselIndex, onPrev, onNext } = props;
+
+  // Estados Locales
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const touchStartX = useRef<number>(0);
   const [showTip, setShowTip] = useState(true);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const touchStartX = useRef<number>(0);
 
   const SWIPE_THRESHOLD = 80;
   const DRAG_CLAMP = 120;
 
-  const hasParticipants = participantes.length > 0;
-  const currentIndex = hasParticipants
-    ? (carouselIndex % participantes.length + participantes.length) % participantes.length
-    : 0;
+  // Cálculos de Índice y Layout
+  const currentIndex = useMemo(() => {
+    if (participantes.length === 0) return 0;
+    return (carouselIndex % participantes.length + participantes.length) % participantes.length;
+  }, [carouselIndex, participantes.length]);
 
+  if (participantes.length === 0) return null;
+
+  const cardWidthPercent = 100 / participantes.length;
+  const stripTranslate = `calc(-${currentIndex * cardWidthPercent}% + ${dragOffset}px)`;
+
+  // Handlers de Touch
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
     setIsDragging(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    const currentX = e.targetTouches[0].clientX;
-    const diff = currentX - touchStartX.current;
-    const clamped = Math.max(-DRAG_CLAMP, Math.min(DRAG_CLAMP, diff));
-    setDragOffset(clamped);
+    const diff = e.targetTouches[0].clientX - touchStartX.current;
+    setDragOffset(Math.max(-DRAG_CLAMP, Math.min(DRAG_CLAMP, diff)));
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
     if (Math.abs(dragOffset) >= SWIPE_THRESHOLD) {
-      if (dragOffset > 0) onPrev();
-      else onNext();
+      if (dragOffset > 0) {
+        onPrev();
+      } else {
+        onNext();
+      }
       setShowTip(false);
     }
     setDragOffset(0);
   };
 
-  if (!hasParticipants) return null;
-
-  const cardWidthPercent = 100 / participantes.length;
-  const stripTranslate = `calc(-${currentIndex * cardWidthPercent}% + ${dragOffset}px)`;
-
   return (
     <>
       <div className="flex items-center gap-2 w-full">
-        <button
-          type="button"
-          onClick={onPrev}
-          className="hidden md:flex p-3 rounded-full bg-[color:var(--color-accent)] text-white hover:bg-[#5B21B6] transition shrink-0"
-          aria-label="Anterior"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+        {/* Botón Prev */}
+        <NavButton direction="prev" onClick={onPrev} />
 
+        {/* Carousel Container */}
         <div
-          className="flex-1 min-w-0 overflow-hidden rounded-2xl border-2 border-gray-200 shadow-lg bg-white touch-pan-y select-none md:select-auto"
+          className="flex-1 min-w-0 overflow-hidden rounded-lg border border-gray-200 shadow-2xl bg-white touch-pan-y select-none"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
           <div
-            className="flex px-2 py-4 min-h-[200px]"
+            className="flex pt-1 pb-1 min-h-[400px] sm:min-h-[500px]"
             style={{
               width: `${participantes.length * 100}%`,
               transform: `translateX(${stripTranslate})`,
@@ -104,117 +86,77 @@ export const GraderCarousel: React.FC<GraderCarouselProps> = ({
             }}
           >
             {participantes.map((usuario, idx) => (
-              <div
+              <ParticipantCard
                 key={usuario.ID}
-                className="flex-shrink-0 px-1 min-w-0 relative"
-                style={{ flexBasis: `${cardWidthPercent}%` }}
-              >
-              {showTip && idx === currentIndex && (
-                <div className="md:hidden w-full flex justify-center mb-2">
-                  <span className="flex items-center gap-2 bg-black bg-opacity-70 text-white text-xs font-medium rounded-full px-3 py-1 shadow-lg">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M4 12h16M16 8l4 4-4 4" />
-                    </svg>
-                    Desliza para cambiar de participante
-                  </span>
-                </div>
-              )}
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); onShowBaseInfo(); }}
-                  className="absolute top-0 right-2 z-10 w-7 h-7 rounded-full bg-[color:var(--color-accent)] text-white flex items-center justify-center text-sm font-bold shadow hover:bg-[#5B21B6] transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[color:var(--color-accent)]"
-                  aria-label="Ver información de la base"
-                >
-                  ?
-                </button>
-                <div className="flex flex-col items-center gap-2 mb-4">
-                  <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-2xl overflow-hidden bg-gray-100 border-2 border-[color:var(--color-accent)] flex items-center justify-center">
-                    {(typeof usuario.Photo === 'string' && usuario.Photo.trim()) ? (
-                      <img
-                        src={usuario.Photo}
-                        alt={`Foto de ${usuario.Nombre}`}
-                        className="w-full h-full object-cover cursor-zoom-in"
-                        onClick={() => setPhotoPreview(usuario.Photo ?? null)}
-                        onError={(e) => {
-                          const t = e.target as HTMLImageElement;
-                          t.style.display = 'none';
-                          const p = t.parentElement;
-                          if (p) p.innerHTML = `<span class="text-xl font-bold text-[color:var(--color-accent)]">${getInitials(usuario.Nombre)}</span>`;
-                        }}
-                      />
-                    ) : (
-                      <span className="text-xl font-bold text-[color:var(--color-accent)]">{getInitials(usuario.Nombre)}</span>
-                    )}
-                  </div>
-                  <p className="text-base font-bold text-gray-900 truncate max-w-full text-center">{usuario.Nombre}</p>
-                </div>
-                <div className="space-y-3">
-                  {[1, 2, 3].map((num) => {
-                    const comportamiento = baseData?.[`Comportamiento${num}` as keyof typeof baseData] as string;
-                    return (
-                      <div key={num}>
-                        <p className="text-xs font-semibold text-[color:var(--color-accent)]">Comportamiento {num}</p>
-                        <p className="text-xs text-gray-500 mb-1">{comportamiento}</p>
-                        <input
-                          type="number"
-                          min={1}
-                          max={5}
-                          step={1}
-                          className={`w-full rounded-lg px-3 py-2 text-gray-900 text-center font-bold text-lg bg-white border-2 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-accent)] ${errores.includes(usuario.ID) ? 'border-yellow-400' : 'border-[color:var(--color-accent)]'}`}
-                          value={calificaciones[usuario.ID]?.[`Calificacion_${num}` as CalificacionKey] ?? ''}
-                          onChange={(e) => onInputChange(usuario.ID, num, e.target.value)}
-                          disabled={submitting || alreadyGraded}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="text-center text-xs text-gray-400 mt-3">
-                  {idx + 1} / {participantes.length}
-                </p>
-              </div>
+                usuario={usuario}
+                idx={idx}
+                currentIndex={currentIndex}
+                cardWidthPercent={cardWidthPercent}
+                showTip={showTip}
+                onPhotoClick={setPhotoPreview}
+                {...props}
+              />
             ))}
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onNext}
-          className="hidden md:flex p-3 rounded-full bg-[color:var(--color-accent)] text-white hover:bg-[#5B21B6] transition shrink-0"
-          aria-label="Siguiente"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        {/* Botón Next */}
+        <NavButton direction="next" onClick={onNext} />
       </div>
-      {photoPreview && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
-          onClick={() => setPhotoPreview(null)}
-          aria-modal="true"
-          tabIndex={-1}
-        >
-          <div className="relative" onClick={e => e.stopPropagation()}>
-            <img
-              src={photoPreview}
-              alt="Foto ampliada"
-              className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-lg"
-            />
-            <button
-              className="absolute top-2 right-2 bg-white rounded-full p-2 shadow focus:outline-none"
-              onClick={() => setPhotoPreview(null)}
-              aria-label="Cerrar"
-              autoFocus
-            >
-              <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
+
+      {/* Modal de Foto */}
+      {photoPreview && <PhotoModal url={photoPreview} onClose={() => setPhotoPreview(null)} />}
     </>
   );
 };
+
+// Pequeños componentes de soporte internos para evitar repetición
+const NavButton = ({ direction, onClick }: { direction: 'prev' | 'next', onClick: () => void }) => {
+  const isNext = direction === 'next';
+
+  return (
+    <div className="hidden md:flex items-center gap-3">
+
+      {/* Si es prev → texto primero */}
+      {!isNext && (
+        <span className="text-sm text-center text-gray-400 leading-tight">
+          Participante <br/>
+          anterior
+        </span>
+      )}
+
+      <button
+        type="button"
+        onClick={onClick}
+        className="p-3 rounded-full bg-[color:var(--color-accent)] text-white hover:brightness-90 transition shrink-0"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {direction === 'prev'
+            ? <path d="M15 19l-7-7 7-7" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+            : <path d="M9 5l7 7-7 7" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>}
+        </svg>
+      </button>
+
+      {/* Si es next → texto después */}
+      {isNext && (
+        <span className="text-sm text-center text-gray-400 leading-tight">
+          Siguiente <br/>
+          participante
+        </span>
+      )}
+    </div>
+  );
+};
+
+const PhotoModal = ({ url, onClose }: { url: string, onClose: () => void }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90" onClick={onClose}>
+    <div className="relative" onClick={e => e.stopPropagation()}>
+      <img src={url} alt="Preview" className="max-w-[90vw] max-h-[80vh] rounded-2xl shadow-lg" />
+      <button className="absolute top-2 right-2 bg-white rounded-full p-2" onClick={onClose}>
+        <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M6 18L18 6M6 6l12 12" strokeWidth={2} strokeLinecap="round" />
+        </svg>
+      </button>
+    </div>
+  </div>
+);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { showToast } from '@/components/UI/Toast';
+import { notify } from '@/components/UI/Notification';
 import { 
   type Participant, 
   type CalificacionesType, 
@@ -117,7 +117,12 @@ export const useGraderActions = (
 
   const handleSubmit = async () => {
     if (!validarTodasLasCalificaciones()) {
-      showToast.error('Todos los participantes deben tener las 3 calificaciones asignadas');
+      notify({
+        title: 'Calificaciones incompletas',
+        titleColor: '#ef4444',
+        subtitle: 'Todos los participantes deben tener las 3 calificaciones asignadas',
+        borderColor: '#ef4444'
+      });
       return;
     }
 
@@ -142,7 +147,12 @@ export const useGraderActions = (
     const id_base = parsedData?.id_base;
 
     if (!id_calificador || !id_base) {
-      showToast.error('Faltan datos esenciales (calificador o base)');
+      notify({
+        title: 'Error de datos',
+        titleColor: '#ef4444',
+        subtitle: 'Faltan datos esenciales (calificador o base)',
+        borderColor: '#ef4444'
+      });
       setSubmitting(false);
       setIsLoading(false);
       return;
@@ -188,7 +198,12 @@ export const useGraderActions = (
       }
 
       const gradedGroupName = groups.find((g) => String(g.id) === selectedGroupId)?.nombre ?? `#${selectedGroupId}`;
-      showToast.success(`Grupo "${gradedGroupName}" calificado con éxito`);
+      notify({
+        title: '¡Éxito!',
+        titleColor: '#22c55e',
+        subtitle: `Grupo "${gradedGroupName}" calificado con éxito`,
+        borderColor: '#22c55e'
+      });
 
       setCalificaciones({});
       setErrores([]);
@@ -201,7 +216,12 @@ export const useGraderActions = (
 
     } catch (error: any) {
       console.error('❌ Error submitting grades:', error);
-      showToast.error(error.message || 'Error al enviar las calificaciones. Intenta de nuevo.');
+      notify({
+        title: 'Error de envío',
+        titleColor: '#ef4444',
+        subtitle: error.message || 'Error al enviar las calificaciones. Intenta de nuevo.',
+        borderColor: '#ef4444'
+      });
     } finally {
       setSubmitting(false);
       setIsLoading(false);

@@ -1,6 +1,6 @@
 import { stringify } from "csv-stringify/sync";
 import { saveAs } from "file-saver";
-import { showToast } from "@/components/UI/Toast";
+import { notify } from "@/components/UI/Notification";
 import { type Assessment, type AdminUser, type GrupoEstudiantil } from "../schemas/superAdminSchemas";
 
 /**
@@ -124,9 +124,19 @@ export const handleExportAdminsCSV = (admins: AdminUser[]) => {
     const fecha = new Date().toISOString().split("T")[0];
     saveAs(blob, `admins_reporte_${fecha}.csv`);
     
-    showToast.success(`Exportados ${exportRows.length} administradores`);
+    notify({ 
+      title: "¡Éxito!", 
+      subtitle: `Exportados ${exportRows.length} administradores`, 
+      titleColor: "#22c55e", 
+      borderColor: "#22c55e" 
+    });
   } catch (err) {
     console.error("❌ Error exporting CSV:", err);
-    showToast.error("Error al exportar a CSV");
+    notify({ 
+      title: "Error", 
+      subtitle: "Error al exportar a CSV", 
+      titleColor: "#ef4444", 
+      borderColor: "#ef4444" 
+    });
   }
 };
