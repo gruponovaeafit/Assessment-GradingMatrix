@@ -64,15 +64,19 @@ export const GraderContainer: React.FC = () => {
 
   const renderHeader = () => (
     <div className="flex items-center gap-2 mb-4">
-      <select
-        value={data.selectedGroupId}
-        onChange={(e) => data.setSelectedGroupId(e.target.value)}
-        className="flex-1 rounded-lg px-3 py-2 border border-gray-300 text-gray-900 bg-white text-sm focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none"
-      >
-        {data.groups.map((g) => (
-          <option key={g.id} value={g.id}>{g.nombre}</option>
-        ))}
-      </select>
+      {data.groups.length > 0 ? (
+        <select
+          value={data.selectedGroupId}
+          onChange={(e) => data.setSelectedGroupId(e.target.value)}
+          className="flex-1 rounded-lg px-3 py-2 border border-gray-300 text-gray-900 bg-white text-sm focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none"
+        >
+          {data.groups.map((g) => (
+            <option key={g.id} value={g.id}>{g.nombre}</option>
+          ))}
+        </select>
+      ) : (
+        <div className="flex-1" /> // Spacer to keep buttons to the right
+      )}
 
       <button
         onClick={() => setShowBaseInfoPopup(true)}
@@ -99,12 +103,12 @@ export const GraderContainer: React.FC = () => {
         baseData={data.baseData}
       />
 
-      <div className="w-full max-w-md md:max-w-2xl">
+      <div className="w-full max-w-md md:max-w-2xl lg:max-w-3xl">
         {isInitialLoading ? (
           renderLoadingState()
         ) : (
           <>
-            {data.groups.length > 0 && renderHeader()}
+            {renderHeader()}
 
             {data.loadingParticipants ? (
               <div className="flex justify-center gap-2 items-center py-12">
@@ -151,7 +155,7 @@ export const GraderContainer: React.FC = () => {
 
 // Componente interno simple para mensajes vacíos
 const EmptyState = ({ message }: { message: string }) => (
-  <div className="text-center py-12 text-gray-600 animate-fade-in">
+  <div className="text-center py-12 text-gray-600 animate-fadeIn">
     <p className="text-lg font-medium">{message}</p>
   </div>
 );

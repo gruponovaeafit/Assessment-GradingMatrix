@@ -39,11 +39,11 @@ export const ParticipantCard: React.FC<ParticipantCardProps> = ({
         </div>
       )}
 
-      <div className="flex items-center justify-center gap-4 mb-4">
-        <p className="text-base font-bold text-gray-800 leading-tight max-w-[140px]">
+      <div className="flex items-center justify-center gap-6 mb-6">
+        <p className="text-base sm:text-xl lg:text-2xl font-bold text-gray-800 leading-tight max-w-[150px] sm:max-w-xs">
           {usuario.Nombre.toUpperCase()}
         </p>
-        <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 border flex items-center justify-center">
+        <div className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-full overflow-hidden bg-gray-100 border-2 border-[color:var(--color-accent)] flex items-center justify-center shadow-lg transition-transform hover:scale-105">
           {usuario.Photo?.trim() ? (
             <img
               src={usuario.Photo}
@@ -52,23 +52,23 @@ export const ParticipantCard: React.FC<ParticipantCardProps> = ({
               onClick={() => onPhotoClick(usuario.Photo!)}
             />
           ) : (
-            <span className="text-xl font-bold text-[color:var(--color-accent)]">{getInitials(usuario.Nombre)}</span>
+            <span className="text-xl sm:text-3xl font-bold text-[color:var(--color-accent)]">{getInitials(usuario.Nombre)}</span>
           )}
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-4">
         {[1, 2, 3].map((num) => (
-          <div key={num}>
-            <p className="text-lg text-center font-semibold text-[color:var(--color-accent)]">Comportamiento {num}</p>
-            <p className="text-xs text-gray-700 mb-1 text-center">
+          <div key={num} className="bg-gray-50/50 p-2 rounded-xl border border-transparent hover:border-gray-200 transition-colors">
+            <p className="text-lg sm:text-xl font-semibold text-[color:var(--color-accent)] text-center">Comportamiento {num}</p>
+            <p className="text-xs sm:text-sm text-gray-700 mb-2 text-center px-4">
               {baseData?.[`Comportamiento${num}` as keyof BaseData] as string}
             </p>
             <input
               type="number"
               min={1} max={5}
-              className={`w-full rounded-xl px-2 py-1 text-center font-bold text-lg text-gray-800 border focus:ring-1 focus:ring-[color:var(--color-accent)] ${
-                errores.includes(usuario.ID) ? 'border-yellow-400' : 'border-gray-300'
+              className={`w-full rounded-xl px-4 py-2 sm:py-3 text-center font-bold text-xl sm:text-2xl text-gray-800 border shadow-sm transition-all focus:ring-2 focus:ring-[color:var(--color-accent)] focus:border-transparent outline-none ${
+                errores.includes(usuario.ID) ? 'border-yellow-400 bg-yellow-50' : 'border-gray-300 bg-white'
               }`}
               value={calificaciones[usuario.ID]?.[`Calificacion_${num}` as CalificacionKey] ?? ''}
               onChange={(e) => onInputChange(usuario.ID, num, e.target.value)}

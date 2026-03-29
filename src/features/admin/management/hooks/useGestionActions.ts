@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { authFetch } from "@/lib/auth/authFetch";
-import { showToast } from "@/components/UI/Toast";
+import { notify } from "@/components/UI/Notification";
 import { type ParticipantDashboardRow } from "../schemas/gestionSchemas";
 
 export function useGestionActions(
@@ -20,7 +20,12 @@ export function useGestionActions(
     if (editModal.role !== originalData.role) updates.role = editModal.role;
 
     if (Object.keys(updates).length === 1) {
-      showToast.error("Debe modificarse al menos un campo");
+      notify({ 
+        title: "Error", 
+        subtitle: "Debe modificarse al menos un campo", 
+        titleColor: "#ef4444", 
+        borderColor: "#ef4444" 
+      });
       return;
     }
 
@@ -33,15 +38,30 @@ export function useGestionActions(
 
       const result = await res.json();
       if (res.ok) {
-        showToast.success("Participante actualizado correctamente");
+        notify({ 
+          title: "¡Éxito!", 
+          subtitle: "Participante actualizado correctamente", 
+          titleColor: "#22c55e", 
+          borderColor: "#22c55e" 
+        });
         setData((prev) => prev.map((p) => (p.ID === editModal.ID ? { ...p, ...editModal } : p)));
         setEditModal(null);
         setOriginalData(null);
       } else {
-        showToast.error(result.error || "Error al actualizar");
+        notify({ 
+          title: "Error", 
+          subtitle: result.error || "Error al actualizar", 
+          titleColor: "#ef4444", 
+          borderColor: "#ef4444" 
+        });
       }
     } catch (err) {
-      showToast.error("Error de conexión al actualizar");
+      notify({ 
+        title: "Error", 
+        subtitle: "Error de conexión al actualizar", 
+        titleColor: "#ef4444", 
+        borderColor: "#ef4444" 
+      });
     }
   };
 

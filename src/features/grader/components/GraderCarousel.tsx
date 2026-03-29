@@ -78,7 +78,7 @@ export const GraderCarousel: React.FC<GraderCarouselProps> = (props) => {
           onTouchEnd={handleTouchEnd}
         >
           <div
-            className="flex pt-1 pb-1 min-h-[300px]"
+            className="flex pt-1 pb-1 min-h-[400px] sm:min-h-[500px]"
             style={{
               width: `${participantes.length * 100}%`,
               transform: `translateX(${stripTranslate})`,
