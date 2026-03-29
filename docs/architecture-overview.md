@@ -60,6 +60,13 @@ El proyecto utiliza **Vitest** y **React Testing Library** para pruebas unitaria
 - Las pruebas de hooks deben mockear `authFetch` para verificar el flujo de datos y validaciones.
 - Los archivos de prueba viven junto al código que prueban (ej. `useAssessments.test.ts`).
 
+### 4. Trazabilidad (Logs de Auditoría) (ADR 0011)
+El sistema implementa un mecanismo de auditoría para acciones sensibles.
+- **Captura**: Se utiliza la utilidad `src/lib/utils/audit.ts` (`logAudit`) en los handlers de la API.
+- **Persistencia**: Los logs se guardan en la tabla `public.AuditLogs` de Supabase.
+- **Seguridad**: La tabla es **insert-only** vía RLS; nadie (ni el staff ni el super-admin desde la app) puede borrar un log una vez generado.
+- **Eventos Críticos**: Se auditan inicios de sesión (éxito/fallo), creación de staff y eliminación de assessments.
+
 ---
 
 ## Patrones de Código Comunes

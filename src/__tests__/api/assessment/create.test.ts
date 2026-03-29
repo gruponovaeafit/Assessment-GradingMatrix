@@ -46,6 +46,15 @@ function setupSupabase({
     }
     if (table === 'GrupoEstudiantil') {
       chain.single.mockResolvedValue(grupoResult);
+    } else if (table === 'Assessment') {
+        chain.single.mockImplementation(() => {
+            // If it's the insert call from handler, use insertResult
+            if (chain.insert.mock.calls.length > 0) {
+                return Promise.resolve(insertResult);
+            }
+            // If it's the status check from requireRoles, return active status
+            return Promise.resolve({ data: { Activo_Assessment: true }, error: null });
+        });
     } else {
       chain.single.mockResolvedValue(insertResult);
     }

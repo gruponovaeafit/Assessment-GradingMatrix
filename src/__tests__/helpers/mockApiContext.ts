@@ -26,7 +26,7 @@ export function mockSuperAdminToken(overrides: Partial<TokenPayload> = {}): Toke
     id: 0,
     email: 'superadmin@nova.com',
     role: 'admin',
-    assessmentId: undefined,
+    assessmentId: 1, // Default assessment for super-admin in tests
     ...overrides,
   } as unknown as TokenPayload;
 }
@@ -42,7 +42,7 @@ export function mockAdminToken(assessmentId: number, overrides: Partial<TokenPay
 }
 
 /** Builds a Supabase chain that resolves with { data, error } at .single() */
-export function buildSupabaseChain(result: { data: unknown; error: unknown }) {
+export function buildSupabaseChain(result: { data: unknown; error: unknown } = { data: null, error: null }) {
   const chain = {
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
@@ -52,25 +52,42 @@ export function buildSupabaseChain(result: { data: unknown; error: unknown }) {
     neq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue(result),
     maybeSingle: vi.fn().mockResolvedValue(result),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    range: vi.fn().mockReturnThis(),
   };
   return chain;
 }
 
 /** 
- * Helper to setup a default non-revoked token mock for requireRoles.
+ * Helper to setup default auth mocks for requireRoles (revocation, account status, assessment status).
  * Call this in beforeEach for API tests that use requireRoles.
  */
-export function setupRevokedTokenMock(supabase: any) {
-  // Por defecto, el token NO está revocado
+export function setupAuthMocks(supabase: any) {
+  // Default non-revoked, active account and active assessment
   supabase.from.mockImplementation((table: string) => {
     if (table === 'RevokedTokens') {
-      return {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-      };
+      return buildSupabaseChain({ data: null, error: null });
+    }
+    if (table === 'Staff') {
+      return buildSupabaseChain({ 
+        data: { 
+          Active: true, 
+          Assessment: { Activo_Assessment: true } 
+        }, 
+        error: null 
+      });
+    }
+    if (table === 'Assessment') {
+      return buildSupabaseChain({ 
+        data: { Activo_Assessment: true }, 
+        error: null 
+      });
     }
     // Para otras tablas, retornar el mock por defecto o dejar que el test lo defina
     return buildSupabaseChain({ data: null, error: null });
   });
 }
+
+/** Legacy alias for setupAuthMocks */
+export const setupRevokedTokenMock = setupAuthMocks;

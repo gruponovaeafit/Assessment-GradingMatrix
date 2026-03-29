@@ -192,6 +192,8 @@ Autentica a un usuario admin, registrador o calificador.
 - Errores frecuentes
   - 400: credenciales incompletas.
   - 401: credenciales incorrectas.
+  - 401: cuenta desactivada (`{ "error": "Tu cuenta ha sido desactivada por el administrador." }`).
+  - 401: assessment desactivado (`{ "error": "Este assessment se encuentra desactivado." }`).
   - 500: configuración de admin incompleta o error interno.
 
 ### POST /api/auth/logout
@@ -1101,6 +1103,30 @@ Genera grupos a partir de una base mock en memoria.
 - Notas
   - Usa datos mock.
   - No sigue completamente la convención estándar de errores y mensajes en español.
+
+---
+
+## Logs de Auditoría (Trazabilidad)
+
+El sistema registra automáticamente acciones críticas para garantizar la seguridad y trazabilidad. Estos logs no son accesibles vía API estándar (solo lectura directa en base de datos para administradores autorizados).
+
+### Acciones Registradas
+- `LOGIN_SUCCESS`: Inicio de sesión exitoso.
+- `LOGIN_FAILED`: Intento de sesión fallido (registra IP y motivo).
+- `STAFF_CREATED`: Registro de nuevo personal (quién lo creó y a quién).
+- `ASSESSMENT_DELETED`: Eliminación de un assessment y sus datos asociados.
+- `UNAUTHORIZED_ACCESS`: Intentos de acceso a rutas protegidas con roles insuficientes.
+
+### Estructura del Log
+Cada entrada en la tabla `AuditLogs` contiene:
+- `ID_Log`: Identificador único.
+- `Fecha`: Marca de tiempo (UTC).
+- `Accion`: Identificador de la acción.
+- `UsuarioID`: ID del staff que realizó la acción.
+- `UsuarioEmail`: Email del staff.
+- `Detalles`: Objeto JSON con metadatos específicos (ej: ID del assessment borrado).
+- `IP`: Dirección IP del cliente.
+- `UserAgent`: Información del navegador/cliente.
 
 ---
 

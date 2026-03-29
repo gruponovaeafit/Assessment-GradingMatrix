@@ -63,8 +63,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         details: gradesError.message 
       });
     }
-
-    console.log('✅ Calificaciones encontradas:', calificaciones?.length || 0);
     
     return res.status(200).json({ 
       calificaciones: calificaciones || [],

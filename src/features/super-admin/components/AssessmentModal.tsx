@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/UI/Button';
 import { InputBox } from '@/components/UI/InputBox';
+import { EmailInput } from '@/components/UI/EmailInput';
 import { useConfirmModal } from '@/components/UI/ConfirmModal';
 import { X, AlertTriangle, AlertCircle } from 'lucide-react';
 import { type GrupoEstudiantil, type AdminUser, type Assessment } from '@/features/super-admin/schemas/superAdminSchemas';
@@ -290,22 +291,16 @@ export const AssessmentModal: React.FC<AssessmentModalProps> = ({
               {!reassignAdminId && (
                 <div className="grid grid-cols-1 gap-4 animate-fadeIn">
                   <div className="space-y-1">
-                    <InputBox
+                    <EmailInput
                       label="Correo Electrónico"
-                      type="email"
                       placeholder="ejemplo@correo.com"
                       value={adminEmail}
-                      onChange={(e) => {
-                        setAdminEmail(e.target.value);
+                      onChange={(val) => {
+                        setAdminEmail(val);
                         if (emailError) setEmailError(null);
                       }}
+                      error={emailError ?? undefined}
                     />
-                    {emailError && (
-                      <p className="flex items-center gap-1.5 text-xs text-red-500 mt-1">
-                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                        {emailError}
-                      </p>
-                    )}
                   </div>
                   <div className="space-y-1">
                     <InputBox

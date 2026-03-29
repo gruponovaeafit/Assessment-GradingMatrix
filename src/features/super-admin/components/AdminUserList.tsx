@@ -1,4 +1,5 @@
 import React from 'react';
+import { EmailInput } from '@/components/UI/EmailInput';
 import { Save, ShieldCheck, Mail, Lock, Building } from 'lucide-react';
 import { type AdminUser } from '../schemas/superAdminSchemas';
 
@@ -53,20 +54,16 @@ export const AdminUserList: React.FC<AdminUserListProps> = ({
 
             <div className="space-y-3">
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 flex items-center gap-1">
-                  <Mail className="w-3 h-3" /> Email de Acceso
-                </label>
-                <input
-                  type="email"
+                <EmailInput
+                  label="Email de Acceso"
                   value={edit.correo}
                   disabled={loading}
-                  onChange={(e) =>
+                  onChange={(val) =>
                     setAdminEdits((prev) => ({
                       ...prev,
-                      [admin.id]: { ...edit, correo: e.target.value },
+                      [admin.id]: { ...edit, correo: val },
                     }))
                   }
-                  className="w-full px-3 py-2 rounded-xl bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-[color:var(--color-accent)] outline-none transition text-sm text-gray-900"
                 />
               </div>
 

@@ -31,22 +31,41 @@ const SAMPLE_ASSESSMENTS = [
  * Build a thenable chain that resolves to { data, error } when awaited directly.
  * Every chainable method returns `this` but the object's Promise protocol is preserved.
  */
-function buildThenable(data: unknown, error: unknown = null) {
+function buildThenable(data: unknown, error: unknown = null, singleData: unknown = data) {
   const resolved = Promise.resolve({ data, error });
-  const chain: Record<string, unknown> = {
+  const singleResolved = Promise.resolve({ data: singleData, error });
+  
+  const chain: Record<string, any> = {
     select: vi.fn(),
     order: vi.fn(),
     eq: vi.fn(),
+    single: vi.fn(),
     maybeSingle: vi.fn(),
     then: resolved.then.bind(resolved),
     catch: resolved.catch.bind(resolved),
     finally: resolved.finally.bind(resolved),
   };
-  // All builder methods return `chain` itself
-  (chain.select as ReturnType<typeof vi.fn>).mockReturnValue(chain);
-  (chain.order as ReturnType<typeof vi.fn>).mockReturnValue(chain);
-  (chain.eq as ReturnType<typeof vi.fn>).mockReturnValue(chain);
-  (chain.maybeSingle as ReturnType<typeof vi.fn>).mockReturnValue(chain);
+
+  chain.select.mockReturnValue(chain);
+  chain.order.mockReturnValue(chain);
+  chain.eq.mockReturnValue(chain);
+  
+  chain.single.mockImplementation(() => {
+    return {
+        then: singleResolved.then.bind(singleResolved),
+        catch: singleResolved.catch.bind(singleResolved),
+        finally: singleResolved.finally.bind(singleResolved),
+    };
+  });
+
+  chain.maybeSingle.mockImplementation(() => {
+    return {
+        then: singleResolved.then.bind(singleResolved),
+        catch: singleResolved.catch.bind(singleResolved),
+        finally: singleResolved.finally.bind(singleResolved),
+    };
+  });
+
   return chain;
 }
 
@@ -74,13 +93,8 @@ describe('GET /api/assessment/list', () => {
   it('super-admin gets all assessments', async () => {
     mockVerifyToken.mockReturnValue(mockSuperAdminToken());
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'RevokedTokens') {
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-        };
-      }
+      if (table === 'RevokedTokens') return buildThenable(null);
+      if (table === 'Assessment') return buildThenable(SAMPLE_ASSESSMENTS, null, { Activo_Assessment: true });
       return buildThenable(SAMPLE_ASSESSMENTS);
     });
     const req = createMockReq({ method: 'GET', cookies: { session: 'tok' } });
@@ -98,11 +112,13 @@ describe('GET /api/assessment/list', () => {
     mockVerifyToken.mockReturnValue(mockAdminToken(1));
     mockFrom.mockImplementation((table: string) => {
       if (table === 'RevokedTokens') {
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-        };
+        return buildThenable(null); // maybeSingle resolves to {data: null}
+      }
+      if (table === 'Staff') {
+        return buildThenable({ 
+          Active: true, 
+          Assessment: { Activo_Assessment: true } 
+        });
       }
       return buildThenable([SAMPLE_ASSESSMENTS[0]]);
     });
@@ -118,13 +134,8 @@ describe('GET /api/assessment/list', () => {
   it('returns empty array when no assessments exist', async () => {
     mockVerifyToken.mockReturnValue(mockSuperAdminToken());
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'RevokedTokens') {
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-        };
-      }
+      if (table === 'RevokedTokens') return buildThenable(null);
+      if (table === 'Assessment') return buildThenable([], null, { Activo_Assessment: true });
       return buildThenable([]);
     });
     const req = createMockReq({ method: 'GET', cookies: { session: 'tok' } });
@@ -137,13 +148,8 @@ describe('GET /api/assessment/list', () => {
   it('returns 500 when Supabase query fails', async () => {
     mockVerifyToken.mockReturnValue(mockSuperAdminToken());
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'RevokedTokens') {
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
-        };
-      }
+      if (table === 'RevokedTokens') return buildThenable(null);
+      if (table === 'Assessment') return buildThenable(null, { message: 'db error' }, { Activo_Assessment: true });
       return buildThenable(null, { message: 'db error' });
     });
     const req = createMockReq({ method: 'GET', cookies: { session: 'tok' } });

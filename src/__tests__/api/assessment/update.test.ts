@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken, setupRevokedTokenMock } from '@/__tests__/helpers/mockApiContext';
+import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken, setupRevokedTokenMock, buildSupabaseChain } from '@/__tests__/helpers/mockApiContext';
 
 vi.mock('@/lib/supabase/server', () => ({
   supabase: { from: vi.fn() },
@@ -23,31 +23,39 @@ const mockVerifyToken = verifyToken as ReturnType<typeof vi.fn>;
 const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
 
 function setupSupabase({
-  updateResult = { data: { ID_Assessment: 10 }, error: null },
-  fetchGroupResult = { data: { ID_GrupoEstudiantil: 5 }, error: null },
-  deactivateResult = { error: null },
+  updateResult = { data: { ID_Assessment: 10 } as any, error: null as any },
+  fetchGroupResult = { data: { ID_GrupoEstudiantil: 5 } as any, error: null as any },
 } = {}) {
   mockFrom.mockImplementation((table: string) => {
     if (table === 'RevokedTokens') {
+      return buildSupabaseChain({ data: null, error: null });
+    }
+    if (table === 'Staff') {
+      return buildSupabaseChain({
+        data: { Active: true, Assessment: { Activo_Assessment: true } },
+        error: null,
+      });
+    }
+    if (table === 'Assessment') {
       return {
+        update: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+        single: vi.fn().mockImplementation(() => {
+          // If the query is just checking status (from requireRoles)
+          // it might expect a different shape than the update result.
+          // But for simplicity, we provide both or handle it.
+          return Promise.resolve({
+            data: { ...updateResult.data, Activo_Assessment: true },
+            error: updateResult.error,
+          });
+        }),
       };
     }
-    return {
-      update: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      neq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockImplementation(() => {
-        if (table === 'Assessment') return Promise.resolve(updateResult);
-        if (table === 'Participante') return Promise.resolve(fetchGroupResult);
-        return Promise.resolve({ data: null, error: null });
-      }),
-      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-      mockResolvedValue: vi.fn().mockResolvedValue(deactivateResult),
-    };
+    if (table === 'Participante') {
+      return buildSupabaseChain(fetchGroupResult);
+    }
+    return buildSupabaseChain();
   });
 }
 

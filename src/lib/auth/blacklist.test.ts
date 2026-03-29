@@ -2,21 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { requireRoles } from '@/lib/auth/apiAuth';
 import { supabase } from '@/lib/supabase/server';
 import { verifyToken } from '@/lib/auth';
+import { setupAuthMocks, buildSupabaseChain } from '@/__tests__/helpers/mockApiContext';
 
 vi.mock('@/lib/supabase/server', () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          maybeSingle: vi.fn()
-        }))
-      }))
-    }))
+    from: vi.fn()
   }
 }));
 
 vi.mock('@/lib/auth', () => ({
   verifyToken: vi.fn(),
+}));
+
+vi.mock('@/lib/auth/cookie', () => ({
+  clearSessionCookie: vi.fn(),
+  COOKIE_NAME: 'session',
 }));
 
 describe('Blacklist Security (RevokedTokens)', () => {
@@ -34,6 +34,7 @@ describe('Blacklist Security (RevokedTokens)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    setupAuthMocks(supabase);
   });
 
   it('should deny access if token is in RevokedTokens table', async () => {
@@ -45,16 +46,15 @@ describe('Blacklist Security (RevokedTokens)', () => {
     (verifyToken as any).mockReturnValue({ id: 1, role: 'admin' });
 
     // Simular que el token ESTÁ en la blacklist
-    const maybeSingleMock = vi.fn().mockResolvedValue({ 
-      data: { Token: token }, 
-      error: null 
-    });
-    (supabase.from as any).mockReturnValue({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          maybeSingle: maybeSingleMock
-        }))
-      }))
+    supabase.from.mockImplementation((table: string) => {
+      if (table === 'RevokedTokens') {
+        return buildSupabaseChain({ data: { Token: token }, error: null });
+      }
+      // Return default active status for other checks in requireRoles
+      if (table === 'Staff') {
+        return buildSupabaseChain({ data: { Active: true, Assessment: { Activo_Assessment: true } }, error: null });
+      }
+      return buildSupabaseChain();
     });
 
     const result = await requireRoles(req, res, ['admin']);
@@ -71,19 +71,7 @@ describe('Blacklist Security (RevokedTokens)', () => {
 
     (verifyToken as any).mockReturnValue({ id: 1, role: 'admin' });
 
-    // Simular que el token NO está en la blacklist
-    const maybeSingleMock = vi.fn().mockResolvedValue({ 
-      data: null, 
-      error: null 
-    });
-    (supabase.from as any).mockReturnValue({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          maybeSingle: maybeSingleMock
-        }))
-      }))
-    });
-
+    // setupAuthMocks already sets RevokedTokens to return null data
     const result = await requireRoles(req, res, ['admin']);
 
     expect(result).not.toBeNull();

@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { hashPassword } from '@/lib/auth';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { logAudit, AuditActions, getClientIP } from '@/lib/utils/audit';
 
 /**
  * POST /api/super-admin/staff-create
@@ -28,6 +29,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { assessmentId, correo, password, rol } = req.body;
+  const ip = getClientIP(req);
+  const userAgent = req.headers['user-agent'] || 'unknown';
 
   if (!assessmentId || Number.isNaN(Number(assessmentId))) {
     return res.status(400).json({ error: 'assessmentId inválido o ausente' });
@@ -69,6 +72,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       throw new Error(error?.message || 'Error al crear el staff');
     }
+
+    // 📝 Log Audit: Staff Created (by Super Admin)
+    await logAudit({
+      accion: AuditActions.STAFF_CREATED,
+      usuario_id: user.id,
+      usuario_email: user.email,
+      detalles: { 
+        targetEmail: correo.trim().toLowerCase(), 
+        role: rol, 
+        assessmentId: Number(assessmentId),
+        staffId: data.ID_Staff,
+        context: 'super-admin'
+      },
+      ip,
+      user_agent: userAgent
+    });
 
     return res.status(200).json({ message: 'Administrador creado', ID_Staff: data.ID_Staff });
   } catch (err: any) {

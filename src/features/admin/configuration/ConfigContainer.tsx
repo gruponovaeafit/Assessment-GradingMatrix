@@ -106,6 +106,31 @@ export const ConfigContainer = () => {
       return;
     }
 
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(staffCorreo)) {
+      notify({
+        title: 'Correo inválido',
+        titleColor: 'var(--warning)',
+        subtitle: 'El correo debe tener un formato válido (ej. usuario@dominio.com)',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--warning)',
+        duration: 3000,
+      });
+      return;
+    }
+
+    if (staffRol === 'calificador' && !staffBaseId) {
+      notify({
+        title: 'Base no seleccionada',
+        titleColor: 'var(--warning)',
+        subtitle: 'Debes seleccionar una base para el calificador',
+        subtitleColor: 'var(--color-muted)',
+        borderColor: 'var(--warning)',
+        duration: 3000,
+      });
+      return;
+    }
+
     setCreatingStaff(true);
     try {
       const response = await authFetch('/api/staff/create', {

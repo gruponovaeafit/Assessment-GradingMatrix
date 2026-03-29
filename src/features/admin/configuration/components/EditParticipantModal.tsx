@@ -1,5 +1,5 @@
-import React from 'react';
 import { type Calificacion } from '../schemas/configSchemas';
+import { EmailInput } from '@/components/UI/EmailInput';
 
 interface EditParticipantModalProps {
   editModal: Calificacion;
@@ -19,15 +19,11 @@ export const EditParticipantModal: React.FC<EditParticipantModalProps> = ({
       <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md max-h-[90vh] overflow-y-auto border border-gray-100 shadow-2xl">
         <h2 id="modal-title" className="text-2xl font-bold mb-6 text-gray-900">Editar Staff</h2>
         <form onSubmit={onUpdate} className="space-y-4">
-          <div>
-            <label className="block mb-1.5 font-semibold text-gray-700 text-sm">Correo</label>
-            <input
-              type="email"
-              value={editModal.Correo}
-              onChange={(e) => setEditModal({ ...editModal, Correo: e.target.value })}
-              className="w-full border border-gray-200 px-4 py-3 rounded-xl text-gray-900 bg-gray-50 placeholder-gray-400 text-sm focus:ring-2 focus:ring-purple-200 focus:outline-none transition"
-            />
-          </div>
+          <EmailInput
+            label="Correo"
+            value={editModal.Correo}
+            onChange={(val) => setEditModal({ ...editModal, Correo: val })}
+          />
 
           <div>
             <label className="block mb-1.5 font-semibold text-gray-700 text-sm">Rol</label>
