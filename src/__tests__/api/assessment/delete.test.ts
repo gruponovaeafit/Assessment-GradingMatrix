@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken, setupRevokedTokenMock } from '@/__tests__/helpers/mockApiContext';
+import { createMockReq, createMockRes, mockAdminToken, mockSuperAdminToken } from '@/__tests__/helpers/mockApiContext';
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -17,6 +17,18 @@ vi.mock('@/lib/auth/cookie', () => ({
   COOKIE_NAME: 'session',
 }));
 
+vi.mock('@/lib/utils/audit', () => ({
+  logAudit: vi.fn(),
+  AuditActions: { 
+    ASSESSMENT_DELETED: 'ASSESSMENT_DELETED',
+    UNAUTHORIZED_ACCESS: 'UNAUTHORIZED_ACCESS'
+  },
+  getClientIP: vi.fn(() => '127.0.0.1'),
+}));
+
+// We import the handler INSIDE the tests or use a dynamic import if needed, 
+// but here we'll just fix the mock implementation logic which is the real culprit.
+
 import handler from '@/pages/api/assessment/delete';
 import { verifyToken } from '@/lib/auth';
 import { supabase } from '@/lib/supabase/server';
@@ -29,24 +41,63 @@ const TABLES_IN_ORDER = ['CalificacionesPorPersona', 'Participante', 'Staff', 'B
 /** Sets up all 6 DELETE calls to succeed. Pass `failAt` to make one fail. */
 function setupCascadeSupabase(failAt?: string, failMsg = 'DB error') {
   mockFrom.mockImplementation((table: string) => {
-    const chain = {
-      delete: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn(),
-    };
+    // console.log('[MOCK DEBUG] Mocking table:', table);
+    // Standard chain mock with all required methods
+    const chain: any = {};
+    chain.delete = vi.fn().mockReturnValue(chain);
+    chain.select = vi.fn().mockReturnValue(chain);
+    chain.insert = vi.fn().mockReturnValue(chain);
+    chain.update = vi.fn().mockReturnValue(chain);
+    chain.eq = vi.fn().mockReturnValue(chain);
+    chain.neq = vi.fn().mockReturnValue(chain);
+    chain.single = vi.fn().mockResolvedValue({ data: null, error: null });
+    chain.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
 
-    if (table === 'RevokedTokens') {
-      chain.maybeSingle.mockResolvedValue({ data: null, error: null });
+    // 1. requireRoles & other table logics
+    if (table === 'RevokedTokens' || table === 'AuditLogs') {
       return chain;
     }
+    
+    if (table === 'Staff') {
+        chain.single.mockResolvedValue({ 
+            data: { Active: true, Assessment: { Activo_Assessment: true } }, 
+            error: null 
+        });
+        return chain;
+    }
 
-    chain.eq.mockResolvedValue(
-      table === failAt ? { error: { message: failMsg } } : { error: null }
-    );
+    // 2. Pre-deletion fetch in delete.ts
+    if (table === 'Assessment') {
+        chain.single.mockResolvedValue({ 
+            data: { 
+                Nombre_Assessment: 'Test Assessment', 
+                Activo_Assessment: true 
+            }, 
+            error: null 
+        });
+    }
+
+    // 3. Operations (DELETE usually)
+    // We overwrite eq for the final promise resolution
+    chain.eq.mockImplementation((col: string, val: any) => {
+        // If we are in the SELECT chain (select has been called but not delete)
+        // we should return the chain so .single() can be called.
+        // If we are in the DELETE chain, we return the promise.
+
+        const isSelectChain = chain.select.mock.calls.length > 0 && chain.delete.mock.calls.length === 0;
+
+        if (isSelectChain) {
+            return chain;
+        }
+
+        return Promise.resolve(
+            table === failAt ? { error: { message: failMsg } } : { error: null }
+        );
+    });
+
     return chain;
-  });
-}
+    });
+    }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
@@ -54,7 +105,7 @@ describe('DELETE /api/assessment/delete', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv('ADMIN_DELETE_PASSWORD', 'correct-password');
-    setupRevokedTokenMock(supabase);
+    setupCascadeSupabase(); // Setup a default working state
   });
 
   it('returns 405 for non-DELETE requests', async () => {
@@ -150,7 +201,7 @@ describe('DELETE /api/assessment/delete', () => {
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ message: 'Assessment y todos sus datos eliminados con éxito' });
     // Every table should have been targeted
-    const calledTables = mockFrom.mock.calls.map((c: unknown[]) => c[0]);
+    const calledTables = mockFrom.mock.calls.map((c: any[]) => c[0]);
     for (const table of TABLES_IN_ORDER) {
       expect(calledTables).toContain(table);
     }

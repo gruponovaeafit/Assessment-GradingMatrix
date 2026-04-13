@@ -3,19 +3,23 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { supabase } from '@/lib/supabase/server';
 import { requireRoles } from '@/lib/auth/apiAuth';
+import { logAudit, AuditActions, getClientIP } from '@/lib/utils/audit';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Método no permitido" });
   }
 
-  if (!await requireRoles(req, res, ["admin", "calificador"])) return;
+  const decoded = await requireRoles(req, res, ["admin", "calificador"]);
+  if (!decoded) return;
 
   const { calificaciones: calificacionesArray, idGrupo: idGrupoBody } = typeof req.body?.calificaciones === 'undefined'
     ? { calificaciones: req.body, idGrupo: undefined }
     : { calificaciones: req.body.calificaciones, idGrupo: req.body.idGrupo };
 
   const calificaciones = calificacionesArray;
+  const ip = getClientIP(req);
+  const userAgent = req.headers['user-agent'] || 'unknown';
 
   if (!Array.isArray(calificaciones) || calificaciones.length === 0) {
     return res.status(400).json({ message: "Se requiere un arreglo de calificaciones" });
@@ -57,44 +61,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .eq('ID_Assessment', assessmentId)
       .eq('ID_GrupoAssessment', grupoActual);
 
-if (participantesError) {
-  throw new Error(`Error al obtener participantes: ${participantesError.message}`);
-}
+    if (participantesError) {
+      throw new Error(`Error al obtener participantes: ${participantesError.message}`);
+    }
 
-if (!participantesGrupo || participantesGrupo.length === 0) {
-  return res.status(400).json({
-    error: 'No hay participantes en este grupo',
-    code: 'NO_PARTICIPANTS',
-  });
-}
+    if (!participantesGrupo || participantesGrupo.length === 0) {
+      return res.status(400).json({
+        error: 'No hay participantes en este grupo',
+        code: 'NO_PARTICIPANTS',
+      });
+    }
 
-const idsParticipantes = participantesGrupo.map(p => p.ID_Participante);
+    const idsParticipantes = participantesGrupo.map(p => p.ID_Participante);
 
-// ✅ VALIDACIÓN CORREGIDA: Verificar si ya calificó a estos participantes específicos
-const { data: existingGrades, error: checkError } = await supabase
-  .from('CalificacionesPorPersona')
-  .select('ID_Calificacion')
-  .eq('ID_Assessment', assessmentId)
-  .eq('ID_Base', idBase)
-  .eq('ID_Staff', calificadorId)
-  .in('ID_Participante', idsParticipantes)  // ← CLAVE: Solo los del grupo actual
-  .limit(1);
+    // ✅ VALIDACIÓN: Verificar si ya calificó a estos participantes específicos
+    const { data: existingGrades, error: checkError } = await supabase
+      .from('CalificacionesPorPersona')
+      .select('ID_Calificacion')
+      .eq('ID_Assessment', assessmentId)
+      .eq('ID_Base', idBase)
+      .eq('ID_Staff', calificadorId)
+      .in('ID_Participante', idsParticipantes)
+      .limit(1);
 
-if (checkError) {
-  throw new Error(`Error al verificar calificaciones previas: ${checkError.message}`);
-}
+    if (checkError) {
+      throw new Error(`Error al verificar calificaciones previas: ${checkError.message}`);
+    }
 
-// ✅ Si ya calificó a alguno de estos participantes, bloquear
-if (existingGrades && existingGrades.length > 0) {
-  return res.status(400).json({
-    error: 'Ya has calificado a este grupo anteriormente. No puedes volver a calificar.',
-    code: 'ALREADY_GRADED',
-    message: 'No es posible recalificar al mismo grupo ni a las mismas personas.',
-  });
-}
-
-// ... resto del código igual (upsertPayload, insert, etc.)
-
+    if (existingGrades && existingGrades.length > 0) {
+      return res.status(400).json({
+        error: 'Ya has calificado a este grupo anteriormente. No puedes volver a calificar.',
+        code: 'ALREADY_GRADED',
+        message: 'No es posible recalificar al mismo grupo ni a las mismas personas.',
+      });
+    }
 
     const upsertPayload = calificaciones.map((cal) => {
       const ID_Participante = Number(cal.ID_Persona ?? cal.ID_Participante);
@@ -128,7 +128,6 @@ if (existingGrades && existingGrades.length > 0) {
       };
     });
 
-    // ✅ CAMBIO: Usar INSERT en lugar de UPSERT para no permitir updates
     const { error: insertError } = await supabase
       .from('CalificacionesPorPersona')
       .insert(upsertPayload);
@@ -136,6 +135,22 @@ if (existingGrades && existingGrades.length > 0) {
     if (insertError) {
       throw new Error(`Error al guardar calificación: ${insertError.message}`);
     }
+
+    // 📝 Log Audit: Grades Submitted
+    await logAudit({
+        accion: AuditActions.CALIFICACION_ENVIADA,
+        usuario_id: decoded.id,
+        usuario_email: decoded.email,
+        detalles: { 
+          assessmentId, 
+          calificadorId, 
+          baseId: idBase, 
+          grupoId: grupoActual, 
+          participantesCount: upsertPayload.length 
+        },
+        ip,
+        user_agent: userAgent
+    });
 
     res.status(200).json({
       message: "✅ Calificaciones procesadas correctamente",

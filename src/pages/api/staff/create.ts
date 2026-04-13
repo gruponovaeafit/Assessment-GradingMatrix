@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase/server';
 import { hashPassword } from '@/lib/auth';
 import { requireRoles } from '@/lib/auth/apiAuth';
 import { getAuthorizedAssessmentId } from '@/lib/assessment';
+import { logAudit, AuditActions, getClientIP } from '@/lib/utils/audit';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -13,12 +14,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!user) return;
 
   const { correo, password, rol, idBase } = req.body;
+  const ip = getClientIP(req);
+  const userAgent = req.headers['user-agent'] || 'unknown';
 
   const assessmentId = getAuthorizedAssessmentId(user, res);
   if (!assessmentId) return;
 
   if (!correo || !password || !rol) {
     return res.status(400).json({ error: 'correo, password y rol son obligatorios' });
+  }
+
+  // Basic server-side email format guard
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(String(correo).trim())) {
+    return res.status(400).json({ error: 'El formato del correo no es válido' });
   }
 
   try {
@@ -34,18 +43,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    const normalizedCorreo = String(correo).trim().toLowerCase();
     const hashedPassword = await hashPassword(password);
 
     const staffData = {
       ID_Assessment: Number(assessmentId),
-      Correo_Staff: correo,
+      Correo_Staff: normalizedCorreo,
       Contrasena_Staff: hashedPassword,
       Rol_Staff: rol,
-      Active: false,
+      Active: true,
       ID_Base: idBase ? Number(idBase) : null,
     };
-
-    console.log('Intentando insertar en Staff:', staffData);
 
     const { data, error } = await supabase
       .from('Staff')
@@ -64,6 +72,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!data) {
       throw new Error('No se pudo crear el staff');
     }
+
+    // 📝 Log Audit: Staff Created
+    await logAudit({
+      accion: AuditActions.STAFF_CREATED,
+      usuario_id: user.id,
+      usuario_email: user.email,
+      detalles: { 
+        targetEmail: normalizedCorreo, 
+        role: rol, 
+        assessmentId, 
+        staffId: data.ID_Staff,
+        baseId: idBase || null
+      },
+      ip,
+      user_agent: userAgent
+    });
 
     res.status(200).json({ message: 'Staff registrado', ID_Staff: data.ID_Staff });
   } catch (error) {

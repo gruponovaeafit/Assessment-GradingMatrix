@@ -232,3 +232,24 @@ create table if not exists public."RevokedTokens" (
 
 create index if not exists "IX_RevokedTokens_ExpiresAt"
   on public."RevokedTokens" ("ExpiresAt");
+
+-- -------------------------
+-- AuditLogs (Trazabilidad y Seguridad)
+-- -------------------------
+create table if not exists public."AuditLogs" (
+  "ID_Log" integer generated always as identity primary key,
+  "Fecha" timestamptz not null default now(),
+  "Accion" varchar(100) not null,
+  "UsuarioID" integer null,
+  "UsuarioEmail" varchar(255) null,
+  "Detalles" jsonb null,
+  "IP" varchar(45) null,
+  "UserAgent" text null
+);
+
+create index if not exists "IX_AuditLogs_Fecha"
+  on public."AuditLogs" ("Fecha");
+
+create index if not exists "IX_AuditLogs_Accion"
+  on public."AuditLogs" ("Accion");
+

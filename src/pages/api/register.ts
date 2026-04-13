@@ -61,7 +61,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 🔐 Roles
     const decoded = await requireRoles(req, res, ['admin', 'registrador']);
     if (!decoded) return;
-    console.log(decoded);
 
     const { fields, files } = await parseForm(req);
     const file = Array.isArray(files.image) ? files.image[0] : files.image;
@@ -146,7 +145,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // 🧠 Insertar en DB
-    console.log(assessmentId);
 
     const { data: inserted, error: dbError } = await supabase
       .from('Participante')

@@ -1,0 +1,28 @@
+<h2>Audit Log Visibility</h2>
+<p class="subtitle">How should administrators view these logs?</p>
+
+<div class="options">
+  <div class="option" data-choice="database" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Database Access Only (MVP)</h3>
+      <p>Logs are only viewable by developers with direct access to the Supabase dashboard or SQL editor. Quickest to implement.</p>
+    </div>
+  </div>
+  
+  <div class="option" data-choice="superadmin" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Super-Admin Dashboard</h3>
+      <p>Add a dedicated "Audit Logs" tab in the Super-Admin view to see all system-wide actions with filtering and search.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="admin" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Scoped Admin View</h3>
+      <p>Group Admins can see logs related only to their own assessments and staff. Most secure and decentralized.</p>
+    </div>
+  </div>
+</div>

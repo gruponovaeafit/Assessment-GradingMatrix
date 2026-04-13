@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { Box } from '@/components/UI/Box';
 import { InputBox } from '@/components/UI/InputBox';
+import { EmailInput } from '@/components/UI/EmailInput';
 import { Button } from '@/components/UI/Button';
 import { NotificationProvider } from '@/components/UI/Notification';
 import { CameraCapture } from './CameraCapture';
@@ -84,12 +85,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
                 disabled={enviando}
               />
 
-              <InputBox
+              <EmailInput
                 label="Correo Electrónico"
-                type="email"
                 placeholder="Correo electrónico"
                 value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
+                onChange={setCorreo}
                 disabled={enviando}
               />
 

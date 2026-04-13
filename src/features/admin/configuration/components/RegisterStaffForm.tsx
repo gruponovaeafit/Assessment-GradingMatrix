@@ -3,6 +3,7 @@ import { type Base } from '../schemas/configSchemas';
 import { Box } from '@/components/UI/Box';
 import { Button } from '@/components/UI/Button';
 import { InputBox } from '@/components/UI/InputBox';
+import { EmailInput } from '@/components/UI/EmailInput';
 
 interface RegisterStaffFormProps {
   staffCorreo: string;
@@ -42,12 +43,11 @@ export const RegisterStaffForm: React.FC<RegisterStaffFormProps> = ({
 
         <form onSubmit={onSubmit} className="flex flex-col gap-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InputBox
+            <EmailInput
               label="Correo"
-              type="email"
               placeholder="Correo del staff"
               value={staffCorreo}
-              onChange={(e) => setStaffCorreo(e.target.value)}
+              onChange={setStaffCorreo}
               disabled={creatingStaff}
             />
             <InputBox

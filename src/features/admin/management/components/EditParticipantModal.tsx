@@ -1,5 +1,5 @@
-import React from 'react';
 import { type ParticipantDashboardRow } from '../schemas/gestionSchemas';
+import { EmailInput } from '@/components/UI/EmailInput';
 
 interface EditParticipantModalProps {
   editModal: ParticipantDashboardRow;
@@ -28,12 +28,11 @@ export const EditParticipantModal: React.FC<EditParticipantModalProps> = ({
             className="w-full border border-gray-600 px-3 py-2 rounded mb-4 text-white bg-[#2d2d2d] placeholder-gray-500 text-sm sm:text-base focus:border-[color:var(--color-accent)] focus:outline-none"
           />
 
-          <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Correo</label>
-          <input
-            type="email"
+          <EmailInput
+            label="Correo"
+            placeholder="Correo del participante"
             value={editModal.Correo}
-            onChange={(e) => setEditModal({ ...editModal, Correo: e.target.value })}
-            className="w-full border border-gray-600 px-3 py-2 rounded mb-4 text-white bg-[#2d2d2d] placeholder-gray-500 text-sm sm:text-base focus:border-[color:var(--color-accent)] focus:outline-none"
+            onChange={(val) => setEditModal({ ...editModal, Correo: val })}
           />
 
           <label className="block mb-2 font-semibold text-white text-sm sm:text-base">Rol</label>

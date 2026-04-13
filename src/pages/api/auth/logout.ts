@@ -44,15 +44,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ message: 'Logout ok' });
     }
 
-    const { error } = await supabase
-      .from('Staff')
-      .update({ Active: false })
-      .eq('ID_Staff', decoded.id);
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
     res.status(200).json({ message: 'Logout ok' });
   } catch (error) {
     console.error('❌ Error al cerrar sesión:', error);

@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '@/lib/supabase/server';
 import { comparePassword, generateToken, hashPassword } from '@/lib/auth';
 import { setSessionCookie } from '@/lib/auth/cookie';
+import { logAudit, AuditActions, getClientIP } from '@/lib/utils/audit';
 
 // API de login
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -11,6 +12,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { email, password } = req.body;
+  const ip = getClientIP(req);
+  const userAgent = req.headers['user-agent'] || 'unknown';
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Correo y contraseña son obligatorios' });
@@ -33,11 +36,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (isAdminPasswordValid) {
       const token = generateToken({ id: 0, email: adminEmail, role: 'admin' });
       setSessionCookie(res, token, 'admin');
+
+      // 📝 Log Audit: Login SuperAdmin
+      await logAudit({
+        accion: AuditActions.LOGIN_SUCCESS,
+        usuario_id: 0,
+        usuario_email: adminEmail,
+        detalles: { role: 'admin', superAdmin: true },
+        ip,
+        user_agent: userAgent
+      });
+
       return res.status(200).json({
         role: 'admin',
         superAdmin: true,
         message: 'Login exitoso',
       });
+    } else {
+        // 📝 Log Audit: Failed SuperAdmin Login
+        await logAudit({
+            accion: AuditActions.LOGIN_FAILED,
+            usuario_id: null,
+            usuario_email: adminEmail,
+            detalles: { reason: 'Contraseña incorrecta', target: 'superadmin' },
+            ip,
+            user_agent: userAgent
+        });
+        return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
   }
 
@@ -49,26 +74,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .single();
 
     if (error || !staff) {
+      // 📝 Log Audit: Failed Login (User not found)
+      await logAudit({
+        accion: AuditActions.LOGIN_FAILED,
+        usuario_id: null,
+        usuario_email: email,
+        detalles: { reason: 'Usuario no encontrado' },
+        ip,
+        user_agent: userAgent
+      });
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
 
-    // Comentado: permitir siempre nuevo login (como si Active fuera siempre false).
-    // if (staff.Active) {
-    //   return res.status(409).json({ error: 'Sesión ya activa para este usuario' });
-    // }
-
     // Verificar contraseña
-    // Si la contraseña en BD no está hasheada (legado), comparar directamente
     let isValidPassword = false;
 
     if (staff.Contrasena_Staff?.startsWith('$2')) {
-      // Contraseña hasheada con bcrypt
       isValidPassword = await comparePassword(password, staff.Contrasena_Staff);
     } else {
-      // Contraseña en texto plano (legado) - comparar directamente
       isValidPassword = staff.Contrasena_Staff === password;
 
-      // Opcional: actualizar a hash para próximos logins
       if (isValidPassword) {
         const hashedPassword = await hashPassword(password);
         await supabase
@@ -79,7 +104,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (!isValidPassword) {
+      // 📝 Log Audit: Failed Login (Wrong password)
+      await logAudit({
+        accion: AuditActions.LOGIN_FAILED,
+        usuario_id: staff.ID_Staff,
+        usuario_email: staff.Correo_Staff,
+        detalles: { reason: 'Contraseña incorrecta' },
+        ip,
+        user_agent: userAgent
+      });
       return res.status(401).json({ error: 'Credenciales incorrectas' });
+    }
+
+    // 2. Add validation after staff is found and password verified:
+    if (staff.Active === false) {
+      // 📝 Log Audit: Failed Login (Account disabled)
+      await logAudit({
+        accion: AuditActions.LOGIN_FAILED,
+        usuario_id: staff.ID_Staff,
+        usuario_email: staff.Correo_Staff,
+        detalles: { reason: 'Cuenta desactivada' },
+        ip,
+        user_agent: userAgent
+      });
+      return res.status(401).json({ error: 'Tu cuenta ha sido desactivada por el administrador.' });
+    }
+
+    // 3. Check assessment status (if not super-admin):
+    const { data: assessment, error: assessmentError } = await supabase
+      .from('Assessment')
+      .select('Activo_Assessment')
+      .eq('ID_Assessment', staff.ID_Assessment)
+      .single();
+
+    if (assessmentError || !assessment || !assessment.Activo_Assessment) {
+      // 📝 Log Audit: Failed Login (Assessment inactive)
+      await logAudit({
+        accion: AuditActions.LOGIN_FAILED,
+        usuario_id: staff.ID_Staff,
+        usuario_email: staff.Correo_Staff,
+        detalles: { reason: 'Assessment desactivado', assessmentId: staff.ID_Assessment },
+        ip,
+        user_agent: userAgent
+      });
+      return res.status(401).json({ error: 'Este assessment se encuentra desactivado.' });
     }
 
     // Generar token JWT
@@ -99,10 +167,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     setSessionCookie(res, token, role);
 
-    await supabase
-      .from('Staff')
-      .update({ Active: true })
-      .eq('ID_Staff', staff.ID_Staff);
+    // 📝 Log Audit: Successful Login
+    await logAudit({
+        accion: AuditActions.LOGIN_SUCCESS,
+        usuario_id: staff.ID_Staff,
+        usuario_email: staff.Correo_Staff,
+        detalles: { role, assessmentId: staff.ID_Assessment },
+        ip,
+        user_agent: userAgent
+    });
 
     res.status(200).json({
       role,
